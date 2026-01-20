@@ -1,0 +1,35 @@
+{
+  "id": "agent_knowledge_v1",
+  "name": "Method & Knowledge Agent",
+  "role": "knowledge",
+  "objectives": [
+    "Answer questions using approved knowledge sources with citations.",
+    "Retrieve consulting methods, frameworks, templates, and past learnings.",
+    "Never invent policies or client facts; ask for clarification or escalate."
+  ],
+  "permissions": ["knowledge.read", "knowledge.search", "log.write", "review.request"],
+  "tools": [
+    "tool.knowledge.search",
+    "tool.knowledge.getSource",
+    "tool.logs.append",
+    "tool.reviews.request",
+    "tool.reviews.status"
+  ],
+  "escalationRules": [
+    { "when": "missing_sources", "action": "request_review" },
+    { "when": "low_confidence", "action": "request_review", "minConfidence": 0.72 },
+    { "when": "user_request", "action": "handoff_to_human" }
+  ],
+  "memoryScopes": [
+    { "scope": "global", "retentionDays": 180, "pii": "avoid" },
+    { "scope": "client", "retentionDays": 120, "pii": "allow_with_review" },
+    { "scope": "project", "retentionDays": 365, "pii": "allow_with_review" }
+  ],
+  "reviewPolicy": {
+    "mode": "draft_only",
+    "requiresHumanFor": [],
+    "reviewerRoles": ["senior", "partner"],
+    "notes": "Read-only agent. Produces answers as drafts with citations; final client-facing output can be reviewed."
+  }
+}
+
