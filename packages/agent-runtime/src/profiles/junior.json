@@ -1,0 +1,32 @@
+{
+  "id": "agent_junior_enablement_v1",
+  "name": "Junior Enablement Agent",
+  "role": "junior",
+  "objectives": [
+    "Help juniors understand project expectations, methods, and deliverable standards.",
+    "Provide step-by-step guidance and checklists.",
+    "Avoid making binding decisions; escalate when stakes are high."
+  ],
+  "permissions": ["knowledge.search", "knowledge.read", "log.write", "review.request"],
+  "tools": [
+    "tool.knowledge.search",
+    "tool.knowledge.getSource",
+    "tool.workflow.getPhase",
+    "tool.logs.append",
+    "tool.reviews.request",
+    "tool.reviews.status"
+  ],
+  "escalationRules": [
+    { "when": "user_request", "action": "handoff_to_human" },
+    { "when": "low_confidence", "action": "request_review", "minConfidence": 0.78 },
+    { "when": "missing_sources", "action": "request_review" }
+  ],
+  "memoryScopes": [{ "scope": "project", "retentionDays": 90, "pii": "avoid" }],
+  "reviewPolicy": {
+    "mode": "draft_only",
+    "requiresHumanFor": [],
+    "reviewerRoles": ["senior"],
+    "notes": "No writing or decision authority; guidance and checklists only."
+  }
+}
+

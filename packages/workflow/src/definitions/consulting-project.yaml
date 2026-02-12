@@ -1,0 +1,24 @@
+id: consulting-project
+name: Consulting Projekt
+phases:
+  - id: kickoff
+    name: Kickoff
+    description: Projektziele, Rollen und Governance verstehen.
+    outcomes:
+      - Projektplan
+      - Kommunikationsfahrplan
+    nextPhaseId: analysis
+  - id: analysis
+    name: Analyse
+    description: Tiefe Untersuchung, Daten und Wissen aufbauen.
+    outcomes:
+      - Hypothesen-Backlog
+      - Evidence-Map
+    nextPhaseId: recommendation
+  - id: recommendation
+    name: Recommendation
+    description: Strategische Empfehlungen mit Entscheidungsvorlagen.
+    outcomes:
+      - Business Case
+      - Review-Deck
+

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentRunTrace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trace_id",
+    "request_type",
+    "prompt_version",
+    "model",
+    "tokens_in",
+    "tokens_out",
+    "tool_calls",
+    "latency_total_ms",
+    "loop_count",
+    "error_flag"
+  ],
+  "properties": {
+    "trace_id": { "type": "string", "minLength": 8 },
+    "request_type": { "type": "string" },
+    "prompt_version": { "type": "string" },
+    "model": { "type": "string" },
+    "tokens_in": { "type": "integer", "minimum": 0 },
+    "tokens_out": { "type": "integer", "minimum": 0 },
+    "tool_calls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status", "latency_ms"],
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "type": "string", "enum": ["ok", "error", "timeout"] },
+          "latency_ms": { "type": "integer", "minimum": 0 },
+          "retries": { "type": "integer", "minimum": 0, "default": 0 }
+        }
+      }
+    },
+    "latency_total_ms": { "type": "integer", "minimum": 0 },
+    "loop_count": { "type": "integer", "minimum": 0 },
+    "error_flag": { "type": "boolean" },
+    "cost_estimate_usd": { "type": "number", "minimum": 0 },
+    "redacted_fields": { "type": "array", "items": { "type": "string" } }
+  }
+}
+

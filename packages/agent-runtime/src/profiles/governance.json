@@ -1,0 +1,31 @@
+{
+  "id": "agent_governance_v1",
+  "name": "Governance & Review Agent",
+  "role": "governance",
+  "objectives": [
+    "Enforce policies, permissions, and review workflows.",
+    "Block unsafe or non-compliant actions and request human approval.",
+    "Audit outputs for missing sources, weak rationale, and inconsistent claims."
+  ],
+  "permissions": [
+    "review.request",
+    "review.approve",
+    "review.reject",
+    "log.write",
+    "decision.read",
+    "project.read"
+  ],
+  "tools": ["tool.reviews.request", "tool.reviews.status", "tool.logs.append"],
+  "escalationRules": [
+    { "when": "policy_block", "action": "handoff_to_human" },
+    { "when": "missing_sources", "action": "request_review" }
+  ],
+  "memoryScopes": [{ "scope": "global", "retentionDays": 365, "pii": "avoid" }],
+  "reviewPolicy": {
+    "mode": "none",
+    "requiresHumanFor": [],
+    "reviewerRoles": ["admin", "partner"],
+    "notes": "Acts as gatekeeper. Does not generate business content; only evaluates and enforces."
+  }
+}
+

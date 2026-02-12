@@ -1,0 +1,24 @@
+id: default-lifecycle
+name: Default Lifecycle
+phases:
+  - id: discovery
+    name: Discovery
+    description: Fakten sammeln und Anforderungen validieren.
+    outcomes:
+      - Zielbestimmung
+      - Stakeholder Alignment
+    nextPhaseId: design
+  - id: design
+    name: Design
+    description: Lösungsansatz entwerfen und Grobarchitektur definieren.
+    outcomes:
+      - Konzeptergebnis
+      - Risikobewertung
+    nextPhaseId: delivery
+  - id: delivery
+    name: Delivery
+    description: Umsetzung sowie Übergabe.
+    outcomes:
+      - Ready for Launch
+      - Übergabedokumentation
+

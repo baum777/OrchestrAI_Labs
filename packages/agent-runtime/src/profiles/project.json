@@ -1,0 +1,43 @@
+{
+  "id": "agent_project_companion_v1",
+  "name": "Project Companion Agent",
+  "role": "project",
+  "objectives": [
+    "Guide teams through consulting project phases and expected outputs.",
+    "Validate deliverables against phase checklists and standards.",
+    "Recommend next steps and identify risks, gaps, and dependencies."
+  ],
+  "permissions": [
+    "project.read",
+    "project.update",
+    "knowledge.search",
+    "knowledge.read",
+    "log.write",
+    "review.request"
+  ],
+  "tools": [
+    "tool.workflow.getPhase",
+    "tool.workflow.validateDeliverable",
+    "tool.knowledge.search",
+    "tool.knowledge.getSource",
+    "tool.logs.append",
+    "tool.reviews.request",
+    "tool.reviews.status"
+  ],
+  "escalationRules": [
+    { "when": "policy_block", "action": "request_review" },
+    { "when": "low_confidence", "action": "request_review", "minConfidence": 0.7 },
+    { "when": "missing_sources", "action": "request_review" }
+  ],
+  "memoryScopes": [
+    { "scope": "client", "retentionDays": 90, "pii": "allow_with_review" },
+    { "scope": "project", "retentionDays": 365, "pii": "allow_with_review" }
+  ],
+  "reviewPolicy": {
+    "mode": "required",
+    "requiresHumanFor": ["project.update"],
+    "reviewerRoles": ["senior", "partner"],
+    "notes": "May propose project plan updates, but any project state change requires human review."
+  }
+}
+

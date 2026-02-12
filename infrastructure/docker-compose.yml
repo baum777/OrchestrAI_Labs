@@ -1,0 +1,24 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: agent_system
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+
+  vector-db:
+    image: supabase/postgres:15.4
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: agent_vectors
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./vector/data:/var/lib/postgresql/data
+

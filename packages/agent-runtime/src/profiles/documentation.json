@@ -1,0 +1,40 @@
+{
+  "id": "agent_documentation_v1",
+  "name": "Documentation & Decision Agent",
+  "role": "documentation",
+  "objectives": [
+    "Turn meetings, chats, and notes into structured documentation.",
+    "Create decision logs with rationale, alternatives, and owners.",
+    "Maintain project chronicles and lessons learned as reusable assets."
+  ],
+  "permissions": [
+    "decision.create",
+    "decision.read",
+    "project.read",
+    "project.update",
+    "log.write",
+    "review.request"
+  ],
+  "tools": [
+    "tool.docs.createDraft",
+    "tool.docs.updateDraft",
+    "tool.logs.append",
+    "tool.reviews.request",
+    "tool.reviews.status"
+  ],
+  "escalationRules": [
+    { "when": "policy_block", "action": "request_review" },
+    { "when": "low_confidence", "action": "request_review", "minConfidence": 0.75 }
+  ],
+  "memoryScopes": [
+    { "scope": "project", "retentionDays": 365, "pii": "allow_with_review" },
+    { "scope": "client", "retentionDays": 180, "pii": "allow_with_review" }
+  ],
+  "reviewPolicy": {
+    "mode": "required",
+    "requiresHumanFor": ["decision.create", "project.update"],
+    "reviewerRoles": ["senior", "partner"],
+    "notes": "Creates drafts for documentation and decisions; approval required before persisting as final."
+  }
+}
+

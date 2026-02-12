@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS agents (
+  id TEXT PRIMARY KEY,
+  profile JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
