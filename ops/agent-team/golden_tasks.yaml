@@ -1,0 +1,25 @@
+# File: ops/agent-team/golden_tasks.yaml
+golden_tasks:
+  minimum_required: 25
+  tasks:
+    - id: "GT-001"
+      name: "Repo health: typecheck"
+      command: "pnpm -r typecheck"
+      expected: "exit_code_0"
+    - id: "GT-002"
+      name: "Repo health: lint"
+      command: "pnpm -r lint"
+      expected: "exit_code_0"
+    - id: "GT-003"
+      name: "Repo health: tests"
+      command: "pnpm -r test"
+      expected: "exit_code_0"
+    - id: "GT-004"
+      name: "API build"
+      command: "pnpm --filter ./apps/api build"
+      expected: "exit_code_0"
+    - id: "GT-005"
+      name: "Web build"
+      command: "pnpm --filter ./apps/web build"
+      expected: "exit_code_0"
+
