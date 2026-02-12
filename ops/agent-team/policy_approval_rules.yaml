@@ -1,0 +1,40 @@
+# File: ops/agent-team/policy_approval_rules.yaml
+rules:
+  - id: large_change
+    match:
+      files_changed_gt: 20
+      loc_changed_gt: 500
+    require:
+      approvals: 1
+      approver_roles: ["reviewer_claude"]
+
+  - id: destructive_ops
+    match:
+      operations_any: ["delete_file", "git_reset", "git_rebase_interactive", "force_push"]
+    require:
+      approvals: 2
+      approver_roles: ["teamlead_orchestrator", "reviewer_claude"]
+      confirmation: true
+
+  - id: ci_or_build
+    match:
+      touches_paths_any: [".github/**", "**/ci/**", "package.json", "pnpm-lock.yaml", "turbo.json"]
+    require:
+      approvals: 1
+      approver_roles: ["reviewer_claude"]
+
+  - id: prompt_or_agent_core
+    match:
+      touches_paths_any: ["**/prompts/**", "**/agents/**", "**/system_prompt/**", "ops/agent-team/**"]
+    require:
+      approvals: 1
+      approver_roles: ["reviewer_claude"]
+
+  - id: prod_config
+    match:
+      touches_paths_any: ["vercel.json", ".env*", "**/config/**"]
+    require:
+      approvals: 2
+      approver_roles: ["teamlead_orchestrator", "reviewer_claude"]
+    deny_if_matches: [".env", ".env.local"]
+
