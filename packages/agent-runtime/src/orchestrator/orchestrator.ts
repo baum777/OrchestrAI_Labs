@@ -106,6 +106,23 @@ export class Orchestrator {
           blocked: true,
           reason: verify.reason ?? "Invalid commit",
         });
+        // Escalation: Governance violation attempt
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "escalation",
+          input: {
+            reason: "invalid_commit_token",
+            details: { reviewId, reason: verify.reason },
+            context: { toolName: intended.toolCalls?.[0]?.tool },
+          },
+          output: { escalated: true, timestamp: new Date().toISOString() },
+          ts: new Date().toISOString(),
+          blocked: true,
+          reason: verify.reason ?? "Invalid commit",
+        });
         return { status: "blocked", data: { reason: verify.reason ?? "Invalid commit" } };
       }
 
@@ -125,6 +142,26 @@ export class Orchestrator {
           blocked: true,
           reason: "Commit mismatch (agent or permission)",
         });
+        // Escalation: Governance violation attempt
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "escalation",
+          input: {
+            reason: "commit_mismatch",
+            details: {
+              expected: { agentId: verify.agentId, permission: verify.permission },
+              got: { agentId: profile.id, permission: perm },
+            },
+            context: { toolName: intended.toolCalls?.[0]?.tool },
+          },
+          output: { escalated: true, timestamp: new Date().toISOString() },
+          ts: new Date().toISOString(),
+          blocked: true,
+          reason: "Commit mismatch (agent or permission)",
+        });
         return { status: "blocked", data: { reason: "Commit mismatch (agent or permission)" } };
       }
 
@@ -140,6 +177,23 @@ export class Orchestrator {
           action: "agent.blocked.payload_tamper",
           input: intended,
           output: { reviewId },
+          ts: new Date().toISOString(),
+          blocked: true,
+          reason: "Payload changed since approval",
+        });
+        // Escalation: Governance violation attempt
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "escalation",
+          input: {
+            reason: "payload_tamper",
+            details: { reviewId },
+            context: { toolName: intended.toolCalls?.[0]?.tool },
+          },
+          output: { escalated: true, timestamp: new Date().toISOString() },
           ts: new Date().toISOString(),
           blocked: true,
           reason: "Payload changed since approval",

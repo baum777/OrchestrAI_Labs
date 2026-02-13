@@ -1,9 +1,15 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
-import { DecisionsService, type CreateDecisionDraftInput } from "./decisions.service";
-
-type CreateDecisionDraftDto = CreateDecisionDraftInput;
+import { Body, Controller, Get, Param, Post, UsePipes, ValidationPipe } from "@nestjs/common";
+import { DecisionsService } from "./decisions.service";
+import { CreateDecisionDraftDto } from "./dto/create-decision-draft.dto";
 
 @Controller()
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  })
+)
 export class DecisionsController {
   constructor(private readonly decisions: DecisionsService) {}
 
