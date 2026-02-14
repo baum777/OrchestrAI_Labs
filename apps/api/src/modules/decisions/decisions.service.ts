@@ -88,6 +88,7 @@ export class DecisionsService {
   async createDraft(projectId: string, input: CreateDecisionDraftInput): Promise<DecisionDraft> {
     const id = `dec_${crypto.randomUUID()}`;
     const now = new Date().toISOString();
+    const decisionText = input.derivation ?? input.title;
     const assumptions = input.assumptions ?? [];
     const alternatives = input.alternatives ?? [];
     const risks = input.risks ?? [];
@@ -97,23 +98,24 @@ export class DecisionsService {
     await this.pool.query(
       `
       INSERT INTO decisions
-        (id, project_id, client_id, title, owner, owner_role, status,
+        (id, project_id, client_id, title, decision, owner, owner_role, status,
          assumptions, derivation, alternatives, risks,
          client_context, comms_context, client_implications,
          goal, success_criteria, next_steps, review_at, review_id, draft_id,
          created_at, updated_at)
       VALUES
-        ($1,$2,$3,$4,$5,$6,'draft',
-         $7::jsonb,$8,$9::jsonb,$10::jsonb,
-         $11,$12,$13,
-         $14,$15::jsonb,$16::jsonb,$17::timestamptz,$18,$19,
-         $20::timestamptz,$21::timestamptz)
+        ($1,$2,$3,$4,$5,$6,$7,'draft',
+         $8::jsonb,$9,$10::jsonb,$11::jsonb,
+         $12,$13,$14,
+         $15,$16::jsonb,$17::jsonb,$18::timestamptz,$19,$20,
+         $21::timestamptz,$22::timestamptz)
       `,
       [
         id,
         projectId,
         input.clientId ?? null,
         input.title,
+        decisionText,
         input.owner,
         input.ownerRole ?? null,
         JSON.stringify(assumptions),
