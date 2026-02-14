@@ -5,6 +5,7 @@
 
 ## Entries
 
+- 2026-02-14T00:00:00Z — [GPT-5.2] Keine bestehende Partner-/Vertriebs-Doku gefunden — Onboarding-Paper muss neu erstellt werden — Neues Dokument in `docs/geschaeftspartner-onboarding-konzept.md` anlegen, konsistent zum Produktüberblick in `README.md`
 - 2026-02-12T18:43:39Z — [Auto] Shared Decision Types bereits vorhanden — `packages/shared/src/types/decision.ts` enthält `DecisionStatus`, `DecisionBase`, `DecisionDraft`, `DecisionFinal` mit korrekter Struktur — Types sind funktional korrekt, Sections fehlen als explizite Kommentare
 - 2026-02-12T18:43:39Z — [Auto] DecisionFinal.reviewId ist required — Type-Level (`reviewId: string`) und Runtime-Checks in `DecisionsService.finalizeFromDraft()` erzwingen reviewId für Final-Status — Invariante muss erhalten bleiben
 - 2026-02-12T18:43:39Z — [Auto] DB-Schema vs. Type-Mapping — DB verwendet snake_case, Types camelCase — Mapping in `DecisionsService.mapRow()` korrekt, dokumentieren

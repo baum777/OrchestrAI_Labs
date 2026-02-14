@@ -5,6 +5,7 @@
 
 ## Entries
 
+- 2026-02-14T12:00:00Z — [GPT-5.2] Repo-Kontext für Geschäftspartner-Onboarding geprüft — Produkt-/Konzept-Überblick aus `README.md` extrahiert; keine Partner-/Vertriebsunterlage in `docs/` gefunden — `README.md`, `docs/*` — Onboarding-Paper als neues Dokument in `docs/` erstellen
 - 2026-02-12T18:43:39Z — [Auto] Read-Only IST-Snapshot erstellt — BLOCK 1 Vorbereitung abgeschlossen — `ops/agent-team/BLOCK1_IST_SNAPSHOT.md` — BLOCK 1 · Schritt 1 kann starten
 - 2026-02-12T18:43:39Z — [Auto] Dokumentation gelesen — `ops/agent-team/README.md`, `team_plan.md`, `autonomy_policy.md`, `policy_approval_rules.yaml` — Operating Model verstanden
 - 2026-02-12T18:43:39Z — [Auto] Repo-Struktur erfasst — Monorepo (pnpm): `apps/web`, `apps/api`, `packages/shared`, `packages/governance`, `packages/agent-runtime` — Relevante Pfade dokumentiert
