@@ -10,6 +10,18 @@
 
 ## Decisions
 
+- date: 2026-02-15
+  decision: Managed Postgres Credentials via Cursor Secrets (DATABASE_URL) in Cloud-VM injizieren
+  rationale: Connection-Strings sind Secrets und sollen weder im Repo noch im Chat/Logs auftauchen; die Golden Tests lesen ausschließlich ENV (`DATABASE_URL`, `TEST_PROJECT_ID`) und benötigen eine echte Postgres-Instanz
+  alternatives:
+    - `.env` Datei im Repo (verworfen: Secret-Leak-Risiko)
+    - Local Postgres/Docker (verworfen: Task verlangt Managed DB ohne Docker)
+    - CI-only Setup (verworfen: Ziel ist Cloud-VM Golden Tests lokal lauffähig)
+  implications:
+    - Nutzer setzt `DATABASE_URL` (inkl. `sslmode=require` falls nötig) als Secret in Cursor Dashboard
+    - Agent kann danach Migrationen per `psql` anwenden und `pnpm -C apps/api test:golden` verifizieren, ohne Secrets auszugeben
+  owner: GPT-5.2 (Cloud Agent)
+
 - date: 2026-02-14
   decision: Geschäftspartner-Onboarding als Business-Dokument in `docs/` pflegen
   rationale: `docs/` ist im Repo die zentrale Dokumentationsablage; es existiert noch keine Partner-/Vertriebsunterlage, daher neues, eigenständiges Onboarding-Paper ohne Tech-Stack
