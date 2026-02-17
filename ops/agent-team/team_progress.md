@@ -1,7 +1,20 @@
 # Team Progress (Execution Log)
 
+**Version:** 1.0.0  
+**Owner:** @implementer_codex  
+**Layer:** implementation  
+**Last Updated:** 2026-02-13  
+**Definition of Done:**
+- [ ] Alle Einträge haben Timestamp, Owner, Action, Result, Links/Refs, Next
+- [ ] Format ist konsistent (ISO Timestamp)
+- [ ] Keine Layer-Vermischung (nur implementation logs)
+
+---
+
 ## Format
 - YYYY-MM-DDTHH:MM:SSZ — [Owner] Action — Result — Links/Refs — Next
+
+---
 
 ## Entries
 
@@ -70,4 +83,13 @@
 - 2026-02-13T14:00:00Z — [Auto] BLOCK 8.1 · README bereinigt — `apps/api/test/golden-tasks/README.md` komplett überarbeitet — Doppelte Abschnitte entfernt, "Automatisierung (Zukunft)" entfernt (bereits implementiert), klare Struktur: Voraussetzungen, Befehle, Test-Ablauf, Hinweis
 - 2026-02-13T14:00:00Z — [Auto] BLOCK 8.1 · DATABASE_URL-Fehlermeldung hinzugefügt — `golden-tasks.e2e.spec.ts`: Klare Fehlermeldung in `beforeAll` wenn DATABASE_URL fehlt — Tests zeigen jetzt "DATABASE_URL must be set to run Golden Task tests." statt generischer DB-Modul-Fehlermeldung
 - 2026-02-13T14:00:00Z — [Auto] BLOCK 8.1 · Tests verifiziert — `pnpm test:golden` zeigt klare Fehlermeldung wenn DATABASE_URL fehlt — Fixture-Pfade funktionieren korrekt, Tests stabilisiert
-
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Governance Header Template erstellt — `ops/agent-team/_governance_header_template.md` als Source of Truth — Template definiert Standard-Format für alle Governance-Artefakte
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Added governance header to team_plan.md — Version 1.0.0, Owner @teamlead_orchestrator, Layer strategy, DoD definiert — Header vollständig, Layer korrekt (strategy)
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Added governance header to team_findings.md — Version 1.0.0, Owner @implementer_codex, Layer implementation, DoD definiert — Header vollständig, Layer korrekt (implementation)
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Added governance header to team_progress.md — Version 1.0.0, Owner @implementer_codex, Layer implementation, DoD definiert — Header vollständig, Layer korrekt (implementation)
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Added governance header to team_decisions.md — Version 1.0.0, Owner @teamlead_orchestrator, Layer strategy, DoD definiert — Header vollständig, Layer korrekt (strategy)
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Added governance header to autonomy_policy.md — Version 1.0.0, Owner @teamlead_orchestrator, Layer governance, DoD definiert — Header vollständig, Layer korrekt (governance)
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Added governance header to scorecard_definition.md — Version 1.0.0, Owner @teamlead_orchestrator, Layer governance, DoD definiert — Header vollständig, Layer korrekt (governance)
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Document Header Validator implementiert — `packages/governance-v2/src/validator/document-header-validator.ts` erstellt — Validiert Version, Owner, Layer, Last Updated, DoD in Markdown-Dokumenten
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: GovernanceHook erweitert — `validateDocument()` und `validateDocumentContent()` Methoden hinzugefügt — Runtime Enforcement für Dokument-Header aktiv
+- 2026-02-13T18:00:00Z — [Auto] PHASE 1 Migration: Tests für Document Header Validator erstellt — `packages/governance-v2/src/validator/__tests__/document-header-validator.test.ts` — 7 Tests: valid document, missing fields, invalid layer

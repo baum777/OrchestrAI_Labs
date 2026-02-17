@@ -13,7 +13,8 @@
       "@agent-system/agent-runtime": ["packages/agent-runtime/src"],
       "@agent-system/workflow": ["packages/workflow/src"],
       "@agent-system/knowledge": ["packages/knowledge/src"],
-      "@agent-system/governance": ["packages/governance/src"]
+      "@agent-system/governance": ["packages/governance/src"],
+      "@agent-system/governance-v2": ["packages/governance-v2/src"]
     },
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
