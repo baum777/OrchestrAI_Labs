@@ -17,5 +17,9 @@ export const TOOL_PERMISSION_MAP: Record<ToolRef, Permission> = {
 
   "tool.reviews.request": "review.request",
   "tool.reviews.status": "review.request",
+
+  "tool.customer_data.executeReadModel": "customer_data.read",
+  "tool.customer_data.getEntity": "customer_data.read",
+  "tool.customer_data.search": "customer_data.read",
 };
 

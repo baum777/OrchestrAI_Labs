@@ -13,6 +13,8 @@ import type {
 import { WorkstreamValidator } from '../validator/workstream-validator.js';
 import { AmbiguityDetector } from '../clarification/ambiguity-detector.js';
 import { DocumentHeaderValidator } from '../validator/document-header-validator.js';
+import type { Clock } from './clock.js';
+import { SystemClock } from './clock.js';
 
 export interface GovernanceHookResult {
   status: 'pass' | 'blocked' | 'conflict' | 'clarification_required';
@@ -27,11 +29,13 @@ export class GovernanceHook {
   private ambiguityDetector: AmbiguityDetector;
   private documentValidator: DocumentHeaderValidator;
   private enabled: boolean;
+  private readonly clock: Clock;
 
-  constructor(enabled: boolean = true) {
+  constructor(enabled: boolean = true, clock?: Clock) {
+    this.clock = clock ?? new SystemClock();
     this.validator = new WorkstreamValidator();
-    this.ambiguityDetector = new AmbiguityDetector();
-    this.documentValidator = new DocumentHeaderValidator();
+    this.ambiguityDetector = new AmbiguityDetector(this.clock);
+    this.documentValidator = new DocumentHeaderValidator(this.clock);
     // Check environment variable for feature flag
     this.enabled = enabled && (process.env.GOVERNANCE_V2_ENFORCE !== '0');
   }

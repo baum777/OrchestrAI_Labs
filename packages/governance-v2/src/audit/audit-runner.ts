@@ -18,6 +18,8 @@ import { PolicyEngine } from '../policy/policy-engine.js';
 import { AutonomyGuard } from '../policy/autonomy-guard.js';
 import { ConflictDetector } from '../clarification/conflict-detector.js';
 import { DecisionHistoryStore } from '../history/decision-history-store.js';
+import type { Clock } from '../runtime/clock.js';
+import { SystemClock } from '../runtime/clock.js';
 
 export class AuditRunner {
   private scorecardEngine: ScorecardEngine;
@@ -27,8 +29,10 @@ export class AuditRunner {
   private autonomyGuard: AutonomyGuard;
   private conflictDetector: ConflictDetector;
   private historyStore: DecisionHistoryStore;
+  private readonly clock: Clock;
 
-  constructor() {
+  constructor(clock?: Clock) {
+    this.clock = clock ?? new SystemClock();
     this.scorecardEngine = new ScorecardEngine();
     this.validator = new WorkstreamValidator();
     this.policyEngine = new PolicyEngine();
@@ -63,7 +67,7 @@ export class AuditRunner {
     const entropyScore = this.calculateEntropyScore(scorecard, violations);
 
     return {
-      timestamp: new Date().toISOString(),
+      timestamp: this.clock.now().toISOString(),
       scorecard,
       violations,
       entropyScore,

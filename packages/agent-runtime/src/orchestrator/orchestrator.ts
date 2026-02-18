@@ -2,6 +2,10 @@ import crypto from "node:crypto";
 import type { AgentProfile, Permission } from "@shared/types/agent";
 import { enforcePermission, enforceReviewGate } from "@governance/policies/enforcement";
 import type { ToolRouter, ToolContext, ToolCall } from "../execution/tool-router";
+import type { Clock } from "@agent-system/governance-v2/runtime/clock";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+import { loadState, saveState } from "@agent-system/governance-v2/runtime/runtime-state-store";
+import { calculateGapMinutes } from "@agent-system/governance-v2/runtime/time-utils";
 
 export type AgentRunInput = {
   agentId: string;
@@ -75,13 +79,22 @@ export interface GovernanceWorkstreamValidator {
 }
 
 export class Orchestrator {
+  private readonly clock: Clock;
+  private readonly gapDetectionEnabled: boolean;
+  private readonly gapThresholdMinutes: number;
+
   constructor(
     private readonly profiles: { getById(id: string): AgentProfile },
     private readonly toolRouter: ToolRouter,
     private readonly reviewStore: ReviewStore,
     private readonly logger: ActionLogger,
-    private readonly governanceValidator?: GovernanceWorkstreamValidator
-  ) {}
+    private readonly governanceValidator?: GovernanceWorkstreamValidator,
+    clock?: Clock
+  ) {
+    this.clock = clock ?? new SystemClock();
+    this.gapDetectionEnabled = process.env.TIME_GAP_DETECTION !== '0';
+    this.gapThresholdMinutes = 50;
+  }
 
   private static sha256Json(v: unknown): string {
     return crypto.createHash("sha256").update(JSON.stringify(v ?? null)).digest("hex");
@@ -116,15 +129,66 @@ export class Orchestrator {
   async run(ctx: ToolContext, input: AgentRunInput): Promise<{ status: "ok" | "blocked"; data: unknown }> {
     const profile = this.profiles.getById(input.agentId);
 
+    // Gap detection preflight
+    const nowIso = this.clock.now().toISOString();
+    let sessionMode: "fresh" | "continuous" = "continuous";
+
+    if (this.gapDetectionEnabled) {
+      try {
+        const state = loadState();
+        if (state.last_seen_at) {
+          const gapMin = calculateGapMinutes(state.last_seen_at, nowIso);
+          
+          if (gapMin >= this.gapThresholdMinutes) {
+            // Log time gap detected
+            await this.logger.append({
+              agentId: profile.id,
+              userId: ctx.userId,
+              projectId: ctx.projectId,
+              clientId: ctx.clientId,
+              action: "TIME_GAP_DETECTED",
+              input: {
+                gapMin,
+                lastSeen: state.last_seen_at,
+                nowIso,
+              },
+              output: {
+                sessionMode: "fresh",
+                threshold: this.gapThresholdMinutes,
+              },
+              ts: nowIso,
+              blocked: false,
+            });
+            
+            sessionMode = "fresh";
+          }
+        }
+      } catch (error) {
+        // Log error but don't block execution
+        console.warn("Failed to perform gap detection:", error);
+      }
+
+      // Update runtime state with current time
+      try {
+        saveState({ last_seen_at: nowIso });
+      } catch (error) {
+        // Log error but don't block execution
+        console.warn("Failed to save runtime state:", error);
+      }
+    }
+
     await this.logger.append({
       agentId: profile.id,
       userId: ctx.userId,
       projectId: ctx.projectId,
       clientId: ctx.clientId,
       action: "agent.run",
-      input,
+      input: {
+        ...input,
+        sessionMode,
+      },
       output: { note: "received" },
-      ts: new Date().toISOString(),
+      ts: nowIso,
     });
 
     if (!input.intendedAction) {
@@ -160,7 +224,7 @@ export class Orchestrator {
           action: 'agent.blocked.governance_validation',
           input: intended,
           output: { reasons: govResult.reasons },
-          ts: new Date().toISOString(),
+          ts: this.clock.now().toISOString(),
           blocked: true,
           reason: govResult.reason || 'Governance validation failed',
         });
@@ -183,7 +247,7 @@ export class Orchestrator {
           action: 'agent.blocked.governance_conflict',
           input: intended,
           output: { reasons: govResult.reasons },
-          ts: new Date().toISOString(),
+          ts: this.clock.now().toISOString(),
           blocked: true,
           reason: govResult.reason || 'Governance conflict detected',
         });
@@ -206,7 +270,7 @@ export class Orchestrator {
           action: 'agent.blocked.clarification_required',
           input: intended,
           output: { clarificationRequest: govResult.clarificationRequest },
-          ts: new Date().toISOString(),
+          ts: this.clock.now().toISOString(),
           blocked: true,
           reason: govResult.reason || 'Clarification required',
         });
@@ -226,6 +290,7 @@ export class Orchestrator {
 
       const verify = await this.reviewStore.getApprovedForCommit({ reviewId, token: commitToken });
       if (!verify.ok) {
+        const timestamp = this.clock.now().toISOString();
         await this.logger.append({
           agentId: profile.id,
           userId: ctx.userId,
@@ -234,7 +299,7 @@ export class Orchestrator {
           action: "agent.blocked.invalid_commit_token",
           input: intended,
           output: { reviewId },
-          ts: new Date().toISOString(),
+          ts: timestamp,
           blocked: true,
           reason: verify.reason ?? "Invalid commit",
         });
@@ -250,8 +315,8 @@ export class Orchestrator {
             details: { reviewId, reason: verify.reason },
             context: { toolName: intended.toolCalls?.[0]?.tool },
           },
-          output: { escalated: true, timestamp: new Date().toISOString() },
-          ts: new Date().toISOString(),
+          output: { escalated: true, timestamp },
+          ts: timestamp,
           blocked: true,
           reason: verify.reason ?? "Invalid commit",
         });
@@ -259,6 +324,7 @@ export class Orchestrator {
       }
 
       if (verify.agentId !== profile.id || verify.permission !== perm) {
+        const timestamp = this.clock.now().toISOString();
         await this.logger.append({
           agentId: profile.id,
           userId: ctx.userId,
@@ -270,7 +336,7 @@ export class Orchestrator {
             expected: { agentId: verify.agentId, permission: verify.permission },
             got: { agentId: profile.id, permission: perm },
           },
-          ts: new Date().toISOString(),
+          ts: timestamp,
           blocked: true,
           reason: "Commit mismatch (agent or permission)",
         });
@@ -289,8 +355,8 @@ export class Orchestrator {
             },
             context: { toolName: intended.toolCalls?.[0]?.tool },
           },
-          output: { escalated: true, timestamp: new Date().toISOString() },
-          ts: new Date().toISOString(),
+          output: { escalated: true, timestamp },
+          ts: timestamp,
           blocked: true,
           reason: "Commit mismatch (agent or permission)",
         });
@@ -301,6 +367,7 @@ export class Orchestrator {
       const currentPayloadHash = Orchestrator.sha256Json({ permission: perm, toolCalls: intended.toolCalls });
 
       if (storedPayloadHash !== currentPayloadHash) {
+        const timestamp = this.clock.now().toISOString();
         await this.logger.append({
           agentId: profile.id,
           userId: ctx.userId,
@@ -309,7 +376,7 @@ export class Orchestrator {
           action: "agent.blocked.payload_tamper",
           input: intended,
           output: { reviewId },
-          ts: new Date().toISOString(),
+          ts: timestamp,
           blocked: true,
           reason: "Payload changed since approval",
         });
@@ -325,8 +392,8 @@ export class Orchestrator {
             details: { reviewId },
             context: { toolName: intended.toolCalls?.[0]?.tool },
           },
-          output: { escalated: true, timestamp: new Date().toISOString() },
-          ts: new Date().toISOString(),
+          output: { escalated: true, timestamp },
+          ts: timestamp,
           blocked: true,
           reason: "Payload changed since approval",
         });
@@ -360,7 +427,7 @@ export class Orchestrator {
             action: "decision.finalized",
             input: adjustedCall.input,
             output: r.output ?? null,
-            ts: new Date().toISOString(),
+            ts: this.clock.now().toISOString(),
           });
         }
 
@@ -375,7 +442,7 @@ export class Orchestrator {
         action: "agent.executed.commit",
         input: intended,
         output: { reviewId, results },
-        ts: new Date().toISOString(),
+        ts: this.clock.now().toISOString(),
       });
 
       return { status: "ok", data: { mode: "commit", reviewId, results } };
@@ -383,13 +450,14 @@ export class Orchestrator {
 
     const gate = enforceReviewGate(profile, perm);
     if (!gate.ok) {
+      const timestamp = this.clock.now().toISOString();
       const req: ReviewRequest = {
         id: `rev_${crypto.randomUUID()}`,
         agentId: profile.id,
         permission: perm,
         payload: intended,
         reviewerRoles: profile.reviewPolicy.reviewerRoles,
-        createdAt: new Date().toISOString(),
+        createdAt: timestamp,
         projectId: ctx.projectId,
         clientId: ctx.clientId,
         userId: ctx.userId,
@@ -404,7 +472,7 @@ export class Orchestrator {
         action: "agent.blocked.review_required",
         input: input.intendedAction,
         output: { reviewId: req.id },
-        ts: new Date().toISOString(),
+        ts: timestamp,
         blocked: true,
         reason: gate.reason,
       });
@@ -426,7 +494,7 @@ export class Orchestrator {
           action: "decision.draft.created",
           input: call.input,
           output: r.output ?? null,
-          ts: new Date().toISOString(),
+          ts: this.clock.now().toISOString(),
         });
       }
 
@@ -441,7 +509,7 @@ export class Orchestrator {
       action: gate.mode === "draft_only" ? "agent.executed.draft_only" : "agent.executed",
       input: intended,
       output: results,
-      ts: new Date().toISOString(),
+      ts: this.clock.now().toISOString(),
     });
 
     return { status: "ok", data: { mode: gate.mode, results } };
