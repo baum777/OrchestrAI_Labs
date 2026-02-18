@@ -13,7 +13,9 @@
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
     "build": "pnpm -r build",
-    "test:governance": "tsx scripts/test-governance-integrity.ts"
+    "test:governance": "tsx scripts/test-governance-integrity.ts",
+    "validate:timestamps": "tsx scripts/validate-timestamp-integrity.ts",
+    "lint:clock": "eslint . --ext .ts,.tsx --rule 'no-restricted-globals: error' --rule 'no-restricted-syntax: error'"
   },
   "engines": {
     "node": ">=20"

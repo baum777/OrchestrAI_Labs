@@ -48,6 +48,21 @@
   owner: GPT-5.2 (Cloud Agent)
 
 - date: 2026-02-18
+  decision: Timestamp-Integritäts-Policy implementiert: updatedAt >= createdAt (immer)
+  rationale: Dokumentations-Header zeigten Inkonsistenz (updatedAt < createdAt), was systemisch nicht möglich sein darf. Deterministische Clock-Logik mit Self-healing verhindert zukünftige Inkonsistenzen.
+  alternatives:
+    - Nur Validierung ohne Self-healing (verworfen, da inkonsistente States persistieren würden)
+    - Manuelle Korrektur ohne Automatisierung (verworfen, da fehleranfällig)
+  implications:
+    - Timestamp-Integritäts-Utility in `packages/shared/src/utils/timestamp-integrity.ts`
+    - DocumentHeaderValidator erweitert für Erstellt/Aktualisiert-Validierung
+    - Self-healing: updatedAt wird automatisch auf createdAt gesetzt bei Inkonsistenz
+    - Unit Tests für alle Szenarien
+    - Dokumentations-Header korrigiert (ist-zustand-agent-system.md, governance.md)
+  owner: @teamlead_orchestrator
+  layer: governance
+
+- date: 2026-02-18
   decision: PolicyEngine wird in packages/governance/ integriert (nicht als separates packages/policy/)
   rationale: PolicyEngine ist Kern-Governance-Funktionalität, nutzt bestehende Governance-Infrastruktur, vermeidet Duplikation, single package für Governance-Konzepte
   alternatives: [Neues packages/policy/ Package, Separate packages/governance-policy/ Package]

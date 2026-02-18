@@ -9,6 +9,12 @@
 import type { ValidationResult } from '../types/governance.types.js';
 import type { Clock } from '../runtime/clock.js';
 import { SystemClock } from '../runtime/clock.js';
+import { 
+  validateTimestampIntegrity, 
+  enforceTimestampIntegrity,
+  registerTimestampCorrectionCallback,
+  timestampMonitoring
+} from '@agent-system/shared';
 import fs from 'node:fs';
 
 export interface DocumentHeader {
@@ -16,6 +22,8 @@ export interface DocumentHeader {
   owner?: string;
   layer?: string;
   lastUpdated?: string;
+  createdAt?: string; // German: "Erstellt"
+  updatedAt?: string; // German: "Aktualisiert"
   definitionOfDone?: string;
 }
 
@@ -23,11 +31,20 @@ export class DocumentHeaderValidator {
   private clock: Clock;
   private maxSkewMinutes: number;
   private staleWarningHours: number;
+  private static monitoringInitialized: boolean = false;
 
   constructor(clock?: Clock, maxSkewMinutes?: number, staleWarningHours?: number) {
     this.clock = clock ?? new SystemClock();
     this.maxSkewMinutes = maxSkewMinutes ?? parseInt(process.env.LAST_UPDATED_MAX_SKEW_MIN ?? '5', 10);
     this.staleWarningHours = staleWarningHours ?? 24;
+    
+    // Register monitoring callback on first use (static to avoid duplicate registration)
+    if (!DocumentHeaderValidator.monitoringInitialized) {
+      registerTimestampCorrectionCallback((event) => {
+        timestampMonitoring.recordCorrection(event);
+      });
+      DocumentHeaderValidator.monitoringInitialized = true;
+    }
   }
 
   /**
@@ -79,6 +96,33 @@ export class DocumentHeaderValidator {
       const timestampValidation = this.validateTimestamp(header.lastUpdated);
       if (timestampValidation) {
         reasons.push(timestampValidation);
+      }
+    }
+
+    // Validate timestamp integrity: createdAt and updatedAt (German format)
+    if (header.createdAt || header.updatedAt) {
+      const createdAt = header.createdAt || header.lastUpdated || '';
+      const updatedAt = header.updatedAt || header.lastUpdated || '';
+      
+      if (createdAt && updatedAt) {
+        // Extract entity identifier from file path or content
+        const entity = filePath || 'unknown';
+        const sourceLayer = header.layer || 'unknown';
+        
+        const integrityResult = validateTimestampIntegrity(
+          createdAt, 
+          updatedAt, 
+          this.clock,
+          entity,
+          sourceLayer
+        );
+        
+        if (!integrityResult.valid) {
+          reasons.push('timestamp_integrity_violation');
+          // Log warnings and errors
+          integrityResult.warnings.forEach(w => reasons.push(`warning: ${w}`));
+          integrityResult.errors.forEach(e => reasons.push(`error: ${e}`));
+        }
       }
     }
 
@@ -134,6 +178,33 @@ export class DocumentHeaderValidator {
       }
     }
 
+    // Validate timestamp integrity: createdAt and updatedAt (German format)
+    if (header.createdAt || header.updatedAt) {
+      const createdAt = header.createdAt || header.lastUpdated || '';
+      const updatedAt = header.updatedAt || header.lastUpdated || '';
+      
+      if (createdAt && updatedAt) {
+        // Extract entity identifier from content (use first line or hash)
+        const entity = content.split('\n')[0]?.substring(0, 50) || 'unknown';
+        const sourceLayer = header.layer || 'unknown';
+        
+        const integrityResult = validateTimestampIntegrity(
+          createdAt, 
+          updatedAt, 
+          this.clock,
+          entity,
+          sourceLayer
+        );
+        
+        if (!integrityResult.valid) {
+          reasons.push('timestamp_integrity_violation');
+          // Log warnings and errors
+          integrityResult.warnings.forEach(w => reasons.push(`warning: ${w}`));
+          integrityResult.errors.forEach(e => reasons.push(`error: ${e}`));
+        }
+      }
+    }
+
     if (reasons.length > 0) {
       return {
         status: 'blocked',
@@ -178,6 +249,18 @@ export class DocumentHeaderValidator {
       const lastUpdatedMatch = line.match(/\*\*Last Updated:\*\*\s*(.+)/);
       if (lastUpdatedMatch) {
         header.lastUpdated = lastUpdatedMatch[1].trim();
+      }
+
+      // Match **Erstellt:** YYYY-MM-DD (German: "Created")
+      const createdAtMatch = line.match(/\*\*Erstellt:\*\*\s*(.+)/);
+      if (createdAtMatch) {
+        header.createdAt = createdAtMatch[1].trim();
+      }
+
+      // Match **Aktualisiert:** YYYY-MM-DD (German: "Updated")
+      const updatedAtMatch = line.match(/\*\*Aktualisiert:\*\*\s*(.+)/);
+      if (updatedAtMatch) {
+        header.updatedAt = updatedAtMatch[1].trim();
       }
 
       // Match **Definition of Done:**
@@ -228,6 +311,54 @@ export class DocumentHeaderValidator {
     }
 
     return null;
+  }
+
+  /**
+   * Self-heals timestamp inconsistencies in document content.
+   * Returns corrected content if changes were made.
+   */
+  selfHealTimestampIntegrity(content: string): { content: string; healed: boolean } {
+    const header = this.parseHeader(content);
+    
+    if (!header.createdAt || !header.updatedAt) {
+      return { content, healed: false };
+    }
+
+    // Extract entity identifier from content
+    const entity = content.split('\n')[0]?.substring(0, 50) || 'unknown';
+    const sourceLayer = header.layer || 'unknown';
+
+    const integrityResult = validateTimestampIntegrity(
+      header.createdAt, 
+      header.updatedAt, 
+      this.clock,
+      entity,
+      sourceLayer
+    );
+    
+    if (integrityResult.valid || !integrityResult.corrected) {
+      return { content, healed: false };
+    }
+
+    // Replace updatedAt with corrected value
+    const corrected = integrityResult.corrected;
+    const lines = content.split('\n');
+    let healed = false;
+
+    const correctedLines = lines.map(line => {
+      // Match **Aktualisiert:** YYYY-MM-DD
+      const updatedMatch = line.match(/(\*\*Aktualisiert:\*\*)\s*(.+)/);
+      if (updatedMatch && header.updatedAt === updatedMatch[2].trim()) {
+        healed = true;
+        return `${updatedMatch[1]} ${corrected.updatedAt}`;
+      }
+      return line;
+    });
+
+    return {
+      content: correctedLines.join('\n'),
+      healed,
+    };
   }
 }
 

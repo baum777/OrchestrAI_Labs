@@ -5,19 +5,23 @@
 ## Architekturprinzipien
 - **Agent-first**: Kernlogik liegt im Agent-/Runtime-Layer, nicht in UIs.
 - **Governance-by-Design**: Kritische Aktionen sind durch **Review-Gates** technisch erzwungen.
+- **V2-First**: Governance-V2 als primäre Architektur-Säule mit deterministischer Clock-Abstraktion.
 - **Memory-on-Disk**: Repo-Artefakte + append-only Logs als Single Source of Truth.
 - **Projekt-Scope überall**: Knowledge/Monitoring/Actions sind projekt-scharf.
+- **Hash-Integrität**: 100%ige Validierung via deterministische Hashes (replay-fähig).
 
 ## Bausteine (High-Level)
-- **`apps/web` (Next.js)**: UI (Grundgerüst) – keine Business-Logik.
+- **`apps/web` (Next.js)**: Dashboard-UI (implementiert) – keine Business-Logik.
+  - Audit Ledger (mit "Verify Integrity" Feature)
+  - Approval Inbox, Fleet Monitor, Governance Matrix
 - **`apps/api` (NestJS)**: Systemgrenze/Orchestrator-API mit Modulen:
-  - Agents (Execution, Tool-Routing, Escalations)
+  - Agents (Execution, Tool-Routing, Escalations, Customer-Data-Integration)
   - Decisions (Draft-Erstellung; Finalisierung ausschließlich via Tool)
   - Reviews (Review-Queue; Approval; Commit-Token)
   - Knowledge (projekt-scharfe Suche)
   - Monitoring (Drift-Metriken + Playbook-Anbindung)
   - Projects (Kontext + Phase-Hints; optional Phase-Update mit Audit-Logging)
-  - Logs (Audit-Trail Zugriff)
+  - Logs (Audit-Trail Zugriff, PostgreSQL-basiert)
 - **Packages (Logik/Policies)**:
   - `packages/agent-runtime`: Orchestrator, Agents, Tool-Permissions, Profiles
   - `packages/governance`: Policies, Review-Engine, Action-Logging
