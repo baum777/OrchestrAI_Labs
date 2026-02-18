@@ -11,8 +11,10 @@
       "types": "./src/index.ts"
     }
   },
+  "dependencies": {
+    "@agent-system/governance-v2": "workspace:*"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
   }
 }
-

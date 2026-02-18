@@ -22,9 +22,6 @@ export class ConflictDetector {
   ): ValidationResult {
     const reasons: string[] = [];
 
-    // Check if autonomy tier conflicts with policy requirements
-    const tierName = autonomyPolicy.ladder[workstream.autonomyTier];
-    
     // Check if workstream requires approval but autonomy tier suggests autonomous execution
     if (workstream.autonomyTier === 4) {
       // Tier 4 = autonomous-with-limits

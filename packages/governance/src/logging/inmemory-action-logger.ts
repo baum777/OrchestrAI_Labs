@@ -1,13 +1,26 @@
 import type { ActionLogger } from "@agent-runtime/orchestrator/orchestrator";
 
-export class InMemoryActionLogger implements ActionLogger {
-  private logs: any[] = [];
+interface ActionLogEntry {
+  agentId: string;
+  userId: string;
+  projectId?: string;
+  clientId?: string;
+  action: string;
+  input: unknown;
+  output: unknown;
+  ts: string;
+  blocked?: boolean;
+  reason?: string;
+}
 
-  async append(entry: any): Promise<void> {
+export class InMemoryActionLogger implements ActionLogger {
+  private logs: ActionLogEntry[] = [];
+
+  async append(entry: ActionLogEntry): Promise<void> {
     this.logs.push(entry);
   }
 
-  list(): any[] {
+  list(): ActionLogEntry[] {
     return [...this.logs];
   }
 }

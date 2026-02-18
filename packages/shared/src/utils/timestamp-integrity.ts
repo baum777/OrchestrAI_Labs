@@ -7,7 +7,7 @@
  * Source of truth: UTC ISO-8601 via Clock abstraction.
  */
 
-import type { Clock } from '@agent-system/governance-v2/runtime/clock';
+import { SystemClock, type Clock } from '@agent-system/governance-v2/runtime/clock';
 
 export interface TimestampPair {
   createdAt: string;
@@ -65,10 +65,11 @@ export function validateTimestampIntegrity(
 ): TimestampIntegrityResult {
   const warnings: string[] = [];
   const errors: string[] = [];
+  const clockForParse = clock ?? new SystemClock();
 
-  // Parse timestamps
-  const createdAtDate = new Date(createdAt);
-  const updatedAtDate = new Date(updatedAt);
+  // Parse timestamps via Clock (governance compliance)
+  const createdAtDate = clockForParse.parseISO(createdAt);
+  const updatedAtDate = clockForParse.parseISO(updatedAt);
 
   // Check if timestamps are valid
   if (isNaN(createdAtDate.getTime())) {

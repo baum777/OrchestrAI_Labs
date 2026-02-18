@@ -4,12 +4,14 @@
 
 import { describe, it, expect } from '@jest/globals';
 import { DocumentHeaderValidator } from '../document-header-validator.js';
-import { FakeClock } from '../../runtime/clock.js';
+import { FakeClock, SystemClock } from '../../runtime/clock.js';
 
 describe('DocumentHeaderValidator - Timestamp Integrity', () => {
+  const sysClock = new SystemClock();
+
   describe('German Format (Erstellt/Aktualisiert)', () => {
     it('passes when Aktualisiert >= Erstellt', () => {
-      const clock = new FakeClock(new Date('2026-02-13T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-13T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
@@ -27,7 +29,7 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
     });
 
     it('blocks when Aktualisiert < Erstellt', () => {
-      const clock = new FakeClock(new Date('2026-02-13T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-13T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
@@ -45,7 +47,7 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
     });
 
     it('self-heals timestamp inconsistency', () => {
-      const clock = new FakeClock(new Date('2026-02-13T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-13T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
@@ -64,7 +66,7 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
     });
 
     it('does not heal when timestamps are valid', () => {
-      const clock = new FakeClock(new Date('2026-02-13T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-13T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0

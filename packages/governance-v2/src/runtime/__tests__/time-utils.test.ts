@@ -3,12 +3,15 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
+import { SystemClock } from '../clock.js';
 import { formatBerlin, calculateGapMinutes } from '../time-utils.js';
 
 describe('Time Utils', () => {
+  const sysClock = new SystemClock();
+
   describe('formatBerlin', () => {
     it('formats date to Europe/Berlin timezone', () => {
-      const utcDate = new Date('2026-02-18T10:00:00.000Z');
+      const utcDate = sysClock.parseISO('2026-02-18T10:00:00.000Z');
       const formatted = formatBerlin(utcDate);
       
       // Should be formatted in Berlin timezone (UTC+1 in winter, UTC+2 in summer)

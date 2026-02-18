@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchApi } from "../../../lib/api-client.js";
+import { clock } from "../../../lib/clock.js";
 
 interface AuditLogEntry {
   id: string;
@@ -34,7 +35,7 @@ export default function AuditLedgerPage() {
   useEffect(() => {
     // TODO: Replace with actual API endpoint
     // fetchApi("/logs?limit=100")
-    setTimeout(() => {
+    clock.setTimeout(() => {
       setLogs([
         {
           id: "log-1",
@@ -64,8 +65,7 @@ export default function AuditLedgerPage() {
   }, []);
 
   const formatTimestamp = (timestamp: string) => {
-    // Use timestamp from API (SystemClock) - no Date.now()!
-    const date = new Date(timestamp);
+    const date = clock.parseISO(timestamp);
     return date.toLocaleString("de-DE", {
       day: "2-digit",
       month: "2-digit",
@@ -102,7 +102,7 @@ export default function AuditLedgerPage() {
     } catch (error) {
       // Mock: Simulate successful verification for demo
       // In production, handle errors properly
-      setTimeout(() => {
+      clock.setTimeout(() => {
         setVerified((prev) => new Set(prev).add(logId));
       }, 1000);
     } finally {

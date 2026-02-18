@@ -4,12 +4,14 @@
 
 import { describe, it, expect } from '@jest/globals';
 import { DocumentHeaderValidator } from '../document-header-validator.js';
-import { FakeClock } from '../../runtime/clock.js';
+import { FakeClock, SystemClock } from '../../runtime/clock.js';
 
 describe('DocumentHeaderValidator - Timestamp Policy', () => {
+  const sysClock = new SystemClock();
+
   describe('Future Timestamp Validation', () => {
     it('blocks timestamp 10 minutes in future (beyond 5 min skew)', () => {
-      const clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-18T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock, 5); // 5 min max skew
 
       const content = `**Version:** 1.0.0
@@ -26,7 +28,7 @@ describe('DocumentHeaderValidator - Timestamp Policy', () => {
     });
 
     it('passes timestamp 2 minutes in future (within 5 min skew)', () => {
-      const clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-18T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock, 5); // 5 min max skew
 
       const content = `**Version:** 1.0.0
@@ -45,7 +47,7 @@ describe('DocumentHeaderValidator - Timestamp Policy', () => {
 
   describe('Invalid Format Validation', () => {
     it('blocks invalid timestamp format (DD.MM.YYYY)', () => {
-      const clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-18T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
@@ -62,7 +64,7 @@ describe('DocumentHeaderValidator - Timestamp Policy', () => {
     });
 
     it('blocks invalid timestamp format (non-ISO)', () => {
-      const clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-18T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
@@ -81,7 +83,7 @@ describe('DocumentHeaderValidator - Timestamp Policy', () => {
 
   describe('Valid Timestamp', () => {
     it('passes valid ISO-8601 timestamp', () => {
-      const clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-18T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
@@ -98,7 +100,7 @@ describe('DocumentHeaderValidator - Timestamp Policy', () => {
     });
 
     it('passes valid ISO-8601 timestamp in past', () => {
-      const clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
+      const clock = new FakeClock(sysClock.parseISO('2026-02-18T10:00:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0

@@ -11,7 +11,7 @@
  * - D: PII Redaction (E-Mail-Adresse entfernen)
  */
 
-import { FakeClock } from "../packages/governance-v2/src/runtime/clock.js";
+import { FakeClock, SystemClock } from "../packages/governance-v2/src/runtime/clock.js";
 import { PolicyEngine } from "../packages/governance/src/policy/policy-engine.js";
 import { PolicyError } from "../packages/governance/src/policy/errors.js";
 import type { PolicyContext } from "../packages/governance/src/policy/types.js";
@@ -29,15 +29,21 @@ import {
 } from "../packages/customer-data/src/index.js";
 import type { ActionLogger } from "../packages/agent-runtime/src/orchestrator/orchestrator.js";
 
+interface ActionLogEntry {
+  action?: string;
+  output?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 // Mock ActionLogger
 class MockActionLogger implements ActionLogger {
-  private logs: any[] = [];
+  private logs: ActionLogEntry[] = [];
 
-  async append(entry: any): Promise<void> {
+  async append(entry: ActionLogEntry): Promise<void> {
     this.logs.push(entry);
   }
 
-  getLogs(): any[] {
+  getLogs(): ActionLogEntry[] {
     return [...this.logs];
   }
 
@@ -45,7 +51,7 @@ class MockActionLogger implements ActionLogger {
     this.logs = [];
   }
 
-  findLogsByAction(action: string): any[] {
+  findLogsByAction(action: string): ActionLogEntry[] {
     return this.logs.filter(log => log.action === action);
   }
 }
@@ -157,7 +163,7 @@ async function simulateGetEntity(
     id: string;
     fields?: string[];
   }
-): Promise<{ ok: boolean; error?: string; output?: any; resultHash?: string; policyDecisionHash?: string; advice?: any }> {
+): Promise<{ ok: boolean; error?: string; output?: Record<string, unknown>; resultHash?: string; policyDecisionHash?: string; advice?: unknown }> {
   const startTime = clock.now().getTime();
   const requestId = crypto.randomUUID();
 
@@ -180,7 +186,7 @@ async function simulateGetEntity(
     clientId,
     projectId: ctx.projectId,
     agentId,
-    permissions: permissions as any[],
+    permissions,
   };
 
   try {
@@ -286,8 +292,8 @@ async function runTests() {
   console.log("🧪 Governance Integrity Stress Test\n");
   console.log("=" .repeat(60));
 
-  // Setup: FakeClock auf festen Zeitpunkt setzen
-  const initialTime = new Date("2026-02-18T10:00:00.000Z");
+  const sysClock = new SystemClock();
+  const initialTime = sysClock.parseISO("2026-02-18T10:00:00.000Z");
   const clock = new FakeClock(initialTime);
   console.log(`\n⏰ Clock initialisiert auf: ${clock.now().toISOString()}\n`);
 
@@ -518,7 +524,7 @@ async function runTests() {
 
     const accessLogs = logger.findLogsByAction("customer_data.access");
     if (accessLogs.length > 0) {
-      const metadata = accessLogs[0].output as any;
+      const metadata = accessLogs[0].output as Record<string, unknown>;
       console.log(`   Redacted Fields: ${JSON.stringify(metadata.redactedFields || [])}`);
     }
   } else {
