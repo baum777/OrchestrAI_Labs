@@ -95,7 +95,9 @@ export class PolicyEngine {
       }
     }
     
-    // Generate decision hash
+    // Generate decision hash (deterministic - excludes timestamp)
+    // Hash is based only on operation and context, not timestamp
+    // This ensures replay-friendliness: same input → same hash
     const decisionData = {
       operation,
       context: {
@@ -103,7 +105,7 @@ export class PolicyEngine {
         clientId: ctx.clientId,
         projectId: ctx.projectId,
       },
-      timestamp,
+      // Explicitly exclude timestamp from hash for determinism
     };
     const decisionHash = crypto
       .createHash("sha256")
@@ -146,7 +148,17 @@ export class PolicyEngine {
       const requestedFields = Array.isArray(params.fields) 
         ? params.fields as string[]
         : [params.fields as string];
-      validateAllowedFields(requestedFields, sanitized.constraints.allowedFields);
+      try {
+        validateAllowedFields(requestedFields, sanitized.constraints.allowedFields);
+      } catch (error) {
+        // Convert validation error to PolicyError
+        throw new PolicyError(
+          error instanceof Error ? error.message : "Fields not allowed",
+          "CONSTRAINT_VIOLATION",
+          { userId: "system" },
+          operationId
+        );
+      }
     }
     
     return sanitized;
