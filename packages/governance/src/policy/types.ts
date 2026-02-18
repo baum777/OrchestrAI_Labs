@@ -39,7 +39,11 @@ export type PolicyErrorCode =
   | "SCOPE_VIOLATION"              // projectId/clientId scope violation
   | "CONSTRAINT_VIOLATION"         // maxRows, allowedFields violated
   | "SANITIZATION_FAILED"          // Parameter sanitization failed
-  | "REDACTION_FAILED";            // Result redaction failed
+  | "REDACTION_FAILED"             // Result redaction failed
+  | "PII_DETECTION"                // PII detected and redacted
+  | "CAPABILITY_MISSING"           // Agent lacks required capability/permission
+  | "TIME_GAP_DETECTED"            // Long time gap detected between operations
+  | "UNAUTHORIZED_ENTITY";         // Entity not on allowlist
 
 export type SanitizedParams = {
   operationId: string;

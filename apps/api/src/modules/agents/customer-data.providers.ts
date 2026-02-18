@@ -6,6 +6,7 @@
 
 import { PolicyEngine } from "@governance/policy/policy-engine";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+import { InMemoryLicenseManager, type LicenseManager } from "@governance/license/license-manager";
 import {
   InMemoryMultiSourceConnectorRegistry,
   InMemoryCapabilityRegistry,
@@ -14,10 +15,17 @@ import {
 } from "@agent-system/customer-data";
 
 /**
- * Create PolicyEngine instance.
+ * Create LicenseManager instance.
  */
-export function createPolicyEngine(): PolicyEngine {
-  return new PolicyEngine(new SystemClock());
+export function createLicenseManager(): LicenseManager {
+  return new InMemoryLicenseManager();
+}
+
+/**
+ * Create PolicyEngine instance with LicenseManager.
+ */
+export function createPolicyEngine(licenseManager?: LicenseManager): PolicyEngine {
+  return new PolicyEngine(new SystemClock(), licenseManager);
 }
 
 /**

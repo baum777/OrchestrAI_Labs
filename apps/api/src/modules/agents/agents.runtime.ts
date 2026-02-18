@@ -15,6 +15,7 @@ import type {
   CapabilityRegistry,
 } from "@agent-system/customer-data";
 import { generateResultHash } from "@agent-system/customer-data";
+import type { LicenseManager } from "@governance/license/license-manager";
 
 const profilesDir = path.join(process.cwd(), "packages/agent-runtime/src/profiles");
 const loader = new ProfileLoader({ profilesDir });
@@ -37,8 +38,29 @@ const toolHandlers = (
   connectorRegistry: MultiSourceConnectorRegistry,
   capabilityRegistry: CapabilityRegistry,
   agentProfileGetter: (agentId: string) => { permissions: string[] } | null,
-  clock: Clock
-): Record<string, ToolHandler> => ({
+  clock: Clock,
+  licenseManager?: LicenseManager
+): Record<string, ToolHandler> => {
+  // Load premium tools if license manager is available
+  // Using try-catch to avoid hard dependency (Core-Extension separation)
+  const premiumTools: Record<string, ToolHandler> = {};
+  
+  if (licenseManager) {
+    try {
+      // Dynamic require for optional premium module
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const marketerModule = require("@premium/marketer/tools/marketing-tool");
+      if (marketerModule?.createMarketingTool) {
+        premiumTools["tool.marketing.generateNarrative"] = marketerModule.createMarketingTool(policyEngine, logger, clock);
+      }
+    } catch (error) {
+      // Premium module not available - silently skip
+      // This is expected if premium module is not installed
+      console.debug("Premium marketer module not available (this is OK if not installed):", error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  return {
   "tool.logs.append": {
     async call() {
       return { ok: true, output: { logged: true } };
@@ -622,11 +644,12 @@ const toolHandlers = (
           }
           return { ok: false, error: error.message };
         }
-        throw error;
-      }
-    },
+      throw error;
+    }
   },
-});
+  ...premiumTools,
+};
+};
 
 export function createOrchestrator(
   logger: ActionLogger,
@@ -635,7 +658,8 @@ export function createOrchestrator(
   policyEngine: PolicyEngine,
   connectorRegistry: MultiSourceConnectorRegistry,
   capabilityRegistry: CapabilityRegistry,
-  clock?: Clock
+  clock?: Clock,
+  licenseManager?: LicenseManager
 ): Orchestrator {
   const decisions = new DecisionsService(pool);
   const knowledge = new KnowledgeService(pool);
@@ -654,7 +678,7 @@ export function createOrchestrator(
   const orchestratorClock = clock ?? new SystemClock();
   
   const toolRouter = new ToolRouter(
-    toolHandlers(decisions, knowledge, logger, policyEngine, connectorRegistry, capabilityRegistry, agentProfileGetter, orchestratorClock)
+    toolHandlers(decisions, knowledge, logger, policyEngine, connectorRegistry, capabilityRegistry, agentProfileGetter, orchestratorClock, licenseManager)
   );
   
   return new Orchestrator(

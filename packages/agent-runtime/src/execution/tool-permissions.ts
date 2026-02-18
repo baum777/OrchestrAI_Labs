@@ -21,5 +21,7 @@ export const TOOL_PERMISSION_MAP: Record<ToolRef, Permission> = {
   "tool.customer_data.executeReadModel": "customer_data.read",
   "tool.customer_data.getEntity": "customer_data.read",
   "tool.customer_data.search": "customer_data.read",
+  
+  "tool.marketing.generateNarrative": "marketing.generate",
 };
 

@@ -5,13 +5,15 @@
  */
 
 import type { PolicyContext, PolicyErrorCode } from "./types.js";
+import type { PolicyViolationAdvice } from "@shared/types/governance";
 
 export class PolicyError extends Error {
   constructor(
     message: string,
     public readonly code: PolicyErrorCode,
     public readonly context: PolicyContext,
-    public readonly operation: string
+    public readonly operation: string,
+    public readonly advice?: PolicyViolationAdvice
   ) {
     super(message);
     this.name = "PolicyError";

@@ -17,7 +17,8 @@ export type Permission =
   | "review.request"
   | "review.approve"
   | "review.reject"
-  | "customer_data.read";
+  | "customer_data.read"
+  | "marketing.generate";
 
 export type ToolRef =
   | "tool.knowledge.search"
@@ -33,7 +34,8 @@ export type ToolRef =
   | "tool.reviews.status"
   | "tool.customer_data.executeReadModel"
   | "tool.customer_data.getEntity"
-  | "tool.customer_data.search";
+  | "tool.customer_data.search"
+  | "tool.marketing.generateNarrative";
 
 export type ReviewPolicy = {
   mode: "none" | "draft_only" | "required";

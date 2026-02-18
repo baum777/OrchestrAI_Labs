@@ -21,3 +21,6 @@ export * from './runtime/time-utils.js';
 export * from './history/decision-history-store.js';
 export * from './utils/repo-root.js';
 
+// V2 Bridge: Export V1 functionality through V2 interface
+export * from './bridge/index.js';
+

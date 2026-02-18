@@ -157,7 +157,7 @@ async function simulateGetEntity(
     id: string;
     fields?: string[];
   }
-): Promise<{ ok: boolean; error?: string; output?: any; resultHash?: string; policyDecisionHash?: string }> {
+): Promise<{ ok: boolean; error?: string; output?: any; resultHash?: string; policyDecisionHash?: string; advice?: any }> {
   const startTime = clock.now().getTime();
   const requestId = crypto.randomUUID();
 
@@ -274,7 +274,7 @@ async function simulateGetEntity(
       } catch (logError) {
         console.error("Failed to log policy violation:", logError);
       }
-      return { ok: false, error: error.message };
+      return { ok: false, error: error.message, advice: error.advice };
     }
     // Re-throw non-PolicyError exceptions
     throw error;
@@ -398,6 +398,27 @@ async function runTests() {
     const violationLogs = logger.findLogsByAction("policy.violation");
     if (violationLogs.length > 0) {
       console.log(`   Audit-Log: ${JSON.stringify(violationLogs[0].output, null, 2)}`);
+    }
+    // Verification: Prüfe ob advice-Feld vorhanden ist
+    if (resultB.advice) {
+      console.log(`   ✅ Advice vorhanden:`);
+      console.log(`      Code: ${resultB.advice.code}`);
+      console.log(`      Advisor Title: ${resultB.advice.advisorTitle}`);
+      console.log(`      Human Explanation: ${resultB.advice.humanExplanation}`);
+      console.log(`      Remedy Step: ${resultB.advice.remedyStep}`);
+      console.log(`      Safety Level: ${resultB.advice.safetyLevel}`);
+      
+      // Prüfe spezifisch für CONSTRAINT_VIOLATION
+      if (resultB.advice.code === "CONSTRAINT_VIOLATION") {
+        const expectedExplanation = "Angeforderte Felder sind nicht erlaubt";
+        if (resultB.advice.humanExplanation === expectedExplanation) {
+          console.log(`   ✅ Human Explanation korrekt: "${resultB.advice.humanExplanation}"`);
+        } else {
+          console.log(`   ⚠️  Human Explanation unerwartet: "${resultB.advice.humanExplanation}" (erwartet: "${expectedExplanation}")`);
+        }
+      }
+    } else {
+      console.log(`   ⚠️  WARNUNG: Advice-Feld fehlt im PolicyError!`);
     }
   } else {
     console.log(`   ⚠️  WARNUNG: System sollte blockieren, hat aber nicht blockiert!`);

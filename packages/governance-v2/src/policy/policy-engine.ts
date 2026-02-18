@@ -1,9 +1,11 @@
 /**
- * Policy Engine
+ * Policy Engine (V2)
  * 
  * Parses and enforces policy rules from:
  * - autonomy_policy.md
  * - policy_approval_rules.yaml
+ * 
+ * V2-First Architecture: Uses Clock abstraction for deterministic time handling.
  */
 
 import type {
@@ -11,6 +13,8 @@ import type {
   PolicyRule,
   AutonomyPolicy,
 } from '../types/governance.types.js';
+import type { Clock } from '../runtime/clock.js';
+import { SystemClock } from '../runtime/clock.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveRepoRoot } from '../utils/repo-root.js';
@@ -18,6 +22,11 @@ import { resolveRepoRoot } from '../utils/repo-root.js';
 export class PolicyEngine {
   private policyRules: PolicyRule[] = [];
   private autonomyPolicy: AutonomyPolicy | null = null;
+  private readonly clock: Clock;
+
+  constructor(clock?: Clock) {
+    this.clock = clock ?? new SystemClock();
+  }
 
   /**
    * Loads policy rules from policy_approval_rules.yaml
