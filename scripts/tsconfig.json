@@ -1,0 +1,32 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "baseUrl": "..",
+    "paths": {
+      "@shared/*": ["packages/shared/src/*"],
+      "@agent-runtime/*": ["packages/agent-runtime/src/*"],
+      "@governance/*": ["packages/governance/src/*"],
+      "@agent-system/shared": ["packages/shared/src"],
+      "@agent-system/agent-runtime": ["packages/agent-runtime/src"],
+      "@agent-system/workflow": ["packages/workflow/src"],
+      "@agent-system/knowledge": ["packages/knowledge/src"],
+      "@agent-system/governance": ["packages/governance/src"],
+      "@agent-system/governance-v2": ["packages/governance-v2/src"],
+      "@agent-system/customer-data": ["packages/customer-data/src"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs"
+    },
+    "require": ["tsconfig-paths/register"]
+  }
+}
+
