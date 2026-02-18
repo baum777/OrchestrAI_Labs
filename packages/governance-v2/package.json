@@ -9,6 +9,10 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./runtime/clock": {
+      "import": "./src/runtime/clock.ts",
+      "types": "./src/runtime/clock.ts"
     }
   },
   "dependencies": {
