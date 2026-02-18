@@ -11,35 +11,20 @@ import type { Clock } from '../runtime/clock.js';
 import { SystemClock } from '../runtime/clock.js';
 import type { PolicyContext, PolicyDecision } from '@governance/policy/types';
 import type { LicenseManager } from '@governance/license/license-manager';
-
-// Dynamic import to avoid hard dependency (V1 might not always be available)
-// V2 can import V1, but V1 must NOT know about V2
-let V1PolicyEngineClass: any = null;
-
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const v1Module = require('@governance/policy/policy-engine');
-  V1PolicyEngineClass = v1Module.PolicyEngine;
-} catch {
-  // V1 module not available - this is OK for optional bridge
-}
+import { PolicyEngine as V1PolicyEngine } from '@governance/policy/policy-engine';
+import type { CapabilityMap } from '@agent-system/customer-data';
 
 /**
  * V2-compatible PolicyEngine that wraps V1 implementation.
  * Uses V2 Clock abstraction for deterministic time handling.
  */
 export class V1PolicyEngineAdapter {
-  private readonly v1Engine: any; // V1PolicyEngine type (dynamic)
+  private readonly v1Engine: InstanceType<typeof V1PolicyEngine>;
   private readonly clock: Clock;
 
   constructor(clock?: Clock, licenseManager?: LicenseManager) {
     this.clock = clock ?? new SystemClock();
-    
-    if (!V1PolicyEngineClass) {
-      throw new Error('V1 PolicyEngine not available. Ensure @governance package is installed.');
-    }
-    
-    this.v1Engine = new V1PolicyEngineClass(this.clock, licenseManager);
+    this.v1Engine = new V1PolicyEngine(this.clock, licenseManager);
   }
 
   /**
@@ -61,7 +46,7 @@ export class V1PolicyEngineAdapter {
     capability: unknown,
     operationId: string
   ): unknown {
-    return this.v1Engine.sanitize(params, capability as any, operationId);
+    return this.v1Engine.sanitize(params, capability as CapabilityMap, operationId);
   }
 
   /**
@@ -72,13 +57,13 @@ export class V1PolicyEngineAdapter {
     capability: unknown,
     operationId: string
   ): unknown {
-    return this.v1Engine.redact(result, capability as any, operationId);
+    return this.v1Engine.redact(result, capability as CapabilityMap, operationId);
   }
 
   /**
    * Get the underlying V1 engine (for advanced use cases).
    */
-  getV1Engine(): any {
+  getV1Engine(): InstanceType<typeof V1PolicyEngine> {
     return this.v1Engine;
   }
 

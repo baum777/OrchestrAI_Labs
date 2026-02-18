@@ -4,7 +4,7 @@
  * Enforces maxRows, allowedFields, and rejects raw SQL attempts.
  */
 
-import type { CapabilityMap, OperationCapability } from "./capability.schema.js";
+import type { CapabilityMap } from "./capability.schema.js";
 
 export type SanitizedParams = {
   operationId: string;

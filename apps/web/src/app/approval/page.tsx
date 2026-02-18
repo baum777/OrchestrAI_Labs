@@ -9,7 +9,7 @@ export default function ApprovalInboxPage() {
   const [decisions, setDecisions] = useState<DecisionDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<PolicyError | null>(null);
-  const [selectedProject, setSelectedProject] = useState<string>("");
+  const [selectedProject, _setSelectedProject] = useState<string>("");
 
   useEffect(() => {
     // In production, this would come from auth context or project selector

@@ -7,6 +7,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { SystemClock } from './clock.js';
 import { resolveRepoRoot } from '../utils/repo-root.js';
 
 export interface RuntimeState {
@@ -54,6 +55,7 @@ export function saveState(state: RuntimeState, repoRoot?: string): void {
   const root = repoRoot ?? resolveRepoRoot();
   const stateFilePath = path.join(root, STATE_FILE_PATH);
   const stateDir = path.dirname(stateFilePath);
+  const clock = new SystemClock();
 
   // Ensure directory exists
   if (!fs.existsSync(stateDir)) {
@@ -65,8 +67,7 @@ export function saveState(state: RuntimeState, repoRoot?: string): void {
     if (typeof state.last_seen_at !== 'string') {
       throw new Error('last_seen_at must be a string (ISO-8601)');
     }
-    // Validate ISO-8601 format
-    const date = new Date(state.last_seen_at);
+    const date = clock.parseISO(state.last_seen_at);
     if (isNaN(date.getTime())) {
       throw new Error(`Invalid ISO-8601 timestamp: ${state.last_seen_at}`);
     }

@@ -7,7 +7,6 @@
 
 import type {
   Workstream,
-  ValidationResult,
   ClarificationRequest,
 } from '../types/governance.types.js';
 import { WorkstreamValidator } from '../validator/workstream-validator.js';

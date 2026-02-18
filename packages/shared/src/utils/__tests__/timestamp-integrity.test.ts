@@ -9,7 +9,7 @@ import {
   generateCreationTimestamps,
   generateUpdateTimestamps,
 } from '../timestamp-integrity.js';
-import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
+import { FakeClock, SystemClock } from '@agent-system/governance-v2/runtime/clock';
 
 describe('Timestamp Integrity Utility', () => {
   describe('validateTimestampIntegrity', () => {
@@ -70,7 +70,7 @@ describe('Timestamp Integrity Utility', () => {
     });
 
     it('warns when updatedAt is significantly in the future', () => {
-      const clock = new FakeClock(new Date('2026-02-13T10:00:00.000Z'));
+      const clock = new FakeClock(new SystemClock().parseISO('2026-02-13T10:00:00.000Z'));
       const result = validateTimestampIntegrity(
         '2026-02-13T10:00:00.000Z',
         '2026-02-13T10:10:00.000Z', // 10 minutes in future
@@ -107,7 +107,7 @@ describe('Timestamp Integrity Utility', () => {
 
   describe('generateCreationTimestamps', () => {
     it('generates identical createdAt and updatedAt', () => {
-      const clock = new FakeClock(new Date('2026-02-13T10:00:00.000Z'));
+      const clock = new FakeClock(new SystemClock().parseISO('2026-02-13T10:00:00.000Z'));
       const result = generateCreationTimestamps(clock);
 
       expect(result.createdAt).toBe('2026-02-13T10:00:00.000Z');
@@ -118,7 +118,7 @@ describe('Timestamp Integrity Utility', () => {
 
   describe('generateUpdateTimestamps', () => {
     it('preserves createdAt and sets updatedAt to now', () => {
-      const clock = new FakeClock(new Date('2026-02-13T11:00:00.000Z'));
+      const clock = new FakeClock(new SystemClock().parseISO('2026-02-13T11:00:00.000Z'));
       const result = generateUpdateTimestamps('2026-02-13T10:00:00.000Z', clock);
 
       expect(result.createdAt).toBe('2026-02-13T10:00:00.000Z');

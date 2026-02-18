@@ -75,13 +75,13 @@ export class AutonomyGuard {
           decision.implications.toLowerCase().includes('secret')
         );
 
-      case 'confirm_destructive':
-        // Check if decision involves destructive operations
+      case 'confirm_destructive': {
         const destructiveKeywords = ['delete', 'remove', 'drop', 'destroy', 'reset', 'rebase'];
         return destructiveKeywords.some(keyword =>
           decision.rationale.toLowerCase().includes(keyword) ||
           decision.implications.toLowerCase().includes(keyword)
         );
+      }
 
       default:
         return false;

@@ -11,7 +11,6 @@ import type { Clock } from '../runtime/clock.js';
 import { SystemClock } from '../runtime/clock.js';
 import { 
   validateTimestampIntegrity, 
-  enforceTimestampIntegrity,
   registerTimestampCorrectionCallback,
   timestampMonitoring
 } from '@agent-system/shared';
@@ -294,8 +293,7 @@ export class DocumentHeaderValidator {
    * Returns validation reason if invalid, null if valid.
    */
   private validateTimestamp(timestamp: string): string | null {
-    // Try to parse as ISO-8601
-    const date = new Date(timestamp);
+    const date = this.clock.parseISO(timestamp);
     
     if (isNaN(date.getTime())) {
       return 'invalid_last_updated_format';

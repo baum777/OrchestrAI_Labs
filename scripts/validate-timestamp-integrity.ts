@@ -37,32 +37,6 @@ function findMarkdownFiles(dir: string, fileList: string[] = []): string[] {
   return fileList;
 }
 
-function validateAndHeal(filePath: string, validator: DocumentHeaderValidator): ValidationResult {
-  const content = readFileSync(filePath, 'utf-8');
-  const result = validator.validateContent(content);
-  
-  let healed = false;
-  let healedContent = content;
-
-  // Check for timestamp integrity violations
-  if (result.reasons?.some(r => r.includes('timestamp_integrity_violation'))) {
-    const healResult = validator.selfHealTimestampIntegrity(content);
-    if (healResult.healed) {
-      healed = true;
-      healedContent = healResult.content;
-      // Write healed content back
-      writeFileSync(filePath, healedContent, 'utf-8');
-    }
-  }
-
-  return {
-    file: filePath,
-    valid: result.status === 'pass',
-    reasons: result.reasons || [],
-    healed,
-  };
-}
-
 async function main() {
   console.log('=== Timestamp Integrity Validator ===\n');
 

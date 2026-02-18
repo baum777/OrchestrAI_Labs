@@ -9,48 +9,22 @@
     "project": "./tsconfig.base.json"
   },
   "rules": {
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "ignoreRestSiblings": true }],
     "no-restricted-globals": [
       "error",
-      {
-        "name": "Date",
-        "message": "Use Clock interface instead of Date. Only SystemClock implementation may use Date. See packages/governance-v2/src/runtime/clock.ts"
-      },
-      {
-        "name": "setTimeout",
-        "message": "Use Clock interface for time-based operations. Only SystemClock implementation may use setTimeout."
-      },
-      {
-        "name": "setInterval",
-        "message": "Use Clock interface for time-based operations. Only SystemClock implementation may use setInterval."
-      }
+      { "name": "Date", "message": "Use Clock interface instead of Date. Only SystemClock implementation may use Date. See packages/governance-v2/src/runtime/clock.ts" },
+      { "name": "setTimeout", "message": "Use Clock interface for time-based operations. Only SystemClock implementation may use setTimeout." },
+      { "name": "setInterval", "message": "Use Clock interface for time-based operations. Only SystemClock implementation may use setInterval." }
     ],
     "no-restricted-syntax": [
       "error",
-      {
-        "selector": "NewExpression[callee.name='Date']",
-        "message": "Use Clock interface instead of new Date(). Only SystemClock implementation may use Date. See packages/governance-v2/src/runtime/clock.ts"
-      },
-      {
-        "selector": "MemberExpression[object.name='Date'][property.name='now']",
-        "message": "Use Clock.now() instead of Date.now(). See packages/governance-v2/src/runtime/clock.ts"
-      }
+      { "selector": "NewExpression[callee.name='Date']", "message": "Use Clock interface instead of new Date(). Only SystemClock implementation may use Date. See packages/governance-v2/src/runtime/clock.ts" },
+      { "selector": "MemberExpression[object.name='Date'][property.name='now']", "message": "Use Clock.now() instead of Date.now(). See packages/governance-v2/src/runtime/clock.ts" }
     ]
   },
   "overrides": [
-    {
-      "files": ["**/runtime/clock.ts", "**/clock.ts", "**/utils/clock/**"],
-      "rules": {
-        "no-restricted-globals": "off",
-        "no-restricted-syntax": "off"
-      }
-    },
-    {
-      "files": ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"],
-      "rules": {
-        "no-restricted-globals": "warn",
-        "no-restricted-syntax": "warn"
-      }
-    }
+    { "files": ["**/runtime/clock.ts", "**/clock.ts", "**/utils/clock/**"], "rules": { "no-restricted-globals": "off", "no-restricted-syntax": "off" } },
+    { "files": ["**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"], "rules": { "no-restricted-globals": "warn", "no-restricted-syntax": "warn" } }
   ]
 }
-
