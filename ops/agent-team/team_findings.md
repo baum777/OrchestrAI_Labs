@@ -1,7 +1,20 @@
 # Team Findings (Log)
 
+**Version:** 1.0.0  
+**Owner:** @implementer_codex  
+**Layer:** implementation  
+**Last Updated:** 2026-02-13  
+**Definition of Done:**
+- [ ] Findings haben Timestamp, Owner, Impact, Suggested Action
+- [ ] Format ist konsistent (ISO Timestamp)
+- [ ] Keine Layer-Vermischung (nur implementation findings)
+
+---
+
 ## Format
 - YYYY-MM-DDTHH:MM:SSZ — [Owner] Finding — Impact — Suggested action
+
+---
 
 ## Entries
 
@@ -27,4 +40,3 @@
 - 2026-02-13T12:00:00Z — [Auto] BLOCK 7 abgeschlossen — Repo-Integration für Golden Tasks implementiert: docs/golden-tasks/ mit README, TEMPLATE, 8 Tasks (GT-001 bis GT-008), testdata/golden-tasks/ mit index.json + 2 Task fixtures (GT-001, GT-002), manuelle Test-Dokumentation (kein Test-Framework vorhanden) — Golden Tasks als Source-of-Truth für Demo + Tests, keine Live-Fetches, keine Secrets, alle Tasks dokumentiert, Fixtures für 2 Tasks vorhanden
 - 2026-02-13T13:00:00Z — [Auto] BLOCK 8 abgeschlossen — Minimal Test Harness implementiert: Jest + Supertest installiert, jest.config.cjs mit Workspace-Package-Mapping, createTestApp Utility für NestJS E2E-Tests, golden-tasks.e2e.spec.ts mit GT-001 und GT-002 automatisierte Tests, Monitoring Smoke Check — Tests laufen gegen echte DB (DATABASE_URL erforderlich), keine Produktcode-Änderungen, Working Directory Handling für Profile-Loader, TypeScript-Warnings ignoriert (diagnostics.ignoreCodes)
 - 2026-02-13T14:00:00Z — [Auto] BLOCK 8.1 abgeschlossen — Golden Task Tests stabilisiert: Fixture-Pfad korrigiert (repoRoot statt __dirname), README bereinigt (doppelte Abschnitte entfernt, klare Struktur), DATABASE_URL-Fehlermeldung hinzugefügt (klare Meldung statt generischer DB-Fehler) — Tests professionell, keine "hacky" Artefakte, klare Fehlermeldungen, stabile Pfade
-
