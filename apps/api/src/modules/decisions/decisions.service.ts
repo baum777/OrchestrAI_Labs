@@ -5,6 +5,8 @@ import { PG_POOL } from "../../db/db.module";
 import type { DecisionDraft, DecisionFinal } from "@shared/types/decision";
 import type { ActionLogger } from "@agent-runtime/orchestrator/orchestrator";
 import { logEscalation } from "../agents/escalation-log";
+import type { Clock } from "@agent-system/governance-v2/runtime/clock";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 
 type DecisionRow = {
   id: string;
@@ -52,7 +54,14 @@ export type CreateDecisionDraftInput = {
 
 @Injectable()
 export class DecisionsService {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  private readonly clock: Clock;
+
+  constructor(
+    @Inject(PG_POOL) private readonly pool: Pool,
+    clock?: Clock
+  ) {
+    this.clock = clock ?? new SystemClock();
+  }
 
   private mapRow(row: DecisionRow): DecisionDraft | DecisionFinal {
     return {
@@ -87,7 +96,7 @@ export class DecisionsService {
 
   async createDraft(projectId: string, input: CreateDecisionDraftInput): Promise<DecisionDraft> {
     const id = `dec_${crypto.randomUUID()}`;
-    const now = new Date().toISOString();
+    const now = this.clock.now().toISOString();
     const assumptions = input.assumptions ?? [];
     const alternatives = input.alternatives ?? [];
     const risks = input.risks ?? [];
@@ -179,31 +188,34 @@ export class DecisionsService {
   async finalizeFromDraft(
     draftId: string,
     reviewId: string,
-    options?: {
-      logger?: ActionLogger;
-      agentId?: string;
-      userId?: string;
+    options: {
+      logger: ActionLogger;  // Required: no optional path
+      agentId: string;
+      userId: string;
       projectId?: string;
       clientId?: string;
     }
   ): Promise<DecisionFinal> {
+    // ActionLogger is required (no optional path)
+    if (!options.logger) {
+      throw new Error("ActionLogger is required for finalizeFromDraft (Audit Requirement)");
+    }
+    
     // 1. Prüfe Decision existiert und ist draft
     const existing = await this.getById(draftId);
     if (existing.status !== "draft") {
       // Escalation: Governance violation attempt
-      if (options?.logger) {
-        await logEscalation(options.logger, {
-          agentId: options.agentId ?? "unknown",
-          userId: options.userId ?? "unknown",
-          projectId: options.projectId ?? existing.projectId ?? undefined,
-          clientId: options.clientId ?? existing.clientId ?? undefined,
-          escalation: {
-            reason: "finalize_invalid_status",
-            details: { draftId, currentStatus: existing.status },
-            context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
-          },
-        });
-      }
+      await logEscalation(options.logger, {
+        agentId: options.agentId,
+        userId: options.userId,
+        projectId: options.projectId ?? existing.projectId ?? undefined,
+        clientId: options.clientId ?? existing.clientId ?? undefined,
+        escalation: {
+          reason: "finalize_invalid_status",
+          details: { draftId, currentStatus: existing.status },
+          context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
+        },
+      });
       throw new Error(`Cannot finalize decision: status is '${existing.status}', expected 'draft'`);
     }
 
@@ -217,82 +229,74 @@ export class DecisionsService {
     );
     if (reviewRows.length === 0) {
       // Escalation: Governance violation attempt
-      if (options?.logger) {
-        await logEscalation(options.logger, {
-          agentId: options.agentId ?? "unknown",
-          userId: options.userId ?? "unknown",
-          projectId: options.projectId ?? existing.projectId ?? undefined,
-          clientId: options.clientId ?? existing.clientId ?? undefined,
-          escalation: {
-            reason: "finalize_review_not_found",
-            details: { draftId, reviewId },
-            context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
-          },
-        });
-      }
+      await logEscalation(options.logger, {
+        agentId: options.agentId,
+        userId: options.userId,
+        projectId: options.projectId ?? existing.projectId ?? undefined,
+        clientId: options.clientId ?? existing.clientId ?? undefined,
+        escalation: {
+          reason: "finalize_review_not_found",
+          details: { draftId, reviewId },
+          context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
+        },
+      });
       throw new Error(`Review not found: ${reviewId}`);
     }
     const review = reviewRows[0];
     if (review.status !== "approved") {
       // Escalation: Governance violation attempt
-      if (options?.logger) {
-        await logEscalation(options.logger, {
-          agentId: options.agentId ?? "unknown",
-          userId: options.userId ?? "unknown",
-          projectId: options.projectId ?? existing.projectId ?? undefined,
-          clientId: options.clientId ?? existing.clientId ?? undefined,
-          escalation: {
-            reason: "finalize_review_not_approved",
-            details: { draftId, reviewId, reviewStatus: review.status },
-            context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
-          },
-        });
-      }
+      await logEscalation(options.logger, {
+        agentId: options.agentId,
+        userId: options.userId,
+        projectId: options.projectId ?? existing.projectId ?? undefined,
+        clientId: options.clientId ?? existing.clientId ?? undefined,
+        escalation: {
+          reason: "finalize_review_not_approved",
+          details: { draftId, reviewId, reviewStatus: review.status },
+          context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
+        },
+      });
       throw new Error(`Review not approved: status is '${review.status}', expected 'approved'`);
     }
 
     // 3. Prüfe projectId match (wenn beide gesetzt sind)
     if (existing.projectId && review.project_id && existing.projectId !== review.project_id) {
       // Escalation: Governance violation attempt
-      if (options?.logger) {
-        await logEscalation(options.logger, {
-          agentId: options.agentId ?? "unknown",
-          userId: options.userId ?? "unknown",
-          projectId: options.projectId ?? existing.projectId ?? undefined,
-          clientId: options.clientId ?? existing.clientId ?? undefined,
-          escalation: {
-            reason: "finalize_project_mismatch",
-            details: {
-              draftId,
-              reviewId,
-              decisionProjectId: existing.projectId,
-              reviewProjectId: review.project_id,
-            },
-            context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
+      await logEscalation(options.logger, {
+        agentId: options.agentId,
+        userId: options.userId,
+        projectId: options.projectId ?? existing.projectId ?? undefined,
+        clientId: options.clientId ?? existing.clientId ?? undefined,
+        escalation: {
+          reason: "finalize_project_mismatch",
+          details: {
+            draftId,
+            reviewId,
+            decisionProjectId: existing.projectId,
+            reviewProjectId: review.project_id,
           },
-        });
-      }
+          context: { decisionId: draftId, toolName: "tool.decisions.finalizeFromDraft" },
+        },
+      });
       throw new Error(
         `Review project mismatch: decision.projectId='${existing.projectId}', review.projectId='${review.project_id}'`
       );
     }
 
-    // 4. Logging vor Finalisierung (intent)
-    if (options?.logger) {
-      try {
-        await options.logger.append({
-          agentId: options.agentId ?? "unknown",
-          userId: options.userId ?? "unknown",
-          projectId: options.projectId ?? existing.projectId ?? undefined,
-          clientId: options.clientId ?? existing.clientId ?? undefined,
-          action: "decision.finalize.intent",
-          input: { draftId, reviewId },
-          output: { note: "Attempting to finalize decision" },
-          ts: new Date().toISOString(),
-        });
-      } catch (error) {
-        throw new Error(`Failed to log finalization intent: ${error instanceof Error ? error.message : String(error)}`);
-      }
+    // 4. Logging vor Finalisierung (intent) - mandatory
+    try {
+      await options.logger.append({
+        agentId: options.agentId,
+        userId: options.userId,
+        projectId: options.projectId ?? existing.projectId ?? undefined,
+        clientId: options.clientId ?? existing.clientId ?? undefined,
+        action: "decision.finalize.intent",
+        input: { draftId, reviewId },
+        output: { note: "Attempting to finalize decision" },
+        ts: this.clock.now().toISOString(),
+      });
+    } catch (error) {
+      throw new Error(`Failed to log finalization intent: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     // 5. Finalisierung (atomar)
@@ -337,7 +341,7 @@ export class DecisionsService {
           action: "decision.finalized",
           input: { draftId, reviewId },
           output: { decisionId: decision.id, status: decision.status, reviewId: decision.reviewId },
-          ts: new Date().toISOString(),
+          ts: this.clock.now().toISOString(),
         });
       } catch (error) {
         // Logging-Fehler nach erfolgreicher Finalisierung ist kritisch, aber wir können nicht rollback

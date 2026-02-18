@@ -1,4 +1,6 @@
 import type { ActionLogger } from "@agent-runtime/orchestrator/orchestrator";
+import type { Clock } from "@agent-system/governance-v2/runtime/clock";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 
 export type EscalationContext = {
   projectId?: string;
@@ -26,8 +28,11 @@ export async function logEscalation(
     projectId?: string;
     clientId?: string;
     escalation: EscalationDetails;
-  }
+  },
+  clock?: Clock
 ): Promise<void> {
+  const timeClock = clock ?? new SystemClock();
+  const timestamp = timeClock.now().toISOString();
   await logger.append({
     agentId: params.agentId,
     userId: params.userId,
@@ -41,9 +46,9 @@ export async function logEscalation(
     },
     output: {
       escalated: true,
-      timestamp: new Date().toISOString(),
+      timestamp,
     },
-    ts: new Date().toISOString(),
+    ts: timestamp,
     blocked: true,
     reason: params.escalation.reason,
   });

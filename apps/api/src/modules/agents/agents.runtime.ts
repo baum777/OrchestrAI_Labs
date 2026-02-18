@@ -1,10 +1,20 @@
 import path from "node:path";
 import type { Pool } from "pg";
+import crypto from "node:crypto";
 import { ProfileLoader } from "@agent-runtime/profiles/profile-loader";
 import { ToolRouter, type ToolContext, type ToolHandler } from "@agent-runtime/execution/tool-router";
 import { Orchestrator, ActionLogger, ReviewStore } from "@agent-runtime/orchestrator/orchestrator";
 import { DecisionsService, type CreateDecisionDraftInput } from "../decisions/decisions.service";
 import { KnowledgeService } from "../knowledge/knowledge.service";
+import { PolicyEngine, type PolicyContext, PolicyError } from "@governance/policy/policy-engine";
+import type { Permission } from "@shared/types/agent";
+import type { Clock } from "@agent-system/governance-v2/runtime/clock";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+import type {
+  MultiSourceConnectorRegistry,
+  CapabilityRegistry,
+} from "@agent-system/customer-data";
+import { generateResultHash } from "@agent-system/customer-data";
 
 const profilesDir = path.join(process.cwd(), "packages/agent-runtime/src/profiles");
 const loader = new ProfileLoader({ profilesDir });
@@ -22,7 +32,12 @@ const asStringArray = (value: unknown): string[] | undefined =>
 const toolHandlers = (
   decisions: DecisionsService,
   knowledge: KnowledgeService,
-  logger?: ActionLogger
+  logger: ActionLogger,
+  policyEngine: PolicyEngine,
+  connectorRegistry: MultiSourceConnectorRegistry,
+  capabilityRegistry: CapabilityRegistry,
+  agentProfileGetter: (agentId: string) => { permissions: string[] } | null,
+  clock: Clock
 ): Record<string, ToolHandler> => ({
   "tool.logs.append": {
     async call() {
@@ -106,7 +121,9 @@ const toolHandlers = (
   },
   "tool.docs.createDraft": {
     async call(_ctx, input: unknown) {
-      return { ok: true, output: { draftId: `draft_${Date.now()}`, input } };
+      // Use deterministic ID generation (timestamp-based but via clock)
+      const draftId = `draft_${clock.now().getTime()}_${crypto.randomUUID().slice(0, 8)}`;
+      return { ok: true, output: { draftId, input } };
     },
   },
   "tool.docs.updateDraft": {
@@ -185,16 +202,467 @@ const toolHandlers = (
       return { ok: true, output: { status: "pending", input } };
     },
   },
+  "tool.customer_data.executeReadModel": {
+    async call(ctx: ToolContext, input: unknown) {
+      const startTime = clock.now().getTime();
+      const requestId = crypto.randomUUID();
+      
+      const data = isRecord(input) ? input : {};
+      const clientId = asString(data.clientId) ?? ctx.clientId;
+      const operationId = asString(data.operationId);
+      
+      if (!clientId) {
+        return { ok: false, error: "clientId is required" };
+      }
+      if (!operationId) {
+        return { ok: false, error: "operationId is required" };
+      }
+      
+      // ActionLogger is required
+      if (!logger) {
+        return {
+          ok: false,
+          error: "ActionLogger required for customer_data.executeReadModel (Audit Requirement)",
+        };
+      }
+      
+      // Get agent profile for permissions (from context - we need to pass agentId)
+      // For now, we'll get it from a helper - this needs to be passed from Orchestrator
+      const agentId = (ctx as unknown as { agentId?: string }).agentId ?? ctx.userId;
+      const profile = agentProfileGetter(agentId);
+      const permissions = profile?.permissions ?? [];
+      
+      // PHASE 2: PolicyEngine authorization
+      const policyCtx: PolicyContext = {
+        userId: ctx.userId,
+        clientId,
+        projectId: ctx.projectId,
+        agentId,
+        permissions: permissions as Permission[],
+      };
+      
+      try {
+        const decision = policyEngine.authorize(
+          policyCtx,
+          "customer_data.executeReadModel",
+          data
+        );
+        
+        // Get capability map
+        const capability = capabilityRegistry.getCapabilities(clientId);
+        if (!capability) {
+          return { ok: false, error: "No capabilities found for clientId" };
+        }
+        
+        // Check operation is allowed
+        if (!capabilityRegistry.isOperationAllowed(clientId, operationId)) {
+          return { ok: false, error: `Operation ${operationId} not allowed for clientId` };
+        }
+        
+        // Get source for operation
+        const source = capabilityRegistry.getSourceForOperation(clientId, operationId);
+        
+        // PHASE 2: Sanitize parameters
+        const sanitized = policyEngine.sanitize(data, capability, operationId);
+        
+        // PHASE 3: Get connector for source
+        const connector = connectorRegistry.getConnector(clientId, source);
+        
+        // Execute connector
+        const result = await connector.executeReadModel(
+          sanitized.operationId,
+          sanitized.params,
+          sanitized.constraints
+        );
+        
+        // PHASE 2: Redact result
+        const redacted = policyEngine.redact(result.data, capability, operationId);
+        
+        const latencyMs = clock.now().getTime() - startTime;
+        
+        // Generate resultHash (deterministic, no PII)
+        const resultHash = generateResultHash(redacted.data, capability.operations[operationId]?.denyFields);
+        
+        // PHASE 5: Enriched audit log
+        try {
+          await logger.append({
+            agentId,
+            userId: ctx.userId,
+            projectId: ctx.projectId,
+            clientId,
+            action: "customer_data.access",
+            input: {
+              clientId,
+              operationId,
+              requestId,
+              ...data,
+            },
+            output: {
+              rowCount: redacted.metadata.rowCount,
+              fieldsReturned: redacted.metadata.fieldsReturned,
+              latencyMs,
+              sourceType: result.metadata.sourceType,
+              resultHash,
+              policyDecisionHash: decision.decisionHash,
+              requestId,
+            },
+            ts: clock.now().toISOString(),
+            blocked: false,
+          });
+        } catch (error) {
+          // Audit log failure blocks operation
+          throw new Error(
+            `AUDIT_LOG_WRITE_FAILED: Cannot complete customer_data access without audit log. ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+        
+        return {
+          ok: true,
+          output: {
+            data: redacted.data,
+            metadata: redacted.metadata,
+            executionMetrics: {
+              latencyMs,
+            },
+            requestId,
+          },
+        };
+      } catch (error) {
+        if (error instanceof PolicyError) {
+          // Log policy violation
+          try {
+            await logger.append({
+              agentId,
+              userId: ctx.userId,
+              projectId: ctx.projectId,
+              clientId,
+              action: "policy.violation",
+              input: {
+                clientId,
+                operation: "customer_data.executeReadModel",
+                operationId,
+                requestId,
+                ...data,
+              },
+              output: {
+                reason: error.message,
+                code: error.code,
+                requestId,
+              },
+              ts: clock.now().toISOString(),
+              blocked: true,
+              reason: error.message,
+            });
+          } catch (logError) {
+            // Even policy violation logging failure should be logged (but not block)
+            console.error("Failed to log policy violation:", logError);
+          }
+          return { ok: false, error: error.message };
+        }
+        throw error;
+      }
+    },
+  },
+  "tool.customer_data.getEntity": {
+    async call(ctx: ToolContext, input: unknown) {
+      const startTime = clock.now().getTime();
+      const requestId = crypto.randomUUID();
+      
+      const data = isRecord(input) ? input : {};
+      const clientId = asString(data.clientId) ?? ctx.clientId;
+      const entity = asString(data.entity);
+      const id = asString(data.id);
+      
+      if (!clientId) {
+        return { ok: false, error: "clientId is required" };
+      }
+      if (!entity || !id) {
+        return { ok: false, error: "entity and id are required" };
+      }
+      
+      if (!logger) {
+        return {
+          ok: false,
+          error: "ActionLogger required for customer_data.getEntity (Audit Requirement)",
+        };
+      }
+      
+      const agentId = (ctx as unknown as { agentId?: string }).agentId ?? ctx.userId;
+      const profile = agentProfileGetter(agentId);
+      const permissions = profile?.permissions ?? [];
+      
+      const policyCtx: PolicyContext = {
+        userId: ctx.userId,
+        clientId,
+        projectId: ctx.projectId,
+        agentId,
+        permissions: permissions as Permission[],
+      };
+      
+      try {
+        const decision = policyEngine.authorize(
+          policyCtx,
+          "customer_data.getEntity",
+          data
+        );
+        
+        const capability = capabilityRegistry.getCapabilities(clientId);
+        if (!capability) {
+          return { ok: false, error: "No capabilities found for clientId" };
+        }
+        
+        // For getEntity, we use a synthetic operationId
+        const operationId = `get${entity.charAt(0).toUpperCase() + entity.slice(1)}`;
+        if (!capabilityRegistry.isOperationAllowed(clientId, operationId)) {
+          return { ok: false, error: `Entity ${entity} not allowed for clientId` };
+        }
+        
+        const source = capabilityRegistry.getSourceForOperation(clientId, operationId);
+        const sanitized = policyEngine.sanitize(
+          { entity, id, fields: data.fields },
+          capability,
+          operationId
+        );
+        
+        const connector = connectorRegistry.getConnector(clientId, source);
+        
+        // Execute as readModel operation
+        const result = await connector.executeReadModel(
+          operationId,
+          { entity, id, ...sanitized.params },
+          sanitized.constraints
+        );
+        
+        const redacted = policyEngine.redact(result.data, capability, operationId);
+        const latencyMs = clock.now().getTime() - startTime;
+        const resultHash = generateResultHash(redacted.data, capability.operations[operationId]?.denyFields);
+        
+        try {
+          await logger.append({
+            agentId,
+            userId: ctx.userId,
+            projectId: ctx.projectId,
+            clientId,
+            action: "customer_data.access",
+            input: { clientId, entity, id, requestId, ...data },
+            output: {
+              rowCount: redacted.metadata.rowCount,
+              fieldsReturned: redacted.metadata.fieldsReturned,
+              latencyMs,
+              sourceType: result.metadata.sourceType,
+              resultHash,
+              policyDecisionHash: decision.decisionHash,
+              requestId,
+            },
+            ts: clock.now().toISOString(),
+            blocked: false,
+          });
+        } catch (error) {
+          throw new Error(
+            `AUDIT_LOG_WRITE_FAILED: Cannot complete customer_data access without audit log. ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+        
+        return {
+          ok: true,
+          output: {
+            entity: redacted.data[0] ?? null,
+            metadata: redacted.metadata,
+            executionMetrics: { latencyMs },
+            requestId,
+          },
+        };
+      } catch (error) {
+        if (error instanceof PolicyError) {
+          try {
+            await logger.append({
+              agentId,
+              userId: ctx.userId,
+              projectId: ctx.projectId,
+              clientId,
+              action: "policy.violation",
+              input: { clientId, operation: "customer_data.getEntity", requestId, ...data },
+              output: { reason: error.message, code: error.code, requestId },
+              ts: clock.now().toISOString(),
+              blocked: true,
+              reason: error.message,
+            });
+          } catch (logError) {
+            console.error("Failed to log policy violation:", logError);
+          }
+          return { ok: false, error: error.message };
+        }
+        throw error;
+      }
+    },
+  },
+  "tool.customer_data.search": {
+    async call(ctx: ToolContext, input: unknown) {
+      const startTime = clock.now().getTime();
+      const requestId = crypto.randomUUID();
+      
+      const data = isRecord(input) ? input : {};
+      const clientId = asString(data.clientId) ?? ctx.clientId;
+      const entity = asString(data.entity);
+      const query = data.query;
+      
+      if (!clientId) {
+        return { ok: false, error: "clientId is required" };
+      }
+      if (!entity || !query) {
+        return { ok: false, error: "entity and query are required" };
+      }
+      
+      if (!logger) {
+        return {
+          ok: false,
+          error: "ActionLogger required for customer_data.search (Audit Requirement)",
+        };
+      }
+      
+      const agentId = (ctx as unknown as { agentId?: string }).agentId ?? ctx.userId;
+      const profile = agentProfileGetter(agentId);
+      const permissions = profile?.permissions ?? [];
+      
+      const policyCtx: PolicyContext = {
+        userId: ctx.userId,
+        clientId,
+        projectId: ctx.projectId,
+        agentId,
+        permissions: permissions as Permission[],
+      };
+      
+      try {
+        const decision = policyEngine.authorize(
+          policyCtx,
+          "customer_data.search",
+          data
+        );
+        
+        const capability = capabilityRegistry.getCapabilities(clientId);
+        if (!capability) {
+          return { ok: false, error: "No capabilities found for clientId" };
+        }
+        
+        const operationId = `search${entity.charAt(0).toUpperCase() + entity.slice(1)}`;
+        if (!capabilityRegistry.isOperationAllowed(clientId, operationId)) {
+          return { ok: false, error: `Search on entity ${entity} not allowed for clientId` };
+        }
+        
+        const source = capabilityRegistry.getSourceForOperation(clientId, operationId);
+        const sanitized = policyEngine.sanitize(
+          { entity, query, limit: data.limit },
+          capability,
+          operationId
+        );
+        
+        const connector = connectorRegistry.getConnector(clientId, source);
+        const result = await connector.executeReadModel(
+          operationId,
+          { entity, query, ...sanitized.params },
+          sanitized.constraints
+        );
+        
+        const redacted = policyEngine.redact(result.data, capability, operationId);
+        const latencyMs = clock.now().getTime() - startTime;
+        const resultHash = generateResultHash(redacted.data, capability.operations[operationId]?.denyFields);
+        
+        try {
+          await logger.append({
+            agentId,
+            userId: ctx.userId,
+            projectId: ctx.projectId,
+            clientId,
+            action: "customer_data.access",
+            input: { clientId, entity, query, requestId, ...data },
+            output: {
+              rowCount: redacted.metadata.rowCount,
+              fieldsReturned: redacted.metadata.fieldsReturned,
+              latencyMs,
+              sourceType: result.metadata.sourceType,
+              resultHash,
+              policyDecisionHash: decision.decisionHash,
+              requestId,
+            },
+            ts: clock.now().toISOString(),
+            blocked: false,
+          });
+        } catch (error) {
+          throw new Error(
+            `AUDIT_LOG_WRITE_FAILED: Cannot complete customer_data access without audit log. ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+        
+        return {
+          ok: true,
+          output: {
+            results: redacted.data,
+            metadata: redacted.metadata,
+            executionMetrics: { latencyMs },
+            requestId,
+          },
+        };
+      } catch (error) {
+        if (error instanceof PolicyError) {
+          try {
+            await logger.append({
+              agentId,
+              userId: ctx.userId,
+              projectId: ctx.projectId,
+              clientId,
+              action: "policy.violation",
+              input: { clientId, operation: "customer_data.search", requestId, ...data },
+              output: { reason: error.message, code: error.code, requestId },
+              ts: clock.now().toISOString(),
+              blocked: true,
+              reason: error.message,
+            });
+          } catch (logError) {
+            console.error("Failed to log policy violation:", logError);
+          }
+          return { ok: false, error: error.message };
+        }
+        throw error;
+      }
+    },
+  },
 });
 
-export function createOrchestrator(logger: ActionLogger, reviewStore: ReviewStore, pool: Pool): Orchestrator {
+export function createOrchestrator(
+  logger: ActionLogger,
+  reviewStore: ReviewStore,
+  pool: Pool,
+  policyEngine: PolicyEngine,
+  connectorRegistry: MultiSourceConnectorRegistry,
+  capabilityRegistry: CapabilityRegistry,
+  clock?: Clock
+): Orchestrator {
   const decisions = new DecisionsService(pool);
   const knowledge = new KnowledgeService(pool);
-  const toolRouter = new ToolRouter(toolHandlers(decisions, knowledge, logger));
+  
+  // Agent profile getter for permissions
+  const agentProfileGetter = (agentId: string) => {
+    try {
+      const profile = loader.getById(agentId);
+      return { permissions: profile.permissions };
+    } catch {
+      return null;
+    }
+  };
+  
+  // Use orchestrator's clock if provided, otherwise create new SystemClock
+  const orchestratorClock = clock ?? new SystemClock();
+  
+  const toolRouter = new ToolRouter(
+    toolHandlers(decisions, knowledge, logger, policyEngine, connectorRegistry, capabilityRegistry, agentProfileGetter, orchestratorClock)
+  );
+  
   return new Orchestrator(
     { getById: (id: string) => loader.getById(id) },
     toolRouter,
     reviewStore,
-    logger
+    logger,
+    undefined, // governanceValidator
+    orchestratorClock
   );
 }

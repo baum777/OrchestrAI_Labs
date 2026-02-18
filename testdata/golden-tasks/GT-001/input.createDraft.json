@@ -1,0 +1,34 @@
+{
+  "title": "Website Relaunch: Budget Overrun",
+  "owner": "agent-system",
+  "assumptions": [
+    "Current scope cannot be delivered within budget.",
+    "Client will not delay launch date.",
+    "Board approval for budget increase is uncertain."
+  ],
+  "alternatives": [
+    "Reduce scope (remove 3 features)",
+    "Increase budget (requires board approval, 2-3 weeks)",
+    "Extend timeline (delay launch, adjust marketing campaign)"
+  ],
+  "risks": [
+    "Client dissatisfaction if features are removed",
+    "Quality degradation if developed under time pressure",
+    "Deadline slippage if timeline is extended"
+  ],
+  "successCriteria": [
+    "Stakeholders aligned on scope/budget",
+    "Budget variance < 5%",
+    "Launch date maintained"
+  ],
+  "nextSteps": [
+    "Prepare revised scope proposal",
+    "Schedule stakeholder review",
+    "Document scope changes in decision log"
+  ],
+  "clientContext": "Mid-size manufacturing company relaunching corporate site.",
+  "commsContext": "Weekly steering call; client expects transparency.",
+  "clientImplications": "Scope reduction impacts feature set; budget increase impacts approval.",
+  "goal": "Align scope with budget while maintaining delivery quality."
+}
+

@@ -10,12 +10,14 @@ export type Permission =
   | "knowledge.search"
   | "project.read"
   | "project.update"
+  | "project.manage"
   | "decision.create"
   | "decision.read"
   | "log.write"
   | "review.request"
   | "review.approve"
-  | "review.reject";
+  | "review.reject"
+  | "customer_data.read";
 
 export type ToolRef =
   | "tool.knowledge.search"
@@ -28,7 +30,10 @@ export type ToolRef =
   | "tool.decisions.finalizeFromDraft"
   | "tool.logs.append"
   | "tool.reviews.request"
-  | "tool.reviews.status";
+  | "tool.reviews.status"
+  | "tool.customer_data.executeReadModel"
+  | "tool.customer_data.getEntity"
+  | "tool.customer_data.search";
 
 export type ReviewPolicy = {
   mode: "none" | "draft_only" | "required";

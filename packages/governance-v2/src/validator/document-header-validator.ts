@@ -3,9 +3,12 @@
  * 
  * Validates governance document headers (Markdown files).
  * Checks for required fields: Version, Owner, Layer, Last Updated, Definition of Done.
+ * Validates timestamp format and future timestamps.
  */
 
 import type { ValidationResult } from '../types/governance.types.js';
+import type { Clock } from '../runtime/clock.js';
+import { SystemClock } from '../runtime/clock.js';
 import fs from 'node:fs';
 
 export interface DocumentHeader {
@@ -17,6 +20,16 @@ export interface DocumentHeader {
 }
 
 export class DocumentHeaderValidator {
+  private clock: Clock;
+  private maxSkewMinutes: number;
+  private staleWarningHours: number;
+
+  constructor(clock?: Clock, maxSkewMinutes?: number, staleWarningHours?: number) {
+    this.clock = clock ?? new SystemClock();
+    this.maxSkewMinutes = maxSkewMinutes ?? parseInt(process.env.LAST_UPDATED_MAX_SKEW_MIN ?? '5', 10);
+    this.staleWarningHours = staleWarningHours ?? 24;
+  }
+
   /**
    * Validates a markdown document for required governance header fields.
    * Parses the header section (first 20 lines) for required fields.
@@ -61,6 +74,14 @@ export class DocumentHeaderValidator {
       reasons.push('invalid_layer_tag');
     }
 
+    // Validate timestamp format and future timestamps
+    if (header.lastUpdated) {
+      const timestampValidation = this.validateTimestamp(header.lastUpdated);
+      if (timestampValidation) {
+        reasons.push(timestampValidation);
+      }
+    }
+
     if (reasons.length > 0) {
       return {
         status: 'blocked',
@@ -103,6 +124,14 @@ export class DocumentHeaderValidator {
 
     if (header.layer && !this.isValidLayer(header.layer)) {
       reasons.push('invalid_layer_tag');
+    }
+
+    // Validate timestamp format and future timestamps
+    if (header.lastUpdated) {
+      const timestampValidation = this.validateTimestamp(header.lastUpdated);
+      if (timestampValidation) {
+        reasons.push(timestampValidation);
+      }
     }
 
     if (reasons.length > 0) {
@@ -175,6 +204,30 @@ export class DocumentHeaderValidator {
    */
   private isValidLayer(layer: string): boolean {
     return ['strategy', 'architecture', 'implementation', 'governance'].includes(layer.toLowerCase());
+  }
+
+  /**
+   * Validates timestamp format and checks for future timestamps.
+   * Returns validation reason if invalid, null if valid.
+   */
+  private validateTimestamp(timestamp: string): string | null {
+    // Try to parse as ISO-8601
+    const date = new Date(timestamp);
+    
+    if (isNaN(date.getTime())) {
+      return 'invalid_last_updated_format';
+    }
+
+    // Check if timestamp is in the future beyond allowed skew
+    const now = this.clock.now();
+    const diffMs = date.getTime() - now.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMinutes > this.maxSkewMinutes) {
+      return 'last_updated_in_future';
+    }
+
+    return null;
   }
 }
 

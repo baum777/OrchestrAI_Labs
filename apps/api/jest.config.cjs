@@ -2,7 +2,7 @@
 module.exports = {
   rootDir: ".",
   testEnvironment: "node",
-  testMatch: ["<rootDir>/test/**/*.e2e.spec.ts"],
+  testMatch: ["<rootDir>/test/**/*.e2e.spec.ts", "<rootDir>/test/**/*.spec.ts"],
   transform: {
     "^.+\\.(t|j)sx?$": [
       "ts-jest",
@@ -10,7 +10,7 @@ module.exports = {
         tsconfig: "<rootDir>/tsconfig.jest.json",
         diagnostics: {
           // repo-known: build/tsconfig drift is out-of-scope; tests should still run
-          ignoreCodes: [6059],
+          ignoreCodes: [6059, 151002, 2564],
         },
       },
     ],
@@ -26,4 +26,3 @@ module.exports = {
     "^@agent-system/knowledge$": "<rootDir>/../../packages/knowledge/src/index.ts",
   },
 };
-

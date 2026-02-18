@@ -4,6 +4,8 @@ import type { Pool } from "pg";
 import type { ProjectPhase } from "@shared/types/project-phase";
 import { ProjectPhaseStore } from "./project-phase.store";
 import type { ActionLogger } from "@agent-runtime/orchestrator/orchestrator";
+import type { Clock } from "@agent-system/governance-v2/runtime/clock";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 
 export type PhaseHints = {
   focus: string;
@@ -19,10 +21,15 @@ export type ProjectContext = {
 
 @Injectable()
 export class ProjectsService {
+  private readonly clock: Clock;
+
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
-    private readonly phaseStore: ProjectPhaseStore
-  ) {}
+    private readonly phaseStore: ProjectPhaseStore,
+    clock?: Clock
+  ) {
+    this.clock = clock ?? new SystemClock();
+  }
 
   async getContext(projectId: string): Promise<ProjectContext> {
     // Verify project exists
@@ -35,7 +42,7 @@ export class ProjectsService {
       throw new Error(`Project not found: ${projectId}`);
     }
 
-    const phase = this.phaseStore.get(projectId);
+    const phase = await this.phaseStore.get(projectId);
     const hints = this.getPhaseHints(phase);
 
     return {
@@ -63,14 +70,14 @@ export class ProjectsService {
       throw new Error(`Project not found: ${projectId}`);
     }
 
-    const oldPhase = this.phaseStore.get(projectId);
+    const oldPhase = await this.phaseStore.get(projectId);
 
     if (oldPhase === newPhase) {
       return; // No change
     }
 
-    // Update phase
-    this.phaseStore.set(projectId, newPhase);
+    // Update phase (atomic DB update)
+    await this.phaseStore.set(projectId, newPhase);
 
     // Audit logging (required)
     try {
@@ -82,12 +89,12 @@ export class ProjectsService {
         action: "project.phase.update",
         input: { projectId, oldPhase, newPhase },
         output: { updated: true },
-        ts: new Date().toISOString(),
+        ts: this.clock.now().toISOString(),
         blocked: false,
       });
     } catch (error) {
       // Rollback on logging failure
-      this.phaseStore.set(projectId, oldPhase);
+      await this.phaseStore.set(projectId, oldPhase);
       throw new Error(
         `AUDIT_LOG_WRITE_FAILED: Cannot update phase without audit log. ${error instanceof Error ? error.message : String(error)}`
       );

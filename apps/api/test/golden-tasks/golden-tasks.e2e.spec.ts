@@ -52,4 +52,3 @@ describe("golden-tasks (smoke)", () => {
     expect(res.body.id).toMatch(/^dec_/);
   });
 });
-

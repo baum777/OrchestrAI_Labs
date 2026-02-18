@@ -1,0 +1,34 @@
+{
+  "title": "CRM Selection for Sales Team",
+  "owner": "agent-system",
+  "assumptions": [
+    "Vendor B is feature-perfect, but expensive and integration is tight.",
+    "Vendor A is balanced, but API limits could be problematic.",
+    "Vendor C is affordable, but integration takes too long."
+  ],
+  "alternatives": [
+    "Vendor A (€100k, 4 weeks integration, good API)",
+    "Vendor B (€120k, 6 weeks integration, perfect features)",
+    "Vendor C (€80k, 8 weeks integration, limited API)"
+  ],
+  "risks": [
+    "Integration delay if Vendor C is chosen",
+    "Feature gaps if Vendor A is chosen",
+    "Budget overrun if Vendor B is chosen"
+  ],
+  "successCriteria": [
+    "CRM live by end of Q1",
+    "Integration successful (all sales processes supported)",
+    "Budget maintained"
+  ],
+  "nextSteps": [
+    "Finalize vendor comparison",
+    "Create integration plan",
+    "Start contract negotiation"
+  ],
+  "clientContext": "B2B SaaS company selecting CRM system for sales team.",
+  "commsContext": "Monthly steering call; client expects vendor recommendation.",
+  "clientImplications": "Vendor selection impacts integration timeline and budget.",
+  "goal": "Select CRM vendor that balances features, budget, and integration timeline."
+}
+

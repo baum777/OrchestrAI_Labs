@@ -4,13 +4,21 @@
  * Detects ambiguous requirements and generates targeted clarification questions.
  */
 
+import crypto from 'node:crypto';
 import type {
   Workstream,
   Decision,
   ClarificationRequest,
 } from '../types/governance.types.js';
+import type { Clock } from '../runtime/clock.js';
+import { SystemClock } from '../runtime/clock.js';
 
 export class AmbiguityDetector {
+  private readonly clock: Clock;
+
+  constructor(clock?: Clock) {
+    this.clock = clock ?? new SystemClock();
+  }
   /**
    * Detects ambiguities in a workstream and generates clarification questions.
    */
@@ -45,14 +53,14 @@ export class AmbiguityDetector {
     }
 
     return {
-      id: `clar_${Date.now()}`,
+      id: `clar_${this.clock.now().getTime()}_${crypto.randomUUID().slice(0, 8)}`,
       workstreamId: workstream.id,
       questions,
       context: {
         workstream: workstream.id,
         owner: workstream.owner,
       },
-      timestamp: new Date().toISOString(),
+      timestamp: this.clock.now().toISOString(),
     };
   }
 
@@ -83,14 +91,14 @@ export class AmbiguityDetector {
     }
 
     return {
-      id: `clar_${Date.now()}`,
+      id: `clar_${this.clock.now().getTime()}_${crypto.randomUUID().slice(0, 8)}`,
       decisionId: decision.id,
       questions,
       context: {
         decision: decision.id,
         owner: decision.owner,
       },
-      timestamp: new Date().toISOString(),
+      timestamp: this.clock.now().toISOString(),
     };
   }
 }

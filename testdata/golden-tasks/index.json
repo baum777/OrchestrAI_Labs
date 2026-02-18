@@ -1,0 +1,18 @@
+{
+  "version": "1.0",
+  "tasks": [
+    {
+      "id": "GT-001",
+      "phase": "delivery",
+      "title": "Website Relaunch Budget Overrun",
+      "fixtureDir": "GT-001"
+    },
+    {
+      "id": "GT-002",
+      "phase": "design",
+      "title": "CRM Selection",
+      "fixtureDir": "GT-002"
+    }
+  ]
+}
+

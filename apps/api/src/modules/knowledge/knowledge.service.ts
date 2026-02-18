@@ -2,6 +2,8 @@ import { Inject, Injectable } from "@nestjs/common";
 import { PG_POOL } from "../../db/db.module";
 import type { Pool } from "pg";
 import type { ActionLogger } from "@agent-runtime/orchestrator/orchestrator";
+import type { Clock } from "@agent-system/governance-v2/runtime/clock";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 
 export type SearchResult = {
   source: "decisions" | "reviews" | "logs";
@@ -83,7 +85,7 @@ export class KnowledgeService {
           returned: limitedResults.length,
           sourcesSearched,
         },
-        ts: new Date().toISOString(),
+        ts: this.clock.now().toISOString(),
         blocked: false,
       });
     } catch (error) {
