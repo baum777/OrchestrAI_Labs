@@ -1,22 +1,36 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { INestApplication } from "@nestjs/common";
-import request from "supertest";
+import type { INestApplication } from "@nestjs/common";
+import { Test, type TestingModule } from "@nestjs/testing";
+import supertest from "supertest";
+import type { Pool } from "pg";
 import { AppModule } from "../../src/app.module";
+import { PG_POOL } from "../../src/db/db.module";
 
-export async function createTestApp(): Promise<{
+export async function createTestApp(options?: {
+  pool?: Pool;
+}): Promise<{
   app: INestApplication;
-  request: ReturnType<typeof request>;
+  request: ReturnType<typeof supertest>;
+  close: () => Promise<void>;
+  moduleRef: TestingModule;
 }> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
+  const builder = Test.createTestingModule({ imports: [AppModule] });
 
-  const app = moduleFixture.createNestApplication();
+  if (options?.pool) {
+    builder.overrideProvider(PG_POOL).useValue(options.pool);
+  }
+
+  const moduleRef = await builder.compile();
+  const app = moduleRef.createNestApplication();
   await app.init();
+
+  const request = supertest(app.getHttpServer());
 
   return {
     app,
-    request: request(app.getHttpServer()),
+    request,
+    moduleRef,
+    close: async () => {
+      await app.close();
+    },
   };
 }
-
