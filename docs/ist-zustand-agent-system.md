@@ -1,11 +1,27 @@
 # IST-Zustand: Agent-System als Unterstützender Mitarbeiter / Prozess-Optimierungs-Layer
 
 **Erstellt:** 2026-02-13  
-**Zweck:** Dokumentation des aktuellen Systemzustands im Kontext des Agent-Systems als unterstützender Mitarbeiter und Prozess-Optimierungs-Layer
+**Aktualisiert:** 2026-02-18  
+**Zweck:** Vollständige Dokumentation des aktuellen Systemzustands im Kontext des Agent-Systems als unterstützender Mitarbeiter und Prozess-Optimierungs-Layer
 
 ---
+## 1. System-Übersicht & Architektur-Prinzipien
 
-## 1. System-Übersicht
+### 1.1 Architektur-Übersicht
+
+Das Agent-System folgt einer **Agent-first-Architektur** mit klarer Trennung:
+
+- **`apps/`**: Oberflächen und API-Grenzen. Keine Business-Logik.
+- **`packages/agent-runtime`**: Agenten-Definitionen, Orchestrator, Execution-Layer.
+- **`packages/governance`** (V1): Policy-Enforcement, Review-Engine, Action-Logging.
+- **`packages/governance-v2`**: Self-validating Meta-Layer mit Clock-Abstraktion, Bridge-Pattern.
+- **`packages/customer-data`**: Customer Data Plane mit Connector-Registry, Capability-Registry.
+- **`packages/workflow`**, **`packages/knowledge`**: Datengetriebene Services als reine Verträge.
+- **`packages/shared`**: Typen, DTOs, Constants ohne Verhalten.
+- **`packages/premium`**: Premium-Module (z.B. Generalist Marketer).
+- **`infrastructure/`**: DB-, Vektor- und Speicherkonfigurationen.
+
+### 1.2 System-Übersicht
 
 Das Agent-System ist eine **Agent-first-Architektur** zur Unterstützung von Projektarbeit und Entscheidungsfindung. Es fungiert als **unterstützender Mitarbeiter** und **Prozess-Optimierungs-Layer**, der:
 
@@ -15,13 +31,15 @@ Das Agent-System ist eine **Agent-first-Architektur** zur Unterstützung von Pro
 - Projektphasen-Management und Workflow-Steuerung unterstützt
 - Monitoring und Drift-Erkennung für Qualitätssicherung bietet
 
-### 1.1 Architektur-Prinzipien
+### 1.3 Architektur-Prinzipien
 
 - **Agent-first**: Business-Logik liegt in Agent-Runtime, nicht in Apps
 - **Separation of Concerns**: Apps (`apps/`) sind nur Oberflächen, Packages (`packages/`) enthalten die Logik
 - **Governance by Design**: Alle kritischen Aktionen durchlaufen Review-Gates
 - **Memory-on-Disk**: Repo-Artefakte als Single Source of Truth
 - **Policy-Driven**: Automatische Approval-Gates basierend auf konfigurierbaren Regeln
+- **V2-First**: Governance-V2 als primäre Architektur-Säule mit deterministischer Clock-Abstraktion
+- **Bridge-Pattern**: Nahtlose Migration von V1 zu V2 über Adapter
 
 ---
 
@@ -31,7 +49,16 @@ Das Agent-System ist eine **Agent-first-Architektur** zur Unterstützung von Pro
 
 #### `apps/web` (Next.js)
 - **Zweck**: Nutzer- und Admin-Oberfläche
-- **Status**: Grundgerüst vorhanden
+- **Status**: Implementiert mit Dashboard-Seiten
+- **Seiten**:
+  - **Audit Ledger**: Audit-Log-Übersicht mit "Verify Integrity" Feature
+  - **Approval Inbox**: Review-Queue, Approval-Flow
+  - **Fleet Monitor**: Agent-Status-Übersicht
+  - **Governance Matrix**: Governance-Übersicht
+- **Komponenten**:
+  - **Layout**: MainLayout, Sidebar
+  - **Governance**: AdvisorCard (PolicyViolationAdvice)
+  - **API-Client**: PolicyError-Handling, fetchApi-Wrapper
 - **Business-Logik**: Keine (nur UI-Komponenten)
 
 #### `apps/api` (NestJS)
@@ -55,13 +82,35 @@ Das Agent-System ist eine **Agent-first-Architektur** zur Unterstützung von Pro
   - **Execution**: Tool-Router, Tool-Permissions, Tool-Context
   - **Profiles**: Agent-Profile-Definitionen (JSON-basiert)
 
-#### `packages/governance`
+#### `packages/governance` (V1)
 - **Zweck**: Policy-Enforcement, Review-Engine, Action-Logging
 - **Komponenten**:
+  - **Policy Engine**: Authorization, Sanitization, Redaction, License-Management
   - **Policies**: Action-Policy, Review-Policy
   - **Enforcement**: Permission-Checks, Review-Gate-Enforcement
-  - **Review**: Review-Engine, Review-Queue (In-Memory)
-  - **Logging**: Action-Logger (In-Memory)
+  - **Review**: Review-Engine, Review-Queue (PostgreSQL-basiert)
+  - **Logging**: Action-Logger (PostgreSQL-basiert)
+  - **License Manager**: Premium-Feature Access Control
+
+#### `packages/governance-v2`
+- **Zweck**: Self-validating Meta-Layer mit Clock-Abstraktion
+- **Komponenten**:
+  - **Clock-Abstraktion**: `FakeClock` (Tests), `SystemClock` (Produktion)
+  - **Bridge-Pattern**: `V1PolicyEngineAdapter` für V1→V2 Migration
+  - **Validators**: Workstream-Validator, Document-Header-Validator
+  - **Compiler**: Decision-Compiler mit Policy-Integration
+  - **Clarification**: Ambiguity-Detector, Conflict-Detector
+  - **Scorecard**: Governance-Scorecard-Engine
+  - **Audit**: Audit-Runner für CI-Integration
+  - **Runtime**: Governance-Hook, Runtime-State-Store, Time-Utils
+
+#### `packages/customer-data`
+- **Zweck**: Customer Data Plane für sicheren Datenzugriff
+- **Komponenten**:
+  - **Connector Registry**: Single- und Multi-Source-Routing
+  - **Capability Registry**: Operation-Allowlisting, Schema-Validation
+  - **Constraints**: Field-Filtering, MaxRows, DenyFields
+  - **Result Hash**: Deterministische Hash-Generierung (PII-exklusiv)
 
 #### `packages/knowledge`
 - **Zweck**: Knowledge-API, Embeddings, Retrieval
@@ -79,6 +128,14 @@ Das Agent-System ist eine **Agent-first-Architektur** zur Unterstützung von Pro
   - `review.ts`: Review-Types, CommitToken
   - `agent.ts`: Agent-Profile, Permissions, Memory-Scope
   - `project-phase.ts`: ProjectPhase Enum
+  - `governance.ts`: PolicyViolationAdvice für AdvisorCard
+
+#### `packages/premium/marketer`
+- **Zweck**: Premium-Modul "Generalist Marketer" mit Data-Driven Storytelling
+- **Komponenten**:
+  - **MarketerAgent**: Narrative-Generierung mit Framework-Support (PAS, AIDA)
+  - **KPIParser**: Semantische Trend-Analyse, Problem-Translation
+  - **Marketing-Tool**: Policy-Integration, PII-Redaction
 
 ### 2.3 Infrastructure
 
@@ -88,7 +145,9 @@ Das Agent-System ist eine **Agent-first-Architektur** zur Unterstützung von Pro
   - `001_init.sql`: Basis-Schema (decisions, review_requests, review_actions, action_logs, projects)
   - `002_review_commit_token.sql`: Commit-Token-Support
   - `003_decisions_domain.sql`: Erweiterte Decision-Felder
-- **pgvector**: Vektor-Support für Embeddings
+  - `004_project_phases.sql`: Project-Phase-Support
+- **pgvector**: Vektor-Support für Embeddings (`infrastructure/vector/pgvector.sql`)
+- **Runtime**: PostgreSQL-basierte Implementierungen (PostgresActionLogger, PostgresReviewQueue, PostgresReviewStore)
 
 #### Storage
 - **Zweck**: Datei-Storage-Konnektoren
@@ -240,13 +299,21 @@ flowchart TD
 - ✅ **BLOCK 5**: Knowledge Search (Decisions, Reviews, Logs)
 - ✅ **BLOCK 6**: Projektkontext & Phasen-Hinweise
 
-### 6.2 Offen / TODO
+### 6.2 Neu (Governance-V2 & Premium)
 
-- ⚠️ **Workflow-Engine**: Phase-Runner, Escalation-Logik (Grundgerüst vorhanden)
-- ⚠️ **Knowledge-Embeddings**: Vektor-Search (Grundgerüst vorhanden)
-- ⚠️ **UI (apps/web)**: Nutzer-Oberfläche (Grundgerüst vorhanden)
-- ⚠️ **Golden Tasks**: E2E-Tests (Definiert, aber nicht implementiert)
-- ⚠️ **Scorecard**: Scoring Rubric (Definiert, aber nicht automatisiert)
+- ✅ **Governance-V2 Framework**: Clock-Abstraktion (`FakeClock`/`SystemClock`) für deterministische, replay-fähige Tests
+- ✅ **V1PolicyEngineAdapter**: Bridge-Pattern für nahtlose V1→V2 Migration
+- ✅ **Hash-Integrität**: 100%ige Validierung von Policy-Decisions via deterministische Hashes (Level 3 Stress-Test bestanden)
+- ✅ **Premium-Modul "Generalist Marketer"**: KI-Extension mit KPI-Parsing, semantischer Trend-Analyse, Policy-Integration
+- ✅ **Live-Verify UI**: Audit-Ledger mit "Verify Integrity" Feature für Hash-Validierung im Dashboard
+- ✅ **Customer Data Plane**: Connector-Registry, Capability-Registry, Constraints, Result-Hash
+
+### 6.3 In Entwicklung / Erweiterungen
+
+- ⚠️ **Knowledge-Embeddings**: Vektor-Search (Grundgerüst vorhanden, pgvector-Support vorhanden)
+- ⚠️ **Workflow-Engine**: Erweiterte Phase-Runner-Logik (Grundgerüst vorhanden)
+- ⚠️ **Golden Tasks**: E2E-Tests (Definiert in `docs/golden-tasks/`, teilweise implementiert)
+- ⚠️ **CI-Integration**: Governance-Audit-Runner für kontinuierliche Validierung
 
 ---
 
