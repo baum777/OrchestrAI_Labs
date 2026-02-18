@@ -7,7 +7,6 @@ packages/**/node_modules/
 .next/
 coverage/
 *.log
-pnpm-lock.yaml
 # Logs
 logs
 *.log
