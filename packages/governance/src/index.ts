@@ -8,4 +8,5 @@ export * from "./review/inmemory-review-queue";
 export * from "./policy/policy-engine.js";
 export * from "./policy/types.js";
 export * from "./policy/errors.js";
+export * from "./license/index.js";
 

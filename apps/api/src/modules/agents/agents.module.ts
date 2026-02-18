@@ -9,9 +9,11 @@ import {
   createPolicyEngine,
   createConnectorRegistry,
   createCapabilityRegistry,
+  createLicenseManager,
 } from "./customer-data.providers";
 import type { Pool } from "pg";
 import type { PolicyEngine } from "@governance/policy/policy-engine";
+import type { LicenseManager } from "@governance/license/license-manager";
 import type {
   MultiSourceConnectorRegistry,
   CapabilityRegistry,
@@ -24,8 +26,13 @@ import type {
     PostgresActionLogger,
     PostgresReviewStore,
     {
+      provide: "LicenseManager",
+      useFactory: createLicenseManager,
+    },
+    {
       provide: PolicyEngine,
-      useFactory: createPolicyEngine,
+      useFactory: (licenseManager: LicenseManager) => createPolicyEngine(licenseManager),
+      inject: ["LicenseManager"],
     },
     {
       provide: "MultiSourceConnectorRegistry",
@@ -43,9 +50,10 @@ import type {
         pool: Pool,
         policyEngine: PolicyEngine,
         connectorRegistry: MultiSourceConnectorRegistry,
-        capabilityRegistry: CapabilityRegistry
+        capabilityRegistry: CapabilityRegistry,
+        licenseManager: LicenseManager
       ) =>
-        createOrchestrator(logger, reviewStore, pool, policyEngine, connectorRegistry, capabilityRegistry),
+        createOrchestrator(logger, reviewStore, pool, policyEngine, connectorRegistry, capabilityRegistry, undefined, licenseManager),
       inject: [
         PostgresActionLogger,
         PostgresReviewStore,
@@ -53,6 +61,7 @@ import type {
         PolicyEngine,
         "MultiSourceConnectorRegistry",
         "CapabilityRegistry",
+        "LicenseManager",
       ],
     },
   ],
