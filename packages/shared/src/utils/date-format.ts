@@ -51,12 +51,18 @@ export function formatBerlinDateTime(date: Date): string {
  * @returns Formatted date string in Berlin timezone (e.g., "19.02.2026")
  * 
  * @throws Error if isoString is not a valid ISO-8601 timestamp
+ * 
+ * Note: Uses Date.parse() internally (allowed in shared utilities for ISO parsing).
+ * For production code, prefer Clock abstraction and pass Date objects directly.
  */
 export function formatBerlinDateFromISO(isoString: string): string {
-  const date = new Date(isoString);
-  if (isNaN(date.getTime())) {
+  // eslint-disable-next-line no-restricted-globals
+  const timestamp = Date.parse(isoString);
+  if (isNaN(timestamp)) {
     throw new Error(`Invalid ISO-8601 timestamp: ${isoString}`);
   }
+  // eslint-disable-next-line no-restricted-globals
+  const date = new Date(timestamp);
   return formatBerlinDate(date);
 }
 

@@ -4,7 +4,7 @@ import { ReviewsController } from "./reviews.controller";
 import { PolicyEngine } from "@governance/policy/policy-engine";
 import { UsersModule } from "../users/users.module";
 import { UserRolesService } from "../users/user-roles.service";
-import { createPolicyEngine } from "../agents/customer-data.providers";
+import { createPolicyEngine, createLicenseManager } from "../agents/customer-data.providers";
 import type { LicenseManager } from "@governance/license/license-manager";
 import { ConsentService } from "../users/consent.service";
 
@@ -25,8 +25,6 @@ import { ConsentService } from "../users/consent.service";
     {
       provide: "LicenseManager",
       useFactory: () => {
-        // Use same factory as AgentsModule
-        const { createLicenseManager } = require("../agents/customer-data.providers");
         return createLicenseManager();
       },
     },

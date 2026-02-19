@@ -21,7 +21,8 @@ export class DecisionsController {
   async createDraft(@Param("projectId") projectId: string, @Body() body: CreateDecisionDraftDto) {
     // PHASE 2: PolicyEngine authorization (RBAC enforcement)
     // Extract userId from body or use owner as fallback
-    const userId = (body as any).userId || body.owner || "system";
+    const bodyWithUserId = body as CreateDecisionDraftDto & { userId?: string };
+    const userId = bodyWithUserId.userId || body.owner || "system";
     const clientId = body.clientId;
 
     const policyCtx: PolicyContext = {

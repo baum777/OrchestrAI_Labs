@@ -69,7 +69,7 @@ describe("consent-management (E2E)", () => {
           permission: "customer_data.read",
           toolCalls: [
             {
-              tool: { name: "customer_data.executeReadModel", version: "1.0" } as any,
+              tool: { name: "customer_data.executeReadModel", version: "1.0" } as { name: string; version: string },
               input: {
                 clientId: testClientId,
                 operationId: "test_operation",
@@ -121,7 +121,7 @@ describe("consent-management (E2E)", () => {
           permission: "customer_data.read",
           toolCalls: [
             {
-              tool: { name: "customer_data.executeReadModel", version: "1.0" } as any,
+              tool: { name: "customer_data.executeReadModel", version: "1.0" } as { name: string; version: string },
               input: {
                 clientId: testClientId,
                 operationId: "test_operation",
@@ -179,7 +179,7 @@ describe("consent-management (E2E)", () => {
           permission: "customer_data.read",
           toolCalls: [
             {
-              tool: { name: "customer_data.executeReadModel", version: "1.0" } as any,
+              tool: { name: "customer_data.executeReadModel", version: "1.0" } as { name: string; version: string },
               input: {
                 clientId: testClientId,
                 operationId: "test_operation",

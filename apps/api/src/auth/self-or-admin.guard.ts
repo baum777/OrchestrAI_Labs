@@ -78,8 +78,12 @@ export class SelfOrAdminGuard implements CanActivate {
     }
 
     // Attach requestor info to request for use in controller
-    (request as any).requestorUserId = requestorUserId;
-    (request as any).requestorRoles = requestorRoles;
+    const requestWithExtras = request as typeof request & {
+      requestorUserId: string;
+      requestorRoles: string[];
+    };
+    requestWithExtras.requestorUserId = requestorUserId;
+    requestWithExtras.requestorRoles = requestorRoles;
 
     return true;
   }

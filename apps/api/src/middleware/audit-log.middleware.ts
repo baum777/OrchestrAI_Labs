@@ -158,8 +158,9 @@ export class AuditLogMiddleware implements NestMiddleware {
    */
   private extractUserId(req: Request): string | null {
     // Priority 1: Authenticated user (from JWT, if available)
-    if ((req as any).user?.userId) {
-      return (req as any).user.userId;
+    const reqWithUser = req as Request & { user?: { userId: string } };
+    if (reqWithUser.user?.userId) {
+      return reqWithUser.user.userId;
     }
     
     // Priority 2: X-User-Id header (MVP/testing)

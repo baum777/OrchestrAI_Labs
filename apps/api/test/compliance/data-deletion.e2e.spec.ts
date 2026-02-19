@@ -13,6 +13,7 @@ import { seedProject } from "../_utils/seed";
 import supertest from "supertest";
 import { DecisionsService } from "../../src/modules/decisions/decisions.service";
 import { PostgresActionLogger } from "../../src/runtime/postgres-action-logger";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 
 describe("data-deletion (E2E)", () => {
   const databaseUrl = process.env.DATABASE_URL;
@@ -23,6 +24,7 @@ describe("data-deletion (E2E)", () => {
   let request: ReturnType<typeof supertest>;
   let decisionsService: DecisionsService;
   let actionLogger: PostgresActionLogger;
+  let clock: SystemClock;
   const testUserId = "test_user_deletion";
   const otherUserId = "test_user_other";
 
@@ -32,6 +34,7 @@ describe("data-deletion (E2E)", () => {
     pool = new Pool({ connectionString: databaseUrl });
     await seedProject(pool, { projectId });
 
+    clock = new SystemClock();
     const app = await createTestApp({ pool });
     request = app.request;
     closeApp = app.close;
@@ -69,7 +72,7 @@ describe("data-deletion (E2E)", () => {
       action: "test.action",
       input: { userId: testUserId, test: "data" },
       output: { result: "ok" },
-      ts: new Date().toISOString(),
+      ts: clock.now().toISOString(),
       blocked: false,
     });
 

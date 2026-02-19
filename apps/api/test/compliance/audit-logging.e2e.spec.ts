@@ -47,7 +47,7 @@ describe("audit-logging (E2E)", () => {
     await pool.query(`DELETE FROM action_logs WHERE user_id = $1`, [testUserId]);
   });
 
-  async function getAuditLogs(actionPattern?: string): Promise<any[]> {
+  async function getAuditLogs(actionPattern?: string): Promise<Record<string, unknown>[]> {
     const query = actionPattern
       ? `SELECT * FROM action_logs WHERE user_id = $1 AND action LIKE $2 ORDER BY created_at DESC`
       : `SELECT * FROM action_logs WHERE user_id = $1 ORDER BY created_at DESC`;

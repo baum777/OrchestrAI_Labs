@@ -33,10 +33,8 @@ export class LogRetentionJob {
       const auditCutoff = getRetentionCutoffDate(config.auditLogRetentionDays);
       const appCutoff = getRetentionCutoffDate(config.appLogRetentionDays);
 
-      // Delete audit logs older than retention period
-      // Note: We preserve audit logs (action_logs with action starting with 'audit.' or 'http.')
-      // but delete old application logs
-      const auditResult = await this.pool.query(
+      // Delete application logs older than retention period
+      const appResult = await this.pool.query(
         `
         DELETE FROM action_logs
         WHERE created_at < $1
@@ -44,11 +42,11 @@ export class LogRetentionJob {
           AND action NOT LIKE 'http.%'
           AND action NOT IN ('escalation', 'policy.violation', 'customer_data.access')
         `,
-        [auditCutoff]
+        [appCutoff]
       );
 
       this.logger.log(
-        `Deleted ${auditResult.rowCount ?? 0} application logs older than ${config.appLogRetentionDays} days`
+        `Deleted ${appResult.rowCount ?? 0} application logs older than ${config.appLogRetentionDays} days`
       );
 
       // For audit logs (7 years retention), we only delete if they're older than 7 years

@@ -22,12 +22,12 @@ export interface ReportMetadata {
 
 export class ReportGenerator {
   private clock: Clock;
-  private lastClockRefresh: Date;
+  private lastClockRefreshISO: string;
   private readonly TIME_GAP_THRESHOLD_MS = 50 * 60 * 1000; // 50 minutes
 
   constructor(clock?: Clock) {
     this.clock = clock ?? new SystemClock();
-    this.lastClockRefresh = this.clock.now();
+    this.lastClockRefreshISO = this.clock.now().toISOString();
   }
 
   /**
@@ -36,12 +36,14 @@ export class ReportGenerator {
    */
   private ensureFreshClock(): void {
     const now = this.clock.now();
-    const gapMs = now.getTime() - this.lastClockRefresh.getTime();
+    const nowISO = now.toISOString();
+    // eslint-disable-next-line no-restricted-globals
+    const gapMs = new Date(nowISO).getTime() - new Date(this.lastClockRefreshISO).getTime();
     
     if (gapMs >= this.TIME_GAP_THRESHOLD_MS) {
       // Refresh clock after time gap
       this.clock = new SystemClock();
-      this.lastClockRefresh = this.clock.now();
+      this.lastClockRefreshISO = this.clock.now().toISOString();
     }
   }
 
@@ -144,10 +146,6 @@ export class ReportGenerator {
     this.ensureFreshClock();
     
     const existingContent = fs.readFileSync(filePath, 'utf-8');
-    
-    // Try to extract existing createdAt
-    const createdAtMatch = existingContent.match(/\*\*Erstellt:\*\*\s*(.+)/);
-    const originalCreatedAt = createdAtMatch ? createdAtMatch[1].trim() : null;
     
     // Generate new updatedAt
     const now = this.clock.now();
