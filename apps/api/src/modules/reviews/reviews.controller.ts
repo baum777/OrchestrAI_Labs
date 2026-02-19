@@ -3,6 +3,7 @@ import { PG_POOL } from "../../db/db.module";
 import type { Pool } from "pg";
 import crypto from "node:crypto";
 import { PolicyEngine, PolicyError, type PolicyContext } from "@governance/policy/policy-engine";
+import { UserRolesService } from "../users/user-roles.service";
 
 function sha256(input: string) {
   return crypto.createHash("sha256").update(input).digest("hex");
@@ -16,7 +17,8 @@ function generateToken(): string {
 export class ReviewsController {
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
-    private readonly policyEngine: PolicyEngine
+    private readonly policyEngine: PolicyEngine,
+    private readonly userRolesService: UserRolesService
   ) {}
 
   private get policyEngineInstance(): PolicyEngine {
@@ -36,10 +38,16 @@ export class ReviewsController {
 
   @Post(":id/approve")
   async approve(@Param("id") id: string, @Body() body: { reviewerUserId: string; reviewerRoles?: string[]; comment?: string }) {
+    // Resolve roles from DB if not provided in request (Phase 2: RBAC integration)
+    let roles = body.reviewerRoles ?? [];
+    if (roles.length === 0) {
+      roles = await this.userRolesService.getRoles(body.reviewerUserId);
+    }
+    
     // PolicyEngine authorization: enforce reviewer role
     const policyCtx: PolicyContext = {
       userId: body.reviewerUserId,
-      roles: body.reviewerRoles ?? [],
+      roles,
     };
     
     try {
@@ -104,10 +112,16 @@ export class ReviewsController {
 
   @Post(":id/reject")
   async reject(@Param("id") id: string, @Body() body: { reviewerUserId: string; reviewerRoles?: string[]; comment?: string }) {
+    // Resolve roles from DB if not provided in request (Phase 2: RBAC integration)
+    let roles = body.reviewerRoles ?? [];
+    if (roles.length === 0) {
+      roles = await this.userRolesService.getRoles(body.reviewerUserId);
+    }
+    
     // PolicyEngine authorization: enforce reviewer role
     const policyCtx: PolicyContext = {
       userId: body.reviewerUserId,
-      roles: body.reviewerRoles ?? [],
+      roles,
     };
     
     try {

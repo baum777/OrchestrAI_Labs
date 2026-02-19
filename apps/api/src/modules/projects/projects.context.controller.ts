@@ -1,13 +1,15 @@
-import { Body, Controller, Get, Param, Put, BadRequestException, Inject } from "@nestjs/common";
+import { Body, Controller, Get, Param, Put, BadRequestException, Inject, UnauthorizedException } from "@nestjs/common";
 import { ProjectsService } from "./projects.service";
 import { PostgresActionLogger } from "../../runtime/postgres-action-logger";
 import type { ProjectPhase } from "@shared/types/project-phase";
+import { PolicyEngine, PolicyError, type PolicyContext } from "@governance/policy/policy-engine";
 
 @Controller("projects")
 export class ProjectsContextController {
   constructor(
     private readonly projects: ProjectsService,
-    @Inject(PostgresActionLogger) private readonly logger: PostgresActionLogger
+    @Inject(PostgresActionLogger) private readonly logger: PostgresActionLogger,
+    private readonly policyEngine: PolicyEngine
   ) {}
 
   @Get(":projectId/context")
@@ -22,7 +24,7 @@ export class ProjectsContextController {
   @Put(":projectId/phase")
   async updatePhase(
     @Param("projectId") projectId: string,
-    @Body() body: { phase: ProjectPhase }
+    @Body() body: { phase: ProjectPhase; userId?: string; clientId?: string }
   ) {
     if (!projectId || projectId.trim().length === 0) {
       throw new BadRequestException("projectId is required");
@@ -37,12 +39,32 @@ export class ProjectsContextController {
       throw new BadRequestException(`phase must be one of: ${validPhases.join(", ")}`);
     }
 
-    // For MVP: use "system" as agentId/userId if not available from context
-    // In production, this should come from auth context
+    // Extract userId from body or use "system" as fallback (MVP)
+    // In production, this should come from auth context (JWT)
+    const userId = body.userId || "system";
+    const clientId = body.clientId;
     const agentId = "system";
-    const userId = "system";
 
-    await this.projects.updatePhase(projectId.trim(), body.phase, this.logger, agentId, userId);
+    // PHASE 2: PolicyEngine authorization (RBAC enforcement)
+    const policyCtx: PolicyContext = {
+      userId,
+      projectId: projectId.trim(),
+      clientId,
+    };
+
+    try {
+      await this.policyEngine.authorize(policyCtx, "project.phase.update", {
+        projectId: projectId.trim(),
+        phase: body.phase,
+      });
+    } catch (error) {
+      if (error instanceof PolicyError) {
+        throw new UnauthorizedException(`Project phase update denied: ${error.message}`);
+      }
+      throw error;
+    }
+
+    await this.projects.updatePhase(projectId.trim(), body.phase, this.logger, agentId, userId, clientId);
     return { ok: true, projectId: projectId.trim(), phase: body.phase };
   }
 }

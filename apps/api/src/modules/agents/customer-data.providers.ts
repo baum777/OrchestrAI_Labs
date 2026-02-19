@@ -22,13 +22,14 @@ export function createLicenseManager(): LicenseManager {
 }
 
 /**
- * Create PolicyEngine instance with LicenseManager and ConsentStore.
+ * Create PolicyEngine instance with LicenseManager, ConsentStore, and PermissionResolver.
  */
 export function createPolicyEngine(
   licenseManager?: LicenseManager,
-  consentStore?: ConsentStore
+  consentStore?: ConsentStore,
+  permissionResolver?: import("@governance/policy/policy-engine").PermissionResolver
 ): PolicyEngine {
-  return new PolicyEngine(new SystemClock(), licenseManager, consentStore);
+  return new PolicyEngine(new SystemClock(), licenseManager, consentStore, permissionResolver);
 }
 
 /**
