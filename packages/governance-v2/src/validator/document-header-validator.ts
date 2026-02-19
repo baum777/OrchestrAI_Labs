@@ -12,7 +12,8 @@ import { SystemClock } from '../runtime/clock.js';
 import { 
   validateTimestampIntegrity, 
   registerTimestampCorrectionCallback,
-  timestampMonitoring
+  timestampMonitoring,
+  formatBerlinDate
 } from '@agent-system/shared';
 import fs from 'node:fs';
 
@@ -309,6 +310,38 @@ export class DocumentHeaderValidator {
     }
 
     return null;
+  }
+
+  /**
+   * Validates that report date matches current Berlin date.
+   * Used for reports that require fresh date (e.g., audit reports).
+   * 
+   * @param createdAt - ISO-8601 timestamp string from report header
+   * @param requiresFreshDate - If true, validates date freshness (default: false)
+   * @returns Validation reason if invalid, null if valid
+   */
+  validateReportFreshness(createdAt: string, requiresFreshDate: boolean = false): string | null {
+    if (!requiresFreshDate) {
+      return null; // Skip validation if not required
+    }
+
+    try {
+      const createdAtDate = this.clock.parseISO(createdAt);
+      if (isNaN(createdAtDate.getTime())) {
+        return 'invalid_created_at_format';
+      }
+
+      const berlinToday = formatBerlinDate(this.clock.now());
+      const reportDate = formatBerlinDate(createdAtDate);
+
+      if (reportDate !== berlinToday) {
+        return 'report_date_mismatch';
+      }
+
+      return null;
+    } catch (error) {
+      return 'report_date_validation_error';
+    }
   }
 
   /**
