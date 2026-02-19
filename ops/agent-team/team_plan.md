@@ -26,6 +26,48 @@
 | CUSTOMER DATA PLANE — Step 2: PolicyEngine + Governance Hardening | @teamlead_orchestrator | planning | `packages/policy/**` or `packages/governance/**`, `apps/api/src/modules/**` | 2 | PolicyEngine Spec + Plan Update | - |
 | CUSTOMER DATA PLANE — Step 3: Scalability, Onboarding & Operational Stability | @teamlead_orchestrator | planning | `docs/**`, `packages/customer-data/**`, `apps/api/src/modules/projects/**`, `infrastructure/db/migrations/**` | 2 | Onboarding Framework Spec + Plan Update | - |
 | CUSTOMER DATA PLANE — Step 1-3 Integration | @implementer_codex | in_progress | `packages/customer-data/**`, `packages/governance/**`, `apps/api/src/modules/**`, `infrastructure/db/migrations/**` | 3 | Full Integration Implementation | Reviewer Approval Required |
+| ANALYTICS — v1 Read-only KPIs | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**` | 3 | Read-only analytics + logging audit | - |
+
+---
+
+## ANALYTICS — v1 Read-only KPIs
+
+**Owner:** @implementer_codex  
+**Autonomy Tier:** 3 (execute-with-approval)  
+**Layer:** implementation  
+**Status:** in_progress
+
+**Scope:**
+- `apps/api/src/modules/analytics/**` (new module)
+- Read-only aggregation over action_logs, review_requests, review_actions
+
+**Structural Model:**
+```
+apps/api/src/modules/analytics/
+├── analytics.module.ts
+├── analytics.controller.ts
+├── analytics.service.ts
+└── dto/
+    └── analytics-query.dto.ts
+```
+
+**Deliverables:**
+- GET /analytics/overview, /skills, /reviews, /governance, /time
+- from/to range (default 7d, max 90d), optional projectId/clientId/agentId filters
+- Aggregated KPIs only, no PII, no raw payload_json
+
+**Definition of Done:**
+- [ ] All endpoints return correct KPIs
+- [ ] Tests pass (service unit + controller smoke)
+- [ ] Logging integrity audit documented in team_findings.md
+- [ ] pnpm -r lint, pnpm -r test pass
+
+**Risks:**
+- **Risk 1:** Logging integrity — Impact: medium — Mitigation: Pre-implementation audit, enrichment plan if gaps
+- **Risk 2:** DB performance — Impact: low — Mitigation: Indexes on action, ts, projectId, agentId, clientId
+
+**Rollback Plan:**
+- Remove AnalyticsModule wiring from AppModule
 
 ---
 

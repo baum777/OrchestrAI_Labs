@@ -16,6 +16,66 @@
 
 ---
 
+## ANALYTICS v1 — Logging Integrity Audit (2026-02-19T19:00:00Z)
+
+### 1. Event Inventory (ActionLogger Usage)
+
+| action | file location | fields logged | format |
+|--------|---------------|---------------|--------|
+| TIME_GAP_DETECTED | orchestrator.ts:182 | agentId, userId, projectId, clientId, action, input{gapMin,lastSeen,nowIso}, output{sessionMode,threshold}, ts, blocked | flat + input/output JSON |
+| skill.blocked.* | orchestrator.ts | agentId, userId, projectId, clientId, action, input, output, ts, blocked, reason, skillId?, skillVersion?, skillBlockReason? | flat + JSON |
+| skill.executed / skill.failed | orchestrator.ts:398 | agentId, userId, projectId, clientId, action, input, output, ts, blocked, reason, skillId, skillVersion, skillRunId, skillStatus, skillDurationMs | flat + JSON |
+| skill.warn.deprecated | orchestrator.ts:332 | agentId, userId, projectId, clientId, action, input, output, ts, blocked, skillId, skillVersion, skillStatus | flat + JSON |
+| agent.run | orchestrator.ts:447 | agentId, userId, projectId, clientId, action, input{sessionMode}, output, ts | flat + JSON |
+| agent.blocked.* | orchestrator.ts | agentId, userId, projectId, clientId, action, input, output, ts, blocked, reason | flat + JSON |
+| escalation | orchestrator.ts, escalation-log.ts | agentId, userId, projectId, clientId, action, input{reason,details,context}, output{escalated,timestamp}, ts, blocked, reason | flat + input JSON |
+| decision.draft.created | orchestrator.ts:651 | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
+| decision.finalized | orchestrator.ts:689, decisions.service.ts | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
+| decision.draft.intent | decisions.service.ts:288 | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
+| agent.executed / agent.executed.commit | orchestrator.ts | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
+| project.phase.updated | projects.service.ts:84 | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
+| knowledge.search | knowledge.service.ts:77 | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
+| review.access.denied | reviews.controller.ts:60,134 | user_id, agent_id, action, input_json, output_json, blocked, reason, created_at | direct INSERT (missing project_id, client_id) |
+| customer_data.access | agents.runtime.ts | agentId, userId, projectId, clientId, action, input, output{rowCount,fieldsReturned,latencyMs,sourceType,resultHash?}, ts | flat + JSON |
+| data.deletion.executed | data-deletion.service.ts:83 | agentId, userId, projectId?, clientId?, action, input, output, ts | flat + JSON |
+| http.* | audit-log.middleware.ts:100 | agentId, userId, projectId, clientId, action, input{method,path,query,body,headers}, output{statusCode,body,latencyMs}, ts, blocked, reason | flat + JSON |
+
+### 2. Field Integrity Matrix
+
+| field | Skill | Governance | Review | Status |
+|-------|-------|------------|--------|--------|
+| skillId | present (optional) | - | - | present |
+| skillVersion | present (optional) | - | - | present |
+| skillRunId | present (skill execution) | - | - | present |
+| skillStatus | present (optional) | - | - | present |
+| skillDurationMs | present (skill execution) | - | - | present |
+| skillBlockReason | present (blocked) | - | - | present |
+| action | present | present | present | present |
+| ts (UTC ISO) | present | present | present (via created_at) | present |
+| projectId | present | present | missing (review.access.denied) | inconsistent |
+| clientId | present | present | missing (review.access.denied) | inconsistent |
+| agentId | present | present | present | present |
+| reason | present (blocked) | present | present | present |
+| decisionHash | - | in output_json (customer_data) | - | present (enriched) |
+| reviewId | - | - | in input_json | present |
+| permission | - | - | in review_requests | present |
+| status | - | - | in review_requests | present |
+| commit_token_used | - | - | in review_requests | present |
+
+### 3. Logging Gaps Report
+
+- **Gap 1:** ReviewsController direct INSERT — project_id, client_id missing for review.access.denied. Impact: Analytics cannot filter by project/client. Mitigation: Acceptable for v1 (aggregate counts still work).
+- **Gap 2:** ReviewsController uses `now()` instead of Clock — Minor; created_at is server time. No change required for analytics.
+- **Conclusion:** Logging is sufficient for Analytics v1. No critical gaps that would block implementation.
+
+### 4. Minimal Logging Enrichment Plan
+
+**Not required** for Analytics v1. Optional future enhancement: Add project_id, client_id to review.access.denied INSERT when review context is available.
+
+**Logging Readiness Score: 8/10** — Core fields present, minor inconsistency in review.access.denied path.
+
+---
+
 ## Entries
 
 - 2026-02-15T17:57:43Z — [GPT-5.2] Test-Harness Drift: `apps/api/package.json` referenziert `test/golden-tasks/golden-tasks.e2e.spec.ts`, aber `apps/api/test/**` enthält aktuell nur `test/app.e2e-spec.ts` Placeholder — `pnpm -C apps/api test:golden` ist im IST-Zustand nicht ausführbar — Test-only Harness-Dateien (jest config + utils + golden specs) wiederherstellen/neu anlegen, ohne Produktcode zu ändern
