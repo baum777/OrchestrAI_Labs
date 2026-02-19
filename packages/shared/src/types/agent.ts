@@ -63,6 +63,7 @@ export type AgentProfile = {
   objectives: string[];
   permissions: Permission[];
   tools: ToolRef[];
+  allowedSkills?: string[]; // Optional: allowlisted skill IDs
   escalationRules: EscalationRule[];
   memoryScopes: MemoryScope[];
   reviewPolicy: ReviewPolicy;
