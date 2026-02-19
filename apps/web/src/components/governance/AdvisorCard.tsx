@@ -64,3 +64,4 @@ export function AdvisorCard({ advice, className = "" }: AdvisorCardProps) {
   );
 }
 
+
