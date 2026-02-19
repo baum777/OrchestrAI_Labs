@@ -12,6 +12,11 @@ type ExecuteDto = {
     permission: Permission;
     toolCalls: { tool: ToolRef; input: unknown }[];
   };
+  skillRequest?: {
+    skillId: string;
+    version?: string;
+    input: unknown;
+  };
 };
 
 @Controller("agents")
@@ -25,6 +30,7 @@ export class AgentsController {
       agentId: body.agentId,
       userMessage: body.userMessage,
       intendedAction: body.intendedAction,
+      skillRequest: body.skillRequest,
     });
   }
 }

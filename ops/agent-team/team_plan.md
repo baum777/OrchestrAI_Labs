@@ -20,6 +20,7 @@
 | PHASE 2 — Validation Engine | @implementer_codex | todo | `packages/governance-v2/**` | 3 | Workstream Validator implementieren | Reviewer Approval |
 | PHASE 3 — Clarification Layer | @implementer_codex | todo | `packages/governance-v2/clarification/**` | 3 | Ambiguity Detection implementieren | - |
 | PHASE 4 — CI Integration + Continuous Audit | @observability_eval | todo | `.github/workflows/**`, `packages/governance-v2/audit/**` | 2 | Governance Linter erstellen | - |
+| SKILLS — Phase 0-1: Scaffold + Pilot Skill | @implementer_codex | in_progress | `packages/skills/**`, `packages/agent-runtime/src/orchestrator/**`, `apps/api/src/modules/agents/**` | 3 | Implement skill layer foundation + pilot skill | Reviewer Approval Required |
 | CUSTOMER DATA PLANE — Step 1: Read-only Interface | @teamlead_orchestrator | planning | `packages/customer-data/**`, `apps/api/src/modules/agents/**` | 2 | Contracts Spec + Plan Update | - |
 | CUSTOMER DATA PLANE — Step 2: PolicyEngine + Governance Hardening | @teamlead_orchestrator | planning | `packages/policy/**` or `packages/governance/**`, `apps/api/src/modules/**` | 2 | PolicyEngine Spec + Plan Update | - |
 | CUSTOMER DATA PLANE — Step 3: Scalability, Onboarding & Operational Stability | @teamlead_orchestrator | planning | `docs/**`, `packages/customer-data/**`, `apps/api/src/modules/projects/**`, `infrastructure/db/migrations/**` | 2 | Onboarding Framework Spec + Plan Update | - |
@@ -183,6 +184,91 @@ packages/governance-v2/audit/
 - **Risk 1:** CI Runtime Verlängerung
   - **Impact:** low
   - **Mitigation:** Audit in separatem Job, kann parallel laufen
+
+---
+
+## SKILLS — Phase 0-1: Scaffold + Pilot Skill
+
+**Owner:** @implementer_codex  
+**Reviewer:** @reviewer_claude  
+**Autonomy Tier:** 3 (execute-with-approval)  
+**Layer:** implementation  
+**Status:** in_progress
+
+**Scope:**
+- `packages/skills/**` (new package)
+- `packages/agent-runtime/src/orchestrator/orchestrator.ts` (skill execution path)
+- `apps/api/src/modules/agents/**` (DTO support, registry wiring)
+- `packages/shared/src/types/agent.ts` (optional skills field)
+
+**Structural Model:**
+```
+packages/skills/
+├── src/
+│   ├── spec/              # TypeScript interfaces, JSON Schema
+│   ├── registry/           # Manifest loading, discovery
+│   ├── loader/             # Lazy loading (instructions, resources)
+│   ├── executor/           # Skill compilation and execution
+│   ├── telemetry/          # Telemetry collection
+│   └── templates/          # Templates for skill authoring
+└── skills/                 # Skill implementations
+    └── governance.workstream_validate/
+        ├── manifest.json
+        └── instructions.md
+```
+
+**Deliverables:**
+- Skill layer foundation (spec, registry, loader, executor)
+- Feature-flagged skill execution path in Orchestrator
+- Pilot skill: governance.workstream_validate
+- Unit tests (FakeClock where relevant)
+- Integration test for skill execution path
+- Documentation updates
+
+**Definition of Done:**
+- [ ] packages/skills scaffold created (spec, registry, loader, executor)
+- [ ] Feature flag SKILLS_ENABLED (default: false) implemented
+- [ ] Orchestrator skill execution path (feature-flagged, no breaking changes)
+- [ ] Pilot skill governance.workstream_validate implemented
+- [ ] Input schema validation working
+- [ ] Deterministic compilation to tool calls OR direct validator call
+- [ ] Action logs include skillId/version/skillRunId
+- [ ] All time operations use Clock interface
+- [ ] Unit tests pass (registry, loader, executor)
+- [ ] Integration test passes (Orchestrator + skill execution)
+- [ ] With SKILLS_ENABLED=false, existing behavior unchanged
+- [ ] No ToolRouter bypass (skills execute via ToolRouter)
+- [ ] No lint violations (Date/setTimeout restrictions)
+- [ ] team_plan.md updated
+- [ ] team_progress.md updated
+
+**Risks:**
+- **Risk 1:** Breaking changes in Orchestrator
+  - **Impact:** high (regression)
+  - **Mitigation:** Feature flag, skill path separate from tool path, comprehensive tests
+- **Risk 2:** Skill execution bypasses governance
+  - **Impact:** high (security)
+  - **Mitigation:** Skills must go through Orchestrator governance hooks, no bypass
+- **Risk 3:** Performance impact (skill discovery/loading)
+  - **Impact:** low (startup time)
+  - **Mitigation:** Metadata-first discovery, lazy loading, in-memory caching
+- **Risk 4:** Non-deterministic skill compilation
+  - **Impact:** medium (replay-friendliness)
+  - **Mitigation:** Deterministic compiler, no LLM calls, fixed tool call sequences
+
+**Test Plan:**
+1. Unit tests: SkillRegistry, SkillLoader, SkillExecutor (with FakeClock)
+2. Integration test: Orchestrator + SkillExecutor + ToolRouter (mocked)
+3. E2E test: POST /agents/execute with skillRequest (SKILLS_ENABLED=true)
+4. Regression test: Existing tool flow unchanged (SKILLS_ENABLED=false)
+
+**Rollback Plan:**
+- Feature flag SKILLS_ENABLED=false disables skill execution path
+- Git revert all commits if needed
+- No database migrations (no schema changes)
+
+**Approval Gate:**
+- Touching `packages/agent-runtime/src/orchestrator/**` OR `apps/api/src/modules/agents/**` requires @reviewer_claude approval per policy_approval_rules.yaml
 
 ---
 
@@ -552,6 +638,7 @@ infrastructure/db/migrations/
 
 ## Approval Gates Needed
 
+- [ ] SKILLS Phase 0-1: Reviewer Approval (@reviewer_claude) erforderlich (touches agents/** per policy_approval_rules.yaml)
 - [ ] PHASE 2: Reviewer Approval (@reviewer_claude) erforderlich
 - [ ] CUSTOMER DATA PLANE WS2: Reviewer Approval (@reviewer_claude) erforderlich (touches agents/** per policy_approval_rules.yaml)
 - [ ] CUSTOMER DATA PLANE Step 2 WS2: Reviewer Approval (@reviewer_claude) erforderlich (touches agents/** AND governance/** per policy_approval_rules.yaml)
