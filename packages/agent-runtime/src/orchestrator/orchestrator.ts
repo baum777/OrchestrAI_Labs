@@ -2,10 +2,10 @@ import crypto from "node:crypto";
 import type { AgentProfile, Permission } from "@shared/types/agent";
 import { enforcePermission, enforceReviewGate } from "@governance/policies/enforcement";
 import type { ToolRouter, ToolContext, ToolCall } from "../execution/tool-router";
-import type { Clock } from "@agent-system/governance-v2/runtime/clock";
-import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
-import { loadState, saveState } from "@agent-system/governance-v2/runtime/runtime-state-store";
-import { calculateGapMinutes } from "@agent-system/governance-v2/runtime/time-utils";
+import type { Clock } from "@agent-system/governance-v2";
+import { SystemClock } from "@agent-system/governance-v2";
+import { loadState, saveState } from "@agent-system/governance-v2";
+import { calculateGapMinutes } from "@agent-system/governance-v2";
 
 export type AgentRunInput = {
   agentId: string;
@@ -92,12 +92,12 @@ export interface GovernanceWorkstreamValidator {
 
 // Optional skill dependencies (feature-flagged)
 interface SkillRegistry {
-  getManifest(skillId: string, version?: string): { id: string; version: string; status: string; requiredPermissions: string[]; requiredTools: string[]; sideEffects: Array<{ type: string }>; reviewPolicy: { mode: string }; customerDataAccess?: { enabled: boolean } } | null;
+  getManifest(skillId: string, version?: string): import('@agent-system/skills').SkillManifest | null;
 }
 
 interface SkillExecutor {
-  compile(manifest: unknown, instructions: string, input: unknown, context: unknown): Promise<{ skillId: string; version: string; input: unknown; toolCalls: ToolCall[]; reviewRequired: boolean; reviewPolicy: { mode: string }; executionMode: string }>;
-  execute(plan: unknown, context: unknown, toolRouter?: ToolRouter): Promise<{ ok: boolean; output?: unknown; error?: string; toolCalls?: ToolCall[]; telemetry?: { skillRunId: string } }>;
+  compile(manifest: import('@agent-system/skills').SkillManifest, instructions: string, input: unknown, context: unknown): Promise<import('@agent-system/skills').SkillPlan>;
+  execute(plan: import('@agent-system/skills').SkillPlan, context: unknown, toolRouter?: ToolRouter): Promise<{ ok: boolean; output?: unknown; error?: string; toolCalls?: ToolCall[]; telemetry?: { skillRunId: string } }>;
 }
 
 interface SkillLoader {
@@ -232,7 +232,7 @@ export class Orchestrator {
         return { status: "blocked", data: { reason: "SKILLS_DEPENDENCIES_MISSING" } };
       }
 
-      const manifest = this.skillRegistry.getManifest(input.skillRequest.skillId, input.skillRequest.version);
+      const manifest: import('@agent-system/skills').SkillManifest | null = this.skillRegistry.getManifest(input.skillRequest.skillId, input.skillRequest.version);
       if (!manifest) {
         await this.logger.append({
           agentId: profile.id,
@@ -362,7 +362,7 @@ export class Orchestrator {
             agentId: profile.id,
             permission: 'skill.execute' as Permission,
             payload: { skillId: input.skillRequest.skillId, version: manifest.version, input: input.skillRequest.input },
-            reviewerRoles: manifest.reviewPolicy.reviewerRoles || [],
+            reviewerRoles: manifest.reviewPolicy.reviewerRoles ?? [],
             createdAt: timestamp,
             projectId: ctx.projectId,
             clientId: ctx.clientId,
@@ -405,10 +405,15 @@ export class Orchestrator {
           version: manifest.version,
           input: input.skillRequest.input,
         },
-        output: {
-          ...result.output,
-          skillRunId: result.telemetry?.skillRunId,
-        },
+        output: (() => {
+          const baseOutput = result.output && typeof result.output === 'object' && !Array.isArray(result.output) 
+            ? result.output as Record<string, unknown> 
+            : {};
+          return {
+            ...baseOutput,
+            skillRunId: result.telemetry?.skillRunId,
+          };
+        })(),
         ts: this.clock.now().toISOString(),
         blocked: !result.ok,
         reason: result.error,

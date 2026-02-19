@@ -30,12 +30,12 @@ export class V1PolicyEngineAdapter {
   /**
    * Authorize an operation (V1 method wrapped with V2 Clock).
    */
-  authorize(
+  async authorize(
     ctx: PolicyContext,
     operation: string,
     params: Record<string, unknown>
-  ): PolicyDecision {
-    return this.v1Engine.authorize(ctx, operation, params);
+  ): Promise<PolicyDecision> {
+    return await this.v1Engine.authorize(ctx, operation, params);
   }
 
   /**

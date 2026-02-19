@@ -19,7 +19,19 @@ import type { LicenseManager } from "@governance/license/license-manager";
 import { SkillRegistry, SkillLoader, SkillExecutor } from "@agent-system/skills";
 import { WorkstreamValidator } from "@agent-system/governance-v2";
 
-const profilesDir = path.join(process.cwd(), "packages/agent-runtime/src/profiles");
+// Resolve profiles directory relative to workspace root
+// In tests, process.cwd() is apps/api, so we need to go up two levels
+// In production, process.cwd() is workspace root
+const getWorkspaceRoot = (): string => {
+  const cwd = process.cwd();
+  // Check if we're in apps/api directory (Windows or Unix paths)
+  if (cwd.endsWith('apps/api') || cwd.endsWith('apps\\api') || cwd.includes(path.join('apps', 'api'))) {
+    return path.resolve(cwd, '../..');
+  }
+  return cwd;
+};
+const workspaceRoot = getWorkspaceRoot();
+const profilesDir = path.join(workspaceRoot, "packages/agent-runtime/src/profiles");
 const loader = new ProfileLoader({ profilesDir });
 loader.loadAll();
 
@@ -30,7 +42,7 @@ let skillLoader: SkillLoader | undefined;
 let skillExecutor: SkillExecutor | undefined;
 
 if (skillsEnabled) {
-  const skillsDir = path.join(process.cwd(), "packages/skills/skills");
+  const skillsDir = path.join(workspaceRoot, "packages/skills/skills");
   skillRegistry = new SkillRegistry({ skillsDir });
   skillRegistry.loadAll();
   skillLoader = new SkillLoader(skillRegistry, skillsDir);

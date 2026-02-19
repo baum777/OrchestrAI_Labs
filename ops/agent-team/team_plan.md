@@ -611,6 +611,74 @@ infrastructure/db/migrations/
 
 ---
 
+## CI STABILIZATION — TypeScript Errors in agent-runtime
+
+**Owner:** @teamlead_orchestrator  
+**Reviewer:** @reviewer_claude  
+**Autonomy Tier:** 2 (draft-only)  
+**Layer:** implementation  
+**Status:** in_progress
+
+**Scope:**
+- `packages/agent-runtime/src/orchestrator/orchestrator.ts` (TypeScript import/type fixes)
+
+**Structural Model:**
+```
+packages/agent-runtime/src/orchestrator/
+└── orchestrator.ts              (fix imports, type definitions)
+```
+
+**Deliverables:**
+- Fix missing module imports (runtime-state-store, time-utils)
+- Resolve SkillManifest type mismatches
+- Fix reviewPolicy.reviewerRoles type access
+- Fix result.output spread type error
+- Ensure no Clock policy regressions
+
+**Definition of Done:**
+- [ ] All TypeScript compilation errors resolved
+- [ ] `pnpm -r lint` passes (except web-app config issue)
+- [ ] `pnpm -C apps/api test:compliance` passes
+- [ ] No Clock policy regressions (all time operations use Clock interface)
+- [ ] No governance score regression
+- [ ] CI fully green (secrets-scan + lint jobs)
+
+**Risks:**
+- **Risk 1:** Type changes break existing code
+  - **Impact:** medium (regression)
+  - **Mitigation:** Careful type alignment, comprehensive tests
+- **Risk 2:** Import path changes break module resolution
+  - **Impact:** medium (build failures)
+  - **Mitigation:** Verify package.json exports, test imports
+- **Risk 3:** Clock policy regression
+  - **Impact:** high (governance violation)
+  - **Mitigation:** No new Date() usage, all time via Clock interface
+
+**Workstreams:**
+
+**WS1 — Import Path Fixes** (Owner: @teamlead_orchestrator, Autonomy: 2)
+- Fix `@agent-system/governance-v2/runtime/runtime-state-store` → `@agent-system/governance-v2`
+- Fix `@agent-system/governance-v2/runtime/time-utils` → `@agent-system/governance-v2`
+- Verify package.json exports are correct
+- Deliverable: Corrected import statements
+
+**WS2 — Type Definition Alignment** (Owner: @teamlead_orchestrator, Autonomy: 2)
+- Align SkillRegistry.getManifest() return type with SkillManifest interface
+- Fix reviewPolicy.reviewerRoles optional property access
+- Fix result.output spread type (unknown → object check)
+- Deliverable: Type-safe code without any assertions
+
+**WS3 — Verification & Testing** (Owner: @teamlead_orchestrator, Autonomy: 2)
+- Run `pnpm -r lint` to verify no new errors
+- Run `pnpm -C apps/api test:compliance` to verify tests pass
+- Verify Clock policy compliance (no new Date() usage)
+- Deliverable: All tests passing, CI green
+
+**Approval Gate:**
+- No approval required (TypeScript fixes only, no logic changes)
+
+---
+
 ## Milestones
 
 - [x] M1: PHASE 1 abgeschlossen (Deterministic Structure Hardening) — 2026-02-18T11:57:00+01:00

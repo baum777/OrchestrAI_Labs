@@ -125,7 +125,7 @@ export class SkillExecutor {
           return {
             ok: result.status === 'pass',
             output: result,
-            error: result.status !== 'pass' ? (result.reasons?.join('; ') || result.reason || 'Validation failed') : undefined,
+            error: result.status !== 'pass' ? (result.reasons?.join('; ') || 'Validation failed') : undefined,
             toolCalls: [],
             telemetry,
           };
