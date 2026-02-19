@@ -11,6 +11,8 @@ import {
   createCapabilityRegistry,
   createLicenseManager,
 } from "./customer-data.providers";
+import { ConsentService } from "../users/consent.service";
+import { UsersModule } from "../users/users.module";
 import type { Pool } from "pg";
 import type { PolicyEngine } from "@governance/policy/policy-engine";
 import type { LicenseManager } from "@governance/license/license-manager";
@@ -20,7 +22,7 @@ import type {
 } from "@agent-system/customer-data";
 
 @Module({
-  imports: [DbModule],
+  imports: [DbModule, UsersModule],
   controllers: [AgentsController],
   providers: [
     PostgresActionLogger,
@@ -31,8 +33,9 @@ import type {
     },
     {
       provide: PolicyEngine,
-      useFactory: (licenseManager: LicenseManager) => createPolicyEngine(licenseManager),
-      inject: ["LicenseManager"],
+      useFactory: (licenseManager: LicenseManager, consentService: ConsentService) => 
+        createPolicyEngine(licenseManager, consentService),
+      inject: ["LicenseManager", ConsentService],
     },
     {
       provide: "MultiSourceConnectorRegistry",

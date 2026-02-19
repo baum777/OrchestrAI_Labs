@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-18T16:00:00+01:00  
+**Last Updated:** 2026-02-19T12:00:00+01:00  
 **Definition of Done:**
 - [ ] Alle Einträge haben Timestamp, Owner, Action, Result, Links/Refs, Next
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -17,6 +17,8 @@
 ---
 
 ## Entries
+
+- 2026-02-19T12:00:00+01:00 — [@implementer_codex] Phase 1 Compliance Hardening E2E-Tests abgeschlossen — E2E-Tests für Consent-Management (3 Tests: Consent fehlt → blockiert, Consent grant → unblocked, Consent revoke → re-blocked) und Data-Deletion (4 Tests: Deletion anonymisiert korrekt, Unauthorized blockiert, Self-deletion funktioniert, Idempotent) implementiert, Auth Guard für DELETE-Endpoint implementiert (SelfOrAdminGuard mit X-User-Id Header Support für MVP), alle Linter-Fehler behoben — `apps/api/test/compliance/consent-management.e2e.spec.ts`, `apps/api/test/compliance/data-deletion.e2e.spec.ts`, `apps/api/src/auth/self-or-admin.guard.ts`, `apps/api/src/modules/users/data-deletion.controller.ts` — Tests ausführen, CI-Integration prüfen
 
 - 2026-02-18T19:00:00Z — [@implementer_codex] SKILLS Phase 0-1 implementation completed — packages/skills scaffold created (spec, registry, loader, executor, telemetry), feature flag SKILLS_ENABLED implemented, Orchestrator skill execution path added (feature-flagged, no breaking changes), API DTO updated for skillRequest, pilot skill governance.workstream_validate implemented (direct mode, uses WorkstreamValidator), unit tests added (registry, loader, executor with FakeClock), integration test added (Orchestrator + skill execution), all time operations use Clock interface, no ToolRouter bypass — `packages/skills/**`, `packages/agent-runtime/src/orchestrator/orchestrator.ts`, `apps/api/src/modules/agents/**` — Run tests, verify SKILLS_ENABLED=false behavior unchanged
 - 2026-02-18T18:00:00Z — [@implementer_codex] SKILLS Phase 0-1 workstream added to team_plan.md — Workstream defined: owner=@implementer_codex, autonomy tier=3, scope=packages/skills/** + orchestrator + agents module, risks documented, test plan defined, rollback plan defined, approval gate noted — `ops/agent-team/team_plan.md` — Start implementation: create packages/skills scaffold

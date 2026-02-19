@@ -2,7 +2,7 @@ import { Body, Controller, Get, Inject, Param, Post, Query, UnauthorizedExceptio
 import { PG_POOL } from "../../db/db.module";
 import type { Pool } from "pg";
 import crypto from "node:crypto";
-import { PolicyEngine, type PolicyContext, PolicyError } from "@governance/policy/policy-engine";
+import { PolicyEngine, PolicyError, type PolicyContext } from "@governance/policy/policy-engine";
 
 function sha256(input: string) {
   return crypto.createHash("sha256").update(input).digest("hex");
@@ -18,6 +18,10 @@ export class ReviewsController {
     @Inject(PG_POOL) private readonly pool: Pool,
     private readonly policyEngine: PolicyEngine
   ) {}
+
+  private get policyEngineInstance(): PolicyEngine {
+    return this.policyEngine;
+  }
 
   @Get()
   async list(@Query("status") status?: string) {
@@ -39,7 +43,7 @@ export class ReviewsController {
     };
     
     try {
-      policyEngine.authorize(policyCtx, "review.approve", { reviewId: id });
+      await this.policyEngine.authorize(policyCtx, "review.approve", { reviewId: id });
     } catch (error) {
       if (error instanceof PolicyError) {
         // Log access denied
@@ -107,7 +111,7 @@ export class ReviewsController {
     };
     
     try {
-      policyEngine.authorize(policyCtx, "review.reject", { reviewId: id });
+      await this.policyEngine.authorize(policyCtx, "review.reject", { reviewId: id });
     } catch (error) {
       if (error instanceof PolicyError) {
         // Log access denied

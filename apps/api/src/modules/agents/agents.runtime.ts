@@ -282,7 +282,7 @@ const toolHandlers = (
       };
       
       try {
-        const decision = policyEngine.authorize(
+        const decision = await policyEngine.authorize(
           policyCtx,
           "customer_data.executeReadModel",
           data
@@ -440,7 +440,7 @@ const toolHandlers = (
       };
       
       try {
-        const decision = policyEngine.authorize(
+        const decision = await policyEngine.authorize(
           policyCtx,
           "customer_data.getEntity",
           data
@@ -573,7 +573,7 @@ const toolHandlers = (
       };
       
       try {
-        const decision = policyEngine.authorize(
+        const decision = await policyEngine.authorize(
           policyCtx,
           "customer_data.search",
           data

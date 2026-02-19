@@ -17,19 +17,26 @@ import { PolicyError } from "./errors.js";
 import { containsRawSql, applyConstraints, validateAllowedFields } from "@agent-system/customer-data";
 import type { Clock } from "@agent-system/governance-v2/runtime/clock";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
-import type { PolicyViolationAdvice } from "@shared/types/governance";
+import type { PolicyViolationAdvice } from "@agent-system/shared";
 import type { LicenseManager } from "../license/license-manager.js";
 
-// Re-export PolicyError for convenience
+// Re-export PolicyError and types for convenience
 export { PolicyError } from "./errors.js";
+export type { PolicyContext, PolicyDecision } from "./types.js";
+
+export interface ConsentStore {
+  hasConsent(userId: string, consentType: string): Promise<boolean>;
+}
 
 export class PolicyEngine {
   private readonly clock: Clock;
   private readonly licenseManager?: LicenseManager;
+  private readonly consentStore?: ConsentStore;
 
-  constructor(clock?: Clock, licenseManager?: LicenseManager) {
+  constructor(clock?: Clock, licenseManager?: LicenseManager, consentStore?: ConsentStore) {
     this.clock = clock ?? new SystemClock();
     this.licenseManager = licenseManager;
+    this.consentStore = consentStore;
   }
 
   /**
@@ -141,12 +148,18 @@ export class PolicyEngine {
 
   /**
    * Authorize an operation. Throws PolicyError if unauthorized.
+   * 
+   * @param ctx - Policy context (userId, clientId, roles, permissions)
+   * @param operation - Operation identifier (e.g., "customer_data.executeReadModel")
+   * @param params - Operation parameters
+   * @returns PolicyDecision if authorized
+   * @throws PolicyError if unauthorized (including missing consent)
    */
-  authorize(
+  async authorize(
     ctx: PolicyContext,
     operation: string,
     params: Record<string, unknown>
-  ): PolicyDecision {
+  ): Promise<PolicyDecision> {
     const timestamp = this.clock.now().toISOString();
     
     // Rule 1: Role-Based Access Control (RBAC)
@@ -174,6 +187,26 @@ export class PolicyEngine {
           operation,
           this.getAdvisorAdvice("CAPABILITY_MISSING")
         );
+      }
+      
+      // Rule 2.5: Consent Check (DSGVO Art. 6)
+      if (this.consentStore) {
+        const hasConsent = await this.consentStore.hasConsent(ctx.userId, "data_processing");
+        if (!hasConsent) {
+          throw new PolicyError(
+            "Consent required for data processing (DSGVO Art. 6)",
+            "CONSENT_MISSING",
+            ctx,
+            operation,
+            {
+              code: "CONSENT_MISSING",
+              advisorTitle: "Einwilligung erforderlich",
+              humanExplanation: "Für die Datenverarbeitung ist Ihre Einwilligung erforderlich",
+              remedyStep: "Bitte erteilen Sie Ihre Einwilligung über /users/:userId/consent",
+              safetyLevel: "warning",
+            }
+          );
+        }
       }
       
       // Rule 3: ClientId Scoping

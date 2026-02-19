@@ -4,7 +4,7 @@
  * Factory functions for PolicyEngine, ConnectorRegistry, and CapabilityRegistry.
  */
 
-import { PolicyEngine } from "@governance/policy/policy-engine";
+import { PolicyEngine, type ConsentStore } from "@governance/policy/policy-engine";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 import { InMemoryLicenseManager, type LicenseManager } from "@governance/license/license-manager";
 import {
@@ -22,10 +22,13 @@ export function createLicenseManager(): LicenseManager {
 }
 
 /**
- * Create PolicyEngine instance with LicenseManager.
+ * Create PolicyEngine instance with LicenseManager and ConsentStore.
  */
-export function createPolicyEngine(licenseManager?: LicenseManager): PolicyEngine {
-  return new PolicyEngine(new SystemClock(), licenseManager);
+export function createPolicyEngine(
+  licenseManager?: LicenseManager,
+  consentStore?: ConsentStore
+): PolicyEngine {
+  return new PolicyEngine(new SystemClock(), licenseManager, consentStore);
 }
 
 /**
