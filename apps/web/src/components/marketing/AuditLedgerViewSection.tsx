@@ -1,5 +1,7 @@
 "use client";
 
+import { clock } from "../../lib/clock.js";
+
 export function AuditLedgerViewSection() {
   // Sample audit log entries for demo
   const sampleLogs = [
@@ -33,7 +35,7 @@ export function AuditLedgerViewSection() {
   ];
 
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
+    const date = clock.parseISO(timestamp);
     return date.toLocaleString("de-DE", {
       day: "2-digit",
       month: "2-digit",

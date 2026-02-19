@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { clock } from "../../lib/clock.js";
 
 // Note: In a real implementation, these would be imported from the packages
 // For now, we'll simulate the behavior client-side
@@ -55,12 +56,12 @@ export function InteractiveTrustDemo() {
         name,
         value: typeof value === "number" ? value : 0,
         previousValue: typeof value === "number" ? value * 0.9 : undefined, // Simulate previous value
-        timestamp: new Date().toISOString(),
+        timestamp: clock.now().toISOString(),
       }));
 
       // Simulate KPIParser processing
       // In production, this would call an API endpoint that uses KPIParser
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => clock.setTimeout(() => resolve(undefined), 1500));
 
       const trends = metrics.map((m) => {
         const delta = m.previousValue ? m.value - m.previousValue : 0;
@@ -110,8 +111,8 @@ export function InteractiveTrustDemo() {
       // In production, this would use the actual FakeClock and PolicyEngine
       // For demo purposes, we'll simulate two identical runs
 
-      // Simulate first run with fixed time
-      const fixedTime = new Date("2026-02-18T10:00:00.000Z");
+      // Simulate first run with fixed time (using clock.parseISO for governance compliance)
+      const _fixedTime = clock.parseISO("2026-02-18T10:00:00.000Z");
       
       // Create deterministic decision data (same as PolicyEngine does)
       const decisionData1 = {
@@ -142,7 +143,7 @@ export function InteractiveTrustDemo() {
       const hash2 = await generateHash(JSON.stringify(decisionData2));
 
       // Simulate processing delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => clock.setTimeout(() => resolve(undefined), 2000));
 
       const result: VerificationResult = {
         hash1,
@@ -305,7 +306,7 @@ export function InteractiveTrustDemo() {
       {/* Info Box */}
       <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
         <p className="text-xs text-gray-600">
-          <strong>Wie es funktioniert:</strong> Der "Verify Integrity" Button nutzt die{" "}
+          <strong>Wie es funktioniert:</strong> Der &quot;Verify Integrity&quot; Button nutzt die{" "}
           <code className="font-mono bg-gray-200 px-1 rounded">FakeClock</code> aus{" "}
           <code className="font-mono bg-gray-200 px-1 rounded">@packages/governance-v2</code>,{" "}
           um zwei identische Durchläufe zu simulieren. Bei deterministischen Systemen müssen die{" "}
