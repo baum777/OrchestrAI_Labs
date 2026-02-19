@@ -5,7 +5,6 @@
  */
 
 import type { Permission } from "@shared/types/agent";
-import type { CapabilityMap } from "@agent-system/customer-data";
 
 export type PolicyContext = {
   userId: string;              // Required: caller identity

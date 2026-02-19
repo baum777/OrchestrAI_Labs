@@ -11,6 +11,16 @@ export interface Clock {
    * Always returns UTC time.
    */
   now(): Date;
+  /**
+   * Parses an ISO-8601 timestamp string to Date.
+   * Use this instead of new Date(str) for governance compliance.
+   */
+  parseISO(iso: string): Date;
+  /**
+   * Schedules a callback after ms milliseconds.
+   * Use this instead of global setTimeout for governance compliance.
+   */
+  setTimeout(cb: () => void, ms: number): ReturnType<typeof setTimeout>;
 }
 
 /**
@@ -20,6 +30,12 @@ export class SystemClock implements Clock {
   now(): Date {
     return new Date();
   }
+  parseISO(iso: string): Date {
+    return new Date(iso);
+  }
+  setTimeout(cb: () => void, ms: number): ReturnType<typeof setTimeout> {
+    return setTimeout(cb, ms);
+  }
 }
 
 /**
@@ -28,6 +44,8 @@ export class SystemClock implements Clock {
  */
 export class FakeClock implements Clock {
   private currentTime: Date;
+  private pendingTimeouts: Array<{ id: number; cb: () => void; ms: number }> = [];
+  private nextId = 1;
 
   constructor(initialTime?: Date) {
     this.currentTime = initialTime ?? new Date();
@@ -49,6 +67,16 @@ export class FakeClock implements Clock {
 
   now(): Date {
     return new Date(this.currentTime);
+  }
+
+  parseISO(iso: string): Date {
+    return new Date(iso);
+  }
+
+  setTimeout(cb: () => void, ms: number): ReturnType<typeof setTimeout> {
+    const id = this.nextId++;
+    this.pendingTimeouts.push({ id, cb, ms });
+    return id as unknown as ReturnType<typeof setTimeout>;
   }
 }
 

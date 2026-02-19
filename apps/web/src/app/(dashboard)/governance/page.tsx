@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchApi } from "../../../lib/api-client";
+import { clock } from "../../../lib/clock";
 
 interface CapabilityInfo {
   clientId: string;
@@ -14,13 +14,13 @@ interface CapabilityInfo {
 export default function GovernanceMatrixPage() {
   const [capabilities, setCapabilities] = useState<CapabilityInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     // TODO: Replace with actual API endpoint for capabilities
     // For now, we'll simulate with mock data
     // In production: fetchApi("/governance/capabilities")
-    setTimeout(() => {
+    clock.setTimeout(() => {
       // Mock data - replace with actual API call
       setCapabilities([
         {

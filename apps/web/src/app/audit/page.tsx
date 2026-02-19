@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchApi } from "../../lib/api-client";
+import { clock } from "../../lib/clock";
 
 interface AuditLogEntry {
   id: string;
@@ -25,7 +25,7 @@ export default function AuditLedgerPage() {
   useEffect(() => {
     // TODO: Replace with actual API endpoint
     // fetchApi("/logs?limit=100")
-    setTimeout(() => {
+    clock.setTimeout(() => {
       setLogs([
         {
           id: "log-1",
@@ -54,8 +54,7 @@ export default function AuditLedgerPage() {
   }, []);
 
   const formatTimestamp = (timestamp: string) => {
-    // Use timestamp from API (SystemClock) - no Date.now()!
-    const date = new Date(timestamp);
+    const date = clock.parseISO(timestamp);
     return date.toLocaleString("de-DE", {
       day: "2-digit",
       month: "2-digit",

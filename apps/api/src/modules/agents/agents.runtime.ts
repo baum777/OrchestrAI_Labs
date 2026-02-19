@@ -47,8 +47,8 @@ const toolHandlers = (
   
   if (licenseManager) {
     try {
-      // Dynamic require for optional premium module
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // Dynamic require for optional premium module (Core-Extension separation)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const marketerModule = require("@premium/marketer/tools/marketing-tool");
       if (marketerModule?.createMarketingTool) {
         premiumTools["tool.marketing.generateNarrative"] = marketerModule.createMarketingTool(policyEngine, logger, clock);
@@ -646,6 +646,7 @@ const toolHandlers = (
         }
       throw error;
     }
+  }
   },
   ...premiumTools,
 };

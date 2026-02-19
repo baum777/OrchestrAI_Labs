@@ -5,6 +5,7 @@
  * Implements timestamp_correction_rate metric.
  */
 
+import { SystemClock, type Clock } from '@agent-system/governance-v2/runtime/clock';
 import type { TimestampCorrectionEvent } from './timestamp-integrity.js';
 
 export interface TimestampCorrectionMetrics {
@@ -35,16 +36,18 @@ class TimestampMonitoring {
    * Get correction metrics for a time window.
    * @param from - Start time (ISO-8601)
    * @param to - End time (ISO-8601)
+   * @param clock - Clock for date parsing (uses SystemClock if not provided)
    */
-  getMetrics(from?: string, to?: string): TimestampCorrectionMetrics {
+  getMetrics(from?: string, to?: string, clock?: Clock): TimestampCorrectionMetrics {
+    const c = clock ?? new SystemClock();
     let filtered = this.corrections;
 
     if (from || to) {
-      const fromDate = from ? new Date(from) : new Date(0);
-      const toDate = to ? new Date(to) : new Date();
-      
+      const fromDate = from ? c.parseISO(from) : c.parseISO('1970-01-01T00:00:00.000Z');
+      const toDate = to ? c.parseISO(to) : c.now();
+
       filtered = this.corrections.filter((e) => {
-        const eventDate = new Date(e.timestamp);
+        const eventDate = c.parseISO(e.timestamp);
         return eventDate >= fromDate && eventDate <= toDate;
       });
     }
@@ -60,8 +63,8 @@ class TimestampMonitoring {
     // Calculate correction rate (corrections per hour)
     let correctionRate = 0;
     if (from && to) {
-      const fromDate = new Date(from);
-      const toDate = new Date(to);
+      const fromDate = c.parseISO(from);
+      const toDate = c.parseISO(to);
       const hours = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60);
       if (hours > 0) {
         correctionRate = filtered.length / hours;
@@ -82,9 +85,10 @@ class TimestampMonitoring {
    * @param threshold - Maximum corrections per hour (default: 10)
    * @param from - Start time (ISO-8601)
    * @param to - End time (ISO-8601)
+   * @param clock - Clock for date parsing
    */
-  exceedsThreshold(threshold: number = 10, from?: string, to?: string): boolean {
-    const metrics = this.getMetrics(from, to);
+  exceedsThreshold(threshold: number = 10, from?: string, to?: string, clock?: Clock): boolean {
+    const metrics = this.getMetrics(from, to, clock);
     return metrics.correctionRate > threshold;
   }
 

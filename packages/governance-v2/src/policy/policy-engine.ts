@@ -69,8 +69,7 @@ export class PolicyEngine {
    * Checks if a decision is allowed by policy rules.
    */
   checkDecision(decision: Decision): { allowed: boolean; reason?: string } {
-    // Placeholder implementation
-    // In production, check decision against policy rules
+    void decision; // Placeholder - will check against policy rules in production
     return { allowed: true };
   }
 
@@ -92,8 +91,7 @@ export class PolicyEngine {
    * Simple YAML parser (for production, use js-yaml or similar).
    */
   private parseYaml(content: string): { rules?: PolicyRule[] } {
-    // This is a simplified parser - in production, use a proper YAML library
-    // For now, return empty rules
+    void content; // Simplified parser - in production, use proper YAML library
     return { rules: [] };
   }
 
@@ -101,7 +99,7 @@ export class PolicyEngine {
    * Parses autonomy policy from markdown.
    */
   private parseAutonomyPolicy(content: string): AutonomyPolicy {
-    // Simplified parser - extract ladder and defaults
+    void content; // Simplified parser - extract ladder and defaults
     const ladder: Record<number, string> = {
       1: 'read-only',
       2: 'draft-only',

@@ -14,6 +14,8 @@ import type {
   ValidationResult,
   Layer,
 } from '../types/governance.types.js';
+import type { Clock } from '../runtime/clock.js';
+import { SystemClock } from '../runtime/clock.js';
 import { PolicyEngine } from '../policy/policy-engine.js';
 import { AutonomyGuard } from '../policy/autonomy-guard.js';
 import { DecisionHistoryStore } from '../history/decision-history-store.js';
@@ -23,15 +25,18 @@ export class DecisionCompiler {
   private policyEngine: PolicyEngine;
   private autonomyGuard: AutonomyGuard;
   private historyStore: DecisionHistoryStore;
+  private clock: Clock;
 
   constructor(
     policyEngine: PolicyEngine,
     autonomyGuard: AutonomyGuard,
-    historyStore: DecisionHistoryStore
+    historyStore: DecisionHistoryStore,
+    clock?: Clock
   ) {
     this.policyEngine = policyEngine;
     this.autonomyGuard = autonomyGuard;
     this.historyStore = historyStore;
+    this.clock = clock ?? new SystemClock();
   }
 
   /**
@@ -124,10 +129,11 @@ export class DecisionCompiler {
 
     // Time window: 30 days
     const timeWindowMs = 30 * 24 * 60 * 60 * 1000;
-    const decisionTime = new Date(decision.timestamp).getTime();
+    const decisionTime = this.clock.parseISO(String(decision.timestamp)).getTime();
 
     for (const existingDecision of sameLayerDecisions) {
-      const existingTime = new Date(existingDecision.timestamp || existingDecision.date || '').getTime();
+      const ts = existingDecision.timestamp || existingDecision.date || '';
+      const existingTime = ts ? this.clock.parseISO(String(ts)).getTime() : 0;
       const timeDiff = decisionTime - existingTime;
 
       // Check if within time window

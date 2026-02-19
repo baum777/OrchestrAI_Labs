@@ -6,12 +6,10 @@
  */
 
 import crypto from "node:crypto";
-import type { Permission } from "@shared/types/agent";
-import type { CapabilityMap, OperationCapability } from "@agent-system/customer-data";
+import type { CapabilityMap } from "@agent-system/customer-data";
 import type {
   PolicyContext,
   PolicyDecision,
-  PolicyErrorCode,
   SanitizedParams,
   RedactedResult,
 } from "./types.js";

@@ -33,10 +33,10 @@ export class ScorecardEngine {
   ): GovernanceScorecard {
     const layerPurity = this.calculateLayerPurity(workstreams, decisions);
     const workstreamCompleteness = this.calculateWorkstreamCompleteness(workstreams);
-    const escalationDiscipline = this.calculateEscalationDiscipline(workstreams, decisions);
+    const escalationDiscipline = this.calculateEscalationDiscipline();
     const decisionTraceability = this.calculateDecisionTraceability(decisions);
     const dodEnforcement = this.calculateDoDEnforcement(workstreams);
-    const clarificationCompliance = this.calculateClarificationCompliance(workstreams);
+    const clarificationCompliance = this.calculateClarificationCompliance();
 
     const totalScore = layerPurity + workstreamCompleteness + escalationDiscipline +
       decisionTraceability + dodEnforcement + clarificationCompliance;
@@ -109,7 +109,7 @@ export class ScorecardEngine {
   /**
    * Calculates escalation discipline score (0-2).
    */
-  private calculateEscalationDiscipline(workstreams: Workstream[], decisions: Decision[]): number {
+  private calculateEscalationDiscipline(): number {
     // Placeholder: check if escalations are properly logged and tracked
     // In production, check against escalation logs
     return 2; // Assume perfect for now
@@ -154,7 +154,7 @@ export class ScorecardEngine {
   /**
    * Calculates clarification compliance score (0-2).
    */
-  private calculateClarificationCompliance(workstreams: Workstream[]): number {
+  private calculateClarificationCompliance(): number {
     // Placeholder: check if clarification requests were properly handled
     // In production, check against clarification logs
     return 2; // Assume perfect for now

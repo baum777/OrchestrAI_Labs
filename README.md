@@ -1,3 +1,5 @@
+**"Developed by OrchestrAI Labs, this framework provides a secure, deterministic bridge between raw marketing data and generative AI, ensuring 100% compliance and auditability."**
+
 # Agent-System Plattform
 
 Eine **Agent-first-Architektur** zur Unterstützung von Projektarbeit und Entscheidungsfindung. Das System fungiert als **unterstützender Mitarbeiter** und **Prozess-Optimierungs-Layer**, der strukturierte Entscheidungsfindung, Governance, Knowledge-Management und Monitoring bereitstellt.

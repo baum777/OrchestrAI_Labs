@@ -115,7 +115,7 @@ LÖSUNG: Durch ${solution} können Sie ${goal} erreichen. Die Daten zeigen klar,
   /**
    * Build AIDA narrative.
    */
-  private buildAIDANarrative(semantic: SemanticTranslation, audience: string, goal: string): string {
+  private buildAIDANarrative(semantic: SemanticTranslation, audience: string, _goal: string): string {
     const attention = `Ihre Marketing-Daten zeigen: ${semantic.problem}`;
     const interest = `Was bedeutet das für ${audience}? ${semantic.context}`;
     const desire = `Durch ${semantic.suggestedFocus.slice(0, 2).join(" und ")} können Sie diese Herausforderung in eine Chance verwandeln.`;

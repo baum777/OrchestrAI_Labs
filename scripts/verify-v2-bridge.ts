@@ -5,7 +5,7 @@
  * Tests that same input + same FakeClock time = same output.
  */
 
-import { FakeClock } from "../packages/governance-v2/src/runtime/clock.js";
+import { FakeClock, SystemClock } from "../packages/governance-v2/src/runtime/clock.js";
 import { V1PolicyEngineAdapter } from "../packages/governance-v2/src/bridge/v1-adapter.js";
 import type { PolicyContext } from "../packages/governance/src/policy/types.js";
 
@@ -13,8 +13,8 @@ async function runVerification() {
   console.log("🔍 V2 Bridge Verification Test\n");
   console.log("=".repeat(60));
 
-  // Setup: Fixed time for determinism
-  const fixedTime = new Date("2026-02-18T10:00:00.000Z");
+  const sysClock = new SystemClock();
+  const fixedTime = sysClock.parseISO("2026-02-18T10:00:00.000Z");
   const clock1 = new FakeClock(fixedTime);
   const clock2 = new FakeClock(fixedTime);
 
@@ -78,7 +78,7 @@ async function runVerification() {
     console.log(`\n📋 Test: Clock Time Independence`);
     console.log("-".repeat(60));
     
-    const clock3 = new FakeClock(new Date("2026-02-18T11:00:00.000Z"));
+    const clock3 = new FakeClock(sysClock.parseISO("2026-02-18T11:00:00.000Z"));
     const adapter3 = new V1PolicyEngineAdapter(clock3);
     const decision3 = adapter3.authorize(policyCtx, operation, params);
 

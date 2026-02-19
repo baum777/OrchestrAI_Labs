@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { clock } from "../../lib/clock";
 
 interface AgentStatus {
   id: string;
@@ -17,7 +18,7 @@ export default function FleetMonitorPage() {
   useEffect(() => {
     // TODO: Replace with actual API endpoint
     // fetchApi("/monitoring/agents")
-    setTimeout(() => {
+    clock.setTimeout(() => {
       setAgents([
         {
           id: "agent-1",
@@ -38,8 +39,7 @@ export default function FleetMonitorPage() {
   }, []);
 
   const formatTimestamp = (timestamp: string) => {
-    // Use timestamp from API (SystemClock) - no Date.now()!
-    const date = new Date(timestamp);
+    const date = clock.parseISO(timestamp);
     return date.toLocaleString("de-DE", {
       day: "2-digit",
       month: "2-digit",

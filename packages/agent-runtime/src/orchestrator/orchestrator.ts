@@ -137,7 +137,7 @@ export class Orchestrator {
       try {
         const state = loadState();
         if (state.last_seen_at) {
-          const gapMin = calculateGapMinutes(state.last_seen_at, nowIso);
+          const gapMin = calculateGapMinutes(state.last_seen_at, nowIso, this.clock);
           
           if (gapMin >= this.gapThresholdMinutes) {
             // Log time gap detected
