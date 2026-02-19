@@ -61,6 +61,13 @@ export interface ActionLogger {
     ts: string;
     blocked?: boolean;
     reason?: string;
+    // Skill metadata (optional, for skill execution logs)
+    skillId?: string;
+    skillVersion?: string;
+    skillRunId?: string;
+    skillStatus?: string;
+    skillDurationMs?: number;
+    skillBlockReason?: string;
   }): Promise<void>;
 }
 
@@ -85,7 +92,7 @@ export interface GovernanceWorkstreamValidator {
 
 // Optional skill dependencies (feature-flagged)
 interface SkillRegistry {
-  getManifest(skillId: string, version?: string): { id: string; version: string; requiredPermissions: string[]; requiredTools: string[]; reviewPolicy: { mode: string } } | null;
+  getManifest(skillId: string, version?: string): { id: string; version: string; status: string; requiredPermissions: string[]; requiredTools: string[]; sideEffects: Array<{ type: string }>; reviewPolicy: { mode: string }; customerDataAccess?: { enabled: boolean } } | null;
 }
 
 interface SkillExecutor {
@@ -290,11 +297,63 @@ export class Orchestrator {
 
       const plan = await this.skillExecutor.compile(manifest, instructions, input.skillRequest.input, skillContext);
 
+      // Guardrails v1: Runtime enforcement checks
+      const { runSkillGuardrails } = await import('@agent-system/skills');
+      const guardrailCheck = runSkillGuardrails(
+        manifest,
+        plan,
+        profile,
+        this.skillsEnabled
+      );
+
+      if (!guardrailCheck.allowed) {
+        const blockReason = guardrailCheck.blockReason || guardrailCheck.reason || 'Guardrail check failed';
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "skill.blocked.guardrail",
+          input: input.skillRequest,
+          output: { reason: blockReason, guardrailReason: guardrailCheck.reason },
+          ts: nowIso,
+          blocked: true,
+          reason: blockReason,
+          skillId: manifest.id,
+          skillVersion: manifest.version,
+          skillStatus: manifest.status,
+          skillBlockReason: guardrailCheck.reason,
+        });
+        return { status: "blocked", data: { reason: guardrailCheck.reason || "GUARDRAIL_CHECK_FAILED", blockReason } };
+      }
+
+      // Warn if deprecated (but allow execution)
+      if (manifest.status === 'deprecated') {
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "skill.warn.deprecated",
+          input: input.skillRequest,
+          output: { warning: `Skill ${manifest.id} is deprecated` },
+          ts: nowIso,
+          blocked: false,
+          skillId: manifest.id,
+          skillVersion: manifest.version,
+          skillStatus: manifest.status,
+        });
+      }
+
       // Governance v2 validation (if generatesWorkstream)
       // Note: For pilot skill, this is skipped (governance.generatesWorkstream: false)
 
-      // Review gate (if needed)
-      if (plan.reviewRequired && plan.reviewPolicy.mode === 'required') {
+      // Review gate (if needed) - enforce for side effects
+      const hasWriteSideEffects = manifest.sideEffects.some(
+        se => se.type === 'create' || se.type === 'update' || se.type === 'delete'
+      );
+      const reviewRequired = plan.reviewRequired || (hasWriteSideEffects && manifest.reviewPolicy.mode !== 'none');
+      if (reviewRequired && (plan.reviewPolicy.mode === 'required' || (hasWriteSideEffects && manifest.reviewPolicy.mode !== 'none'))) {
         const gate = enforceReviewGate(profile, 'skill.execute' as Permission);
         if (!gate.ok) {
           const timestamp = this.clock.now().toISOString();
@@ -329,15 +388,18 @@ export class Orchestrator {
       }
 
       // Execute skill
+      const executionStart = this.clock.now().getTime();
       const result = await this.skillExecutor.execute(plan, skillContext, this.toolRouter);
+      const executionEnd = this.clock.now().getTime();
+      const durationMs = executionEnd - executionStart;
 
-      // Log skill execution
+      // Log skill execution with enriched metadata
       await this.logger.append({
         agentId: profile.id,
         userId: ctx.userId,
         projectId: ctx.projectId,
         clientId: ctx.clientId,
-        action: "skill.executed",
+        action: result.ok ? "skill.executed" : "skill.failed",
         input: {
           skillId: input.skillRequest.skillId,
           version: manifest.version,
@@ -350,6 +412,11 @@ export class Orchestrator {
         ts: this.clock.now().toISOString(),
         blocked: !result.ok,
         reason: result.error,
+        skillId: manifest.id,
+        skillVersion: manifest.version,
+        skillRunId: result.telemetry?.skillRunId,
+        skillStatus: manifest.status,
+        skillDurationMs: durationMs,
       });
 
       return { status: result.ok ? "ok" : "blocked", data: result };

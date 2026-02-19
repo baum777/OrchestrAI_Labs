@@ -29,6 +29,7 @@ const AgentProfileSchema = z.object({
   objectives: z.array(z.string()).min(1),
   permissions: z.array(z.string()).min(1),
   tools: z.array(z.string()).min(1),
+  allowedSkills: z.array(z.string()).optional(),
   escalationRules: z.array(EscalationRuleSchema),
   memoryScopes: z.array(MemoryScopeSchema),
   reviewPolicy: ReviewPolicySchema,
