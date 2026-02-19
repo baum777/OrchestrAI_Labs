@@ -1,6 +1,6 @@
-import type { AgentProfile, ToolRef } from "@shared/types/agent";
-import { enforcePermission } from "@governance/policies/enforcement";
-import { TOOL_PERMISSION_MAP } from "./tool-permissions";
+import type { AgentProfile, ToolRef } from "@agent-system/shared";
+import { enforcePermission } from "@agent-system/governance";
+import { TOOL_PERMISSION_MAP } from "./tool-permissions.js";
 
 export type ToolContext = {
   projectId?: string;

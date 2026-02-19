@@ -1,6 +1,6 @@
 import { AgentProfile } from "@agent-system/shared";
-import governanceProfile from "../profiles/governance.json";
-import { AgentRuntimeContext, BaseAgent } from "./base-agent";
+import governanceProfile from "../profiles/governance.json" with { type: "json" };
+import { AgentRuntimeContext, BaseAgent } from "./base-agent.js";
 
 export const governanceAgentProfile: AgentProfile =
   governanceProfile as AgentProfile;

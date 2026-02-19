@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "test": "jest",
     "test:golden": "jest --runTestsByPath test/golden-tasks/golden-tasks.e2e.spec.ts test/golden-tasks/governance-bypass.e2e.spec.ts",
-    "test:compliance": "jest --runTestsByPath test/compliance/**/*.e2e.spec.ts"
+    "test:compliance": "jest test/compliance"
   },
   "dependencies": {
     "@agent-system/agent-runtime": "workspace:*",

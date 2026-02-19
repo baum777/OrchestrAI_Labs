@@ -4,8 +4,8 @@
  * Defines TypeScript interfaces for skill manifests, execution context, and results.
  */
 
-import type { AgentProfile } from '@shared/types/agent';
-import type { ToolContext, ToolCall, ToolResult } from '@agent-runtime/execution/tool-router';
+import type { AgentProfile } from "@agent-system/shared";
+import type { ToolContext, ToolCall, ToolResult } from "@agent-system/agent-runtime";
 import type { Clock } from '@agent-system/governance-v2/runtime/clock';
 import type { ValidationResult } from '@agent-system/governance-v2';
 
