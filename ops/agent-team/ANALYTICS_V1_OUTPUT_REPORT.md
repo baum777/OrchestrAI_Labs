@@ -1,8 +1,8 @@
 # Analytics v1 — Output Report
 
-**Date:** 2026-02-19T20:00:00Z  
+**Date:** 2026-02-19T20:00:00Z (Updated: 2026-02-19T21:00:00Z hardening)  
 **Owner:** @implementer_codex  
-**Status:** COMPLETE
+**Status:** COMPLETE (Hardening applied)
 
 ---
 
@@ -13,6 +13,24 @@
 - **Logging Integrity Audit** durchgeführt, dokumentiert in `team_findings.md`
 - **Performance-Indizes** für action_logs ergänzt (Migration 008)
 - **Tests:** Service-Unit, Controller-Smoke, Logging-Integrität
+
+### Follow-up Hardening (2026-02-19T21:00:00Z)
+
+- **Table usage corrected:** Analytics uses **action_logs** and **review_requests** only. NOT review_actions, NOT decisions.
+- **Logging gap fixed:** review.access.denied now includes project_id, client_id (best-effort from review_requests) — analytics filters no longer miscount denied events.
+- **Migration 008:** README.md updated with run instruction; no automated migration runner in repo — manual psql execution required.
+- **Monorepo tests:** Analytics tests run via `pnpm -C apps/api test`. `pnpm -r test` has pre-existing failures in governance-v2 package (out of scope).
+
+---
+
+## Table Usage (Confirmed)
+
+| Table          | Used by Analytics | Endpoints / Queries                                                                 |
+|----------------|-------------------|--------------------------------------------------------------------------------------|
+| action_logs    | ✅ Yes            | overview, skills, governance, time — all KPI aggregations                            |
+| review_requests| ✅ Yes            | reviews — status counts, commit_token_used, commitConversion                         |
+| review_actions | ❌ No             | Not queried by AnalyticsService                                                      |
+| decisions      | ❌ No             | Not queried by AnalyticsService                                                      |
 
 ---
 
@@ -32,23 +50,38 @@
 
 ---
 
-## Files Modified
+## Files Modified (Hardening)
 
 | Path | Change |
 |------|--------|
-| `ops/agent-team/team_plan.md` | Workstream ANALYTICS v1 hinzugefügt |
-| `ops/agent-team/team_progress.md` | 2 Progress-Einträge |
-| `ops/agent-team/team_findings.md` | Logging Integrity Audit (Event Inventory, Field Matrix, Gaps, Enrichment Plan) |
-| `apps/api/src/app.module.ts` | AnalyticsModule importiert |
-| `apps/api/jest.config.cjs` | testMatch um `src/**/*.spec.ts` erweitert |
+| `apps/api/src/modules/reviews/reviews.controller.ts` | review.access.denied INSERT now includes project_id, client_id from review_requests |
+| `ops/agent-team/team_plan.md` | Hardening workstream, corrected scope (action_logs + review_requests) |
+| `ops/agent-team/team_progress.md` | Hardening entry |
+| `ops/agent-team/team_findings.md` | Gap 1 fixed, Logging Readiness 9/10 |
+| `README.md` | Migration 008 run instruction |
+| `apps/api/test/analytics/logging-integrity.spec.ts` | Test for project_id/client_id columns; ModuleRef removed |
 
 ---
 
-## Logging Readiness Score: 8/10
+## Logging Readiness Score: 9/10
 
-- **Present:** action, ts, projectId, clientId, agentId, reason, skillId/skillVersion/skillRunId/skillStatus/skillDurationMs/skillBlockReason (optional), decisionHash (enriched)
-- **Inconsistent:** review.access.denied (ReviewsController direct INSERT) fehlt project_id, client_id
+- **Present:** action, ts, projectId, clientId, agentId, reason, skillId/skillVersion/… (optional), decisionHash (enriched)
+- **Fixed:** review.access.denied now populates project_id, client_id from review_requests (best-effort)
 - **Conclusion:** Logging ausreichend für Analytics v1
+
+---
+
+## Deployment Requirements
+
+**Migration 008** (Analytics Indexes) — **no automated migration runner** in this repo.
+
+Apply manually before deploying Analytics v1:
+
+```bash
+psql -d your_database -f infrastructure/db/migrations/008_analytics_indexes.sql
+```
+
+README.md lists this in the migration section. Add to your deploy pipeline if you use one.
 
 ---
 
@@ -59,6 +92,8 @@
 | DB-Performance bei >1M Zeilen | Indizes auf action, created_at, client_id (008) |
 | Ungültige Date-Range | Validierung: max 90d, from &lt; to |
 | PII-Leak | Keine raw payload_json, nur aggregierte Zahlen |
+| review.access.denied filter miscount | FIXED — project_id/client_id now populated |
+| Missing migration 008 | Documented; manual application required |
 
 ---
 
@@ -66,15 +101,33 @@
 
 1. `AnalyticsModule` aus `AppModule` entfernen
 2. Migration 008 optional rückgängig (DROP INDEX IF EXISTS)
-3. Keine Schema-Änderungen an bestehenden Tabellen
+3. Revert ReviewsController changes if needed (review.access.denied would lose project_id/client_id again)
 
 ---
 
-## Test Plan
+## Test Evidence
 
-- `pnpm -C apps/api test -- src/modules/analytics` — 13 Tests
-- `pnpm -C apps/api test -- test/analytics/logging-integrity.spec.ts` — 2 Tests
-- `pnpm -C apps/api lint` — grün
+### Canonical Commands
+
+```bash
+# Analytics + logging-integrity tests
+pnpm -C apps/api test -- src/modules/analytics test/analytics
+
+# Full api tests (includes analytics)
+pnpm -C apps/api test
+
+# Lint
+pnpm -C apps/api lint
+
+# Monorepo (note: governance-v2 has pre-existing test failures)
+pnpm -r lint   # Run from root
+pnpm -r test   # Fails on governance-v2; use pnpm -C apps/api test for api
+```
+
+### Results
+
+- `pnpm -C apps/api test -- src/modules/analytics test/analytics` — 16 tests passed
+- `pnpm -C apps/api lint` — 0 errors
 
 ---
 
@@ -89,3 +142,11 @@
 | GET /analytics/time | timeGapDetected, lastTimeGapAt, dailyTrend |
 
 **Query params:** from, to (UTC ISO, default 7d, max 90d), projectId?, clientId?, agentId?
+
+---
+
+## Release Notes
+
+- **Analytics v1** is production-ready for read-only KPI dashboards.
+- **Migration 008** must be applied manually before use (no migration runner).
+- **review.access.denied** events now include project_id and client_id when available for correct analytics filtering.

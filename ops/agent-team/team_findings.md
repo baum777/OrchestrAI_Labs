@@ -35,7 +35,7 @@
 | agent.executed / agent.executed.commit | orchestrator.ts | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
 | project.phase.updated | projects.service.ts:84 | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
 | knowledge.search | knowledge.service.ts:77 | agentId, userId, projectId, clientId, action, input, output, ts | flat + JSON |
-| review.access.denied | reviews.controller.ts:60,134 | user_id, agent_id, action, input_json, output_json, blocked, reason, created_at | direct INSERT (missing project_id, client_id) |
+| review.access.denied | reviews.controller.ts | user_id, agent_id, action, input_json, output_json, blocked, reason, created_at, project_id, client_id | direct INSERT (project_id/client_id from review_requests, best-effort) — FIXED 2026-02-19 |
 | customer_data.access | agents.runtime.ts | agentId, userId, projectId, clientId, action, input, output{rowCount,fieldsReturned,latencyMs,sourceType,resultHash?}, ts | flat + JSON |
 | data.deletion.executed | data-deletion.service.ts:83 | agentId, userId, projectId?, clientId?, action, input, output, ts | flat + JSON |
 | http.* | audit-log.middleware.ts:100 | agentId, userId, projectId, clientId, action, input{method,path,query,body,headers}, output{statusCode,body,latencyMs}, ts, blocked, reason | flat + JSON |
@@ -52,8 +52,8 @@
 | skillBlockReason | present (blocked) | - | - | present |
 | action | present | present | present | present |
 | ts (UTC ISO) | present | present | present (via created_at) | present |
-| projectId | present | present | missing (review.access.denied) | inconsistent |
-| clientId | present | present | missing (review.access.denied) | inconsistent |
+| projectId | present | present | present (review.access.denied — from review_requests) | present |
+| clientId | present | present | present (review.access.denied — from review_requests) | present |
 | agentId | present | present | present | present |
 | reason | present (blocked) | present | present | present |
 | decisionHash | - | in output_json (customer_data) | - | present (enriched) |
@@ -64,15 +64,15 @@
 
 ### 3. Logging Gaps Report
 
-- **Gap 1:** ReviewsController direct INSERT — project_id, client_id missing for review.access.denied. Impact: Analytics cannot filter by project/client. Mitigation: Acceptable for v1 (aggregate counts still work).
+- **Gap 1 (FIXED 2026-02-19):** ReviewsController direct INSERT — project_id, client_id now populated from review_requests (best-effort) before INSERT. Analytics filters work for review.access.denied.
 - **Gap 2:** ReviewsController uses `now()` instead of Clock — Minor; created_at is server time. No change required for analytics.
-- **Conclusion:** Logging is sufficient for Analytics v1. No critical gaps that would block implementation.
+- **Conclusion:** Logging is sufficient for Analytics v1. Gap 1 resolved in hardening pass.
 
 ### 4. Minimal Logging Enrichment Plan
 
-**Not required** for Analytics v1. Optional future enhancement: Add project_id, client_id to review.access.denied INSERT when review context is available.
+**Implemented:** review.access.denied now fetches project_id, client_id from review_requests WHERE id = reviewId before INSERT. Best-effort (null if review not found).
 
-**Logging Readiness Score: 8/10** — Core fields present, minor inconsistency in review.access.denied path.
+**Logging Readiness Score: 9/10** — Core fields present, review.access.denied gap fixed.
 
 ---
 

@@ -280,6 +280,8 @@ psql -d your_database -f infrastructure/db/migrations/001_init.sql
 psql -d your_database -f infrastructure/db/migrations/002_review_commit_token.sql
 psql -d your_database -f infrastructure/db/migrations/003_decisions_domain.sql
 psql -d your_database -f infrastructure/db/migrations/004_project_phases.sql
+# Optional: 005_user_consents, 006_data_deletion, 007_user_roles, 008_analytics_indexes
+psql -d your_database -f infrastructure/db/migrations/008_analytics_indexes.sql  # For Analytics v1
 
 # pgvector Extension aktivieren
 psql -d your_database -f infrastructure/vector/pgvector.sql

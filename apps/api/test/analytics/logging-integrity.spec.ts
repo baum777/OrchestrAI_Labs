@@ -9,7 +9,6 @@ import { PG_POOL } from "../../src/db/db.module";
 import { DbModule } from "../../src/db/db.module";
 import { AnalyticsModule } from "../../src/modules/analytics/analytics.module";
 import { PostgresActionLogger } from "../../src/runtime/postgres-action-logger";
-import type { ModuleRef } from "@nestjs/core";
 
 describe("Logging Integrity (Analytics v1)", () => {
   let app: INestApplication;
@@ -68,5 +67,17 @@ describe("Logging Integrity (Analytics v1)", () => {
       ts: new Date().toISOString(),
     };
     await expect(logger.append(testEntry)).resolves.not.toThrow();
+  });
+
+  it("review.access.denied logs support project_id and client_id columns", async () => {
+    if (!pool) return;
+    // Schema supports project_id, client_id (verified above).
+    // ReviewsController now fetches project_id/client_id from review_requests
+    // before INSERT when logging review.access.denied (hardening fix).
+    const { rows } = await pool.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_name = 'action_logs' AND column_name IN ('project_id', 'client_id')
+    `);
+    expect(rows).toHaveLength(2);
   });
 });

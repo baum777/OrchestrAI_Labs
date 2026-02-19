@@ -27,6 +27,26 @@
 | CUSTOMER DATA PLANE — Step 3: Scalability, Onboarding & Operational Stability | @teamlead_orchestrator | planning | `docs/**`, `packages/customer-data/**`, `apps/api/src/modules/projects/**`, `infrastructure/db/migrations/**` | 2 | Onboarding Framework Spec + Plan Update | - |
 | CUSTOMER DATA PLANE — Step 1-3 Integration | @implementer_codex | in_progress | `packages/customer-data/**`, `packages/governance/**`, `apps/api/src/modules/**`, `infrastructure/db/migrations/**` | 3 | Full Integration Implementation | Reviewer Approval Required |
 | ANALYTICS — v1 Read-only KPIs | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**` | 3 | Read-only analytics + logging audit | - |
+| ANALYTICS v1 Hardening (Follow-up) | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**`, `apps/api/src/modules/reviews/**`, `ops/agent-team/**` | 3 | Correctness, logging gap fix, migration wiring, monorepo tests | - |
+
+---
+
+## ANALYTICS v1 Hardening (Follow-up)
+
+**Owner:** @implementer_codex  
+**Autonomy Tier:** 3  
+**Layer:** implementation  
+**Status:** in_progress
+
+**Scope:** Correctness under missing/partial logs, table-usage consistency, review.access.denied logging gap, migration deploy flow, monorepo test integration.
+
+**Definition of Done:**
+- [ ] Table usage (action_logs, review_requests) documented; review_actions/decisions removed from scope if unused
+- [ ] review.access.denied logs include project_id/client_id (best-effort)
+- [ ] Migration 008 wiring/deploy documented
+- [ ] pnpm -r test / pnpm -r lint include analytics
+
+**Risks:** Minimal — log write-site fix only; no DB migrations for gap fix.
 
 ---
 
@@ -39,7 +59,7 @@
 
 **Scope:**
 - `apps/api/src/modules/analytics/**` (new module)
-- Read-only aggregation over action_logs, review_requests, review_actions
+- Read-only aggregation over action_logs, review_requests (review_actions and decisions not used by Analytics)
 
 **Structural Model:**
 ```

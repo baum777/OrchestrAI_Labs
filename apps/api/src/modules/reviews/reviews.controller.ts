@@ -54,11 +54,16 @@ export class ReviewsController {
       await this.policyEngine.authorize(policyCtx, "review.approve", { reviewId: id });
     } catch (error) {
       if (error instanceof PolicyError) {
-        // Log access denied
+        // Log access denied with project_id/client_id (best-effort from review_requests)
         try {
+          const ctxRes = await this.pool.query<{ project_id: string | null; client_id: string | null }>(
+            `SELECT project_id, client_id FROM review_requests WHERE id = $1 LIMIT 1`,
+            [id]
+          );
+          const ctx = ctxRes.rows[0];
           await this.pool.query(
-            `INSERT INTO action_logs (user_id, agent_id, action, input_json, output_json, blocked, reason, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, now())`,
+            `INSERT INTO action_logs (user_id, agent_id, action, input_json, output_json, blocked, reason, created_at, project_id, client_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, now(), $8, $9)`,
             [
               body.reviewerUserId,
               "system",
@@ -67,6 +72,8 @@ export class ReviewsController {
               JSON.stringify({ reason: error.message, code: error.code }),
               true,
               error.message,
+              ctx?.project_id ?? null,
+              ctx?.client_id ?? null,
             ]
           );
         } catch (logError) {
@@ -128,11 +135,16 @@ export class ReviewsController {
       await this.policyEngine.authorize(policyCtx, "review.reject", { reviewId: id });
     } catch (error) {
       if (error instanceof PolicyError) {
-        // Log access denied
+        // Log access denied with project_id/client_id (best-effort from review_requests)
         try {
+          const ctxRes = await this.pool.query<{ project_id: string | null; client_id: string | null }>(
+            `SELECT project_id, client_id FROM review_requests WHERE id = $1 LIMIT 1`,
+            [id]
+          );
+          const ctx = ctxRes.rows[0];
           await this.pool.query(
-            `INSERT INTO action_logs (user_id, agent_id, action, input_json, output_json, blocked, reason, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, now())`,
+            `INSERT INTO action_logs (user_id, agent_id, action, input_json, output_json, blocked, reason, created_at, project_id, client_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, now(), $8, $9)`,
             [
               body.reviewerUserId,
               "system",
@@ -141,6 +153,8 @@ export class ReviewsController {
               JSON.stringify({ reason: error.message, code: error.code }),
               true,
               error.message,
+              ctx?.project_id ?? null,
+              ctx?.client_id ?? null,
             ]
           );
         } catch (logError) {
