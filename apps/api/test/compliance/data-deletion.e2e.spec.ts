@@ -56,11 +56,11 @@ describe("data-deletion (E2E)", () => {
 
   it("Test D: Data deletion removes/anonymizes correctly", async () => {
     // Arrange: Create test data
-    const draft1 = await decisionsService.createDraft(projectId, {
+    await decisionsService.createDraft(projectId, {
       title: "Test Decision 1",
       owner: testUserId,
     });
-    const draft2 = await decisionsService.createDraft(projectId, {
+    await decisionsService.createDraft(projectId, {
       title: "Test Decision 2",
       owner: testUserId,
     });

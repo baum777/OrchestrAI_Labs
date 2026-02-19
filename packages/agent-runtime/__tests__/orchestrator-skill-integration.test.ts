@@ -73,7 +73,9 @@ describe('Orchestrator + Skill Integration', () => {
 
     const profiles = new MockProfiles();
     const toolRouter = new ToolRouter({});
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const reviewStore = new MockReviewStore() as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const logger = new MockActionLogger() as any;
 
     orchestrator = new Orchestrator(

@@ -6,7 +6,7 @@
  */
 
 import { SystemClock, type Clock } from '@agent-system/governance-v2/runtime/clock';
-import { formatBerlinDate, formatBerlinDateFromISO } from '@agent-system/shared';
+import { formatBerlinDate } from '@agent-system/shared';
 import fs from 'node:fs';
 import path from 'node:path';
 

@@ -27,6 +27,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
       const validator = new DocumentHeaderValidator(clock);
       
       // Report created yesterday (Berlin 18.02.2026)
+      // eslint-disable-next-line no-restricted-globals
       const yesterday = new Date('2026-02-17T23:30:00.000Z').toISOString();
       const result = validator.validateReportFreshness(yesterday, true);
       
@@ -37,6 +38,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
       const clock = new FakeClock(new Date('2026-02-18T23:30:00.000Z'));
       const validator = new DocumentHeaderValidator(clock);
       
+      // eslint-disable-next-line no-restricted-globals
       const oldDate = new Date('2026-01-01T00:00:00.000Z').toISOString();
       const result = validator.validateReportFreshness(oldDate, false);
       
@@ -73,6 +75,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
   describe('Session Time Gap Handling', () => {
     it('should use fresh clock after time gap >= 50 minutes', () => {
       // Simulate: Session start at 18:00
+      // eslint-disable-next-line no-restricted-globals
       const sessionStart = new Date('2026-02-18T18:00:00.000Z');
       const clock1 = new FakeClock(sessionStart);
       const validator1 = new DocumentHeaderValidator(clock1);
@@ -80,6 +83,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
       const createdAt1 = clock1.now().toISOString();
       
       // Simulate: Pause > 50 minutes, then resume at 19:10
+      // eslint-disable-next-line no-restricted-globals
       const sessionResume = new Date('2026-02-18T19:10:00.000Z');
       const clock2 = new FakeClock(sessionResume); // Fresh clock
       const validator2 = new DocumentHeaderValidator(clock2);
@@ -111,6 +115,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
       expect(createdAt).not.toBe(createdAt.slice(0, 10)); // Not date-only
       
       // Assert: Can be parsed back to Date
+      // eslint-disable-next-line no-restricted-globals
       const parsed = new Date(createdAt);
       expect(parsed.getTime()).not.toBeNaN();
     });

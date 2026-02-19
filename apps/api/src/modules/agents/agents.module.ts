@@ -15,7 +15,7 @@ import { ConsentService } from "../users/consent.service";
 import { UserRolesService } from "../users/user-roles.service";
 import { UsersModule } from "../users/users.module";
 import type { Pool } from "pg";
-import type { PolicyEngine } from "@governance/policy/policy-engine";
+import { PolicyEngine } from "@governance/policy/policy-engine";
 import type { LicenseManager } from "@governance/license/license-manager";
 import type {
   MultiSourceConnectorRegistry,

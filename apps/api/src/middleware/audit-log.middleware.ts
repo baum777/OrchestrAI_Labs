@@ -194,7 +194,7 @@ export class AuditLogMiddleware implements NestMiddleware {
    */
   private extractProjectId(req: Request): string | null {
     // From URL parameter
-    const projectIdMatch = req.path.match(/\/projects\/([^\/]+)/);
+    const projectIdMatch = req.path.match(/\/projects\/([^/]+)/);
     if (projectIdMatch) {
       return projectIdMatch[1];
     }
@@ -226,7 +226,7 @@ export class AuditLogMiddleware implements NestMiddleware {
   private getOperationName(method: string, path: string): string {
     // Normalize path: remove IDs and query params
     const normalizedPath = path
-      .replace(/\/[^\/]+/g, (match) => {
+      .replace(/\/[^/]+/g, (match) => {
         // Replace UUIDs and IDs with :id
         if (/^\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(match)) {
           return "/:id";

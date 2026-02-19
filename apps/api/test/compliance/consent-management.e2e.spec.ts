@@ -13,7 +13,6 @@ import { seedProject } from "../_utils/seed";
 import supertest from "supertest";
 import { Orchestrator } from "@agent-runtime/orchestrator/orchestrator";
 import { ConsentService } from "../../src/modules/users/consent.service";
-import { PolicyError } from "@governance/policy/policy-engine";
 
 describe("consent-management (E2E)", () => {
   const databaseUrl = process.env.DATABASE_URL;
@@ -69,7 +68,7 @@ describe("consent-management (E2E)", () => {
           permission: "customer_data.read",
           toolCalls: [
             {
-              tool: { name: "customer_data.executeReadModel", version: "1.0" } as { name: string; version: string },
+              tool: "tool.customer_data.executeReadModel",
               input: {
                 clientId: testClientId,
                 operationId: "test_operation",
@@ -121,7 +120,7 @@ describe("consent-management (E2E)", () => {
           permission: "customer_data.read",
           toolCalls: [
             {
-              tool: { name: "customer_data.executeReadModel", version: "1.0" } as { name: string; version: string },
+              tool: "tool.customer_data.executeReadModel",
               input: {
                 clientId: testClientId,
                 operationId: "test_operation",
@@ -179,7 +178,7 @@ describe("consent-management (E2E)", () => {
           permission: "customer_data.read",
           toolCalls: [
             {
-              tool: { name: "customer_data.executeReadModel", version: "1.0" } as { name: string; version: string },
+              tool: "tool.customer_data.executeReadModel",
               input: {
                 clientId: testClientId,
                 operationId: "test_operation",
