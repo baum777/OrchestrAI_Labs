@@ -1,12 +1,12 @@
 "use client";
 
-import { InteractiveTrustDemo } from "../components/marketing/InteractiveTrustDemo.js";
-import { GovernanceShieldSection } from "../components/marketing/GovernanceShieldSection.js";
-import { AuditLedgerViewSection } from "../components/marketing/AuditLedgerViewSection.js";
-import { MultiTenantSafetySection } from "../components/marketing/MultiTenantSafetySection.js";
+import { InteractiveTrustDemo } from "../../components/marketing/InteractiveTrustDemo.js";
+import { GovernanceShieldSection } from "../../components/marketing/GovernanceShieldSection.js";
+import { AuditLedgerViewSection } from "../../components/marketing/AuditLedgerViewSection.js";
+import { MultiTenantSafetySection } from "../../components/marketing/MultiTenantSafetySection.js";
 import Link from "next/link";
 
-export default function Home() {
+export default function MarketingLandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
