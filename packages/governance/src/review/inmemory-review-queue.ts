@@ -1,4 +1,4 @@
-import type { ReviewQueue, ReviewRequest } from "@agent-runtime/orchestrator/orchestrator";
+import type { ReviewQueue, ReviewRequest } from "@agent-system/agent-runtime";
 
 export class InMemoryReviewQueue implements ReviewQueue {
   private items: ReviewRequest[] = [];

@@ -1,8 +1,10 @@
-import type { AgentProfile, Permission, ReviewPolicy } from "@shared/types/agent";
+import type { AgentProfile, Permission, ReviewPolicy } from "@agent-system/shared";
 
-export class PolicyError extends Error {
+/** Thrown by enforcePermission/enforceReviewGate when permission or review gate fails. */
+export class EnforcementError extends Error {
   constructor(message: string, public readonly code: "PERMISSION_DENIED" | "REVIEW_REQUIRED") {
     super(message);
+    this.name = "EnforcementError";
   }
 }
 
@@ -16,7 +18,7 @@ export function hasPermission(profile: AgentProfile, perm: Permission): boolean 
 
 export function enforcePermission(profile: AgentProfile, perm: Permission): void {
   if (!hasPermission(profile, perm)) {
-    throw new PolicyError(`Permission denied: ${perm}`, "PERMISSION_DENIED");
+    throw new EnforcementError(`Permission denied: ${perm}`, "PERMISSION_DENIED");
   }
 }
 

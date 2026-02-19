@@ -5,7 +5,7 @@
  * Prevents ToolRouter/Review/Policy/Clock bypass and enforces manifest contracts.
  */
 
-import type { AgentProfile, Permission } from '@shared/types/agent';
+import type { AgentProfile, Permission } from "@agent-system/shared";
 import type { SkillManifest, SkillPlan } from '../spec/skill-spec.js';
 
 export interface GuardrailCheckResult {

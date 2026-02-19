@@ -1,6 +1,6 @@
 import { AgentProfile } from "@agent-system/shared";
-import juniorProfile from "../profiles/junior.json";
-import { AgentRuntimeContext, BaseAgent } from "./base-agent";
+import juniorProfile from "../profiles/junior.json" with { type: "json" };
+import { AgentRuntimeContext, BaseAgent } from "./base-agent.js";
 
 export const juniorAgentProfile: AgentProfile = juniorProfile as AgentProfile;
 

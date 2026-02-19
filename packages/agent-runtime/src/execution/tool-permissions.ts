@@ -1,4 +1,4 @@
-import type { Permission, ToolRef } from "@shared/types/agent";
+import type { Permission, ToolRef } from "@agent-system/shared";
 
 export const TOOL_PERMISSION_MAP: Record<ToolRef, Permission> = {
   "tool.knowledge.search": "knowledge.search",

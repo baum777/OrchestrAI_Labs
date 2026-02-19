@@ -3,7 +3,12 @@ export type AgentRole =
   | "project"
   | "documentation"
   | "junior"
-  | "governance";
+  | "governance"
+  | "workflow"
+  | "tools";
+
+/** Alias for AgentRole used by AgentSelector. */
+export type AgentDomain = AgentRole;
 
 export type Permission =
   | "knowledge.read"
@@ -60,6 +65,8 @@ export type AgentProfile = {
   id: string;
   name: string;
   role: AgentRole;
+  /** Alias for role, used by AgentSelector. */
+  domain?: AgentRole;
   objectives: string[];
   permissions: Permission[];
   tools: ToolRef[];

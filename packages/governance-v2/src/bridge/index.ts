@@ -8,7 +8,7 @@
 export { V1PolicyEngineAdapter } from './v1-adapter.js';
 export type { Clock } from '../runtime/clock.js';
 export { SystemClock, FakeClock } from '../runtime/clock.js';
-export type { PolicyViolationAdvice } from '@shared/types/governance';
+export type { PolicyViolationAdvice } from "@agent-system/shared";
 
 // Re-export V2 types
 export type {
@@ -24,7 +24,7 @@ export type {
   PolicyErrorCode,
   SanitizedParams,
   RedactedResult,
-} from '@governance/policy/types';
+} from "@agent-system/governance";
 
 export { PolicyEngine as V2PolicyEngine } from '../policy/policy-engine.js';
 

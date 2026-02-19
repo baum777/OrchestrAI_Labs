@@ -17,7 +17,7 @@ import { PG_POOL } from "../../db/db.module";
 import type { Clock } from "@agent-system/governance-v2/runtime/clock";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 import type { Permission } from "@agent-system/shared";
-import type { PermissionResolver } from "@agent-system/governance/policy/policy-engine";
+import type { PermissionResolver } from "@agent-system/governance";
 
 export type UserRole = "admin" | "reviewer" | "user" | "partner";
 

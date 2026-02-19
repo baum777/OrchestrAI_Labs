@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import type { AgentProfile } from "@shared/types/agent";
+import type { AgentProfile } from "@agent-system/shared";
 
 const ReviewPolicySchema = z.object({
   mode: z.enum(["none", "draft_only", "required"]),

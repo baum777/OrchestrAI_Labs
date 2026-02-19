@@ -9,9 +9,8 @@
 
 import type { Clock } from '../runtime/clock.js';
 import { SystemClock } from '../runtime/clock.js';
-import type { PolicyContext, PolicyDecision } from '@governance/policy/types';
-import type { LicenseManager } from '@governance/license/license-manager';
-import { PolicyEngine as V1PolicyEngine } from '@governance/policy/policy-engine';
+import type { PolicyContext, PolicyDecision, LicenseManager } from "@agent-system/governance";
+import { PolicyEngine as V1PolicyEngine } from "@agent-system/governance";
 import type { CapabilityMap } from '@agent-system/customer-data';
 
 /**

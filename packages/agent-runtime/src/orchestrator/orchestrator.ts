@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
-import type { AgentProfile, Permission } from "@shared/types/agent";
-import { enforcePermission, enforceReviewGate } from "@governance/policies/enforcement";
-import type { ToolRouter, ToolContext, ToolCall } from "../execution/tool-router";
+import type { AgentProfile, Permission } from "@agent-system/shared";
+import { enforcePermission, enforceReviewGate } from "@agent-system/governance";
+import type { ToolRouter, ToolContext, ToolCall } from "../execution/tool-router.js";
+import type { SkillManifest, SkillPlan } from "@agent-system/skills";
 import type { Clock } from "@agent-system/governance-v2";
 import { SystemClock } from "@agent-system/governance-v2";
 import { loadState, saveState } from "@agent-system/governance-v2";
@@ -92,12 +93,12 @@ export interface GovernanceWorkstreamValidator {
 
 // Optional skill dependencies (feature-flagged)
 interface SkillRegistry {
-  getManifest(skillId: string, version?: string): import('@agent-system/skills').SkillManifest | null;
+  getManifest(skillId: string, version?: string): SkillManifest | null;
 }
 
 interface SkillExecutor {
-  compile(manifest: import('@agent-system/skills').SkillManifest, instructions: string, input: unknown, context: unknown): Promise<import('@agent-system/skills').SkillPlan>;
-  execute(plan: import('@agent-system/skills').SkillPlan, context: unknown, toolRouter?: ToolRouter): Promise<{ ok: boolean; output?: unknown; error?: string; toolCalls?: ToolCall[]; telemetry?: { skillRunId: string } }>;
+  compile(manifest: SkillManifest, instructions: string, input: unknown, context: unknown): Promise<SkillPlan>;
+  execute(plan: SkillPlan, context: unknown, toolRouter?: ToolRouter): Promise<{ ok: boolean; output?: unknown; error?: string; toolCalls?: ToolCall[]; telemetry?: { skillRunId: string } }>;
 }
 
 interface SkillLoader {
@@ -232,7 +233,7 @@ export class Orchestrator {
         return { status: "blocked", data: { reason: "SKILLS_DEPENDENCIES_MISSING" } };
       }
 
-      const manifest: import('@agent-system/skills').SkillManifest | null = this.skillRegistry.getManifest(input.skillRequest.skillId, input.skillRequest.version);
+      const manifest: SkillManifest | null = this.skillRegistry.getManifest(input.skillRequest.skillId, input.skillRequest.version);
       if (!manifest) {
         await this.logger.append({
           agentId: profile.id,

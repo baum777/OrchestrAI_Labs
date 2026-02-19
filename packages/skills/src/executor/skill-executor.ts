@@ -9,7 +9,7 @@
 
 import { z } from 'zod';
 import type { Clock } from '@agent-system/governance-v2/runtime/clock';
-import type { ToolRouter, ToolCall, ToolResult } from '@agent-runtime/execution/tool-router';
+import type { ToolRouter, ToolCall, ToolResult } from "@agent-system/agent-runtime";
 import type { WorkstreamValidator, ValidationResult } from '@agent-system/governance-v2';
 import type {
   SkillManifest,

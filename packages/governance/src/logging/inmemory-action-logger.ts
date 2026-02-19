@@ -1,4 +1,4 @@
-import type { ActionLogger } from "@agent-runtime/orchestrator/orchestrator";
+import type { ActionLogger } from "@agent-system/agent-runtime";
 
 interface ActionLogEntry {
   agentId: string;

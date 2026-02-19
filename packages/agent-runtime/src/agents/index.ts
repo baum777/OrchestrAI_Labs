@@ -1,6 +1,6 @@
-export * from "./knowledge.agent";
-export * from "./project.agent";
-export * from "./documentation.agent";
-export * from "./junior.agent";
-export * from "./governance.agent";
+export * from "./knowledge.agent.js";
+export * from "./project.agent.js";
+export * from "./documentation.agent.js";
+export * from "./junior.agent.js";
+export * from "./governance.agent.js";
 
