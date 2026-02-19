@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import type { Pool } from "pg";
 import type { Permission } from "@shared/types/agent";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 
 function sha256(input: string) {
   return crypto.createHash("sha256").update(input).digest("hex");
@@ -36,7 +37,8 @@ export async function seedReviewRequest(pool: Pool, params: SeedReviewParams): P
   commitToken?: string;
 }> {
   const reviewId = params.reviewId ?? `rev_${crypto.randomUUID()}`;
-  const now = new Date().toISOString();
+  const clock = new SystemClock();
+  const now = clock.now().toISOString();
 
   const commitToken = params.commitToken;
   const commitTokenHash = commitToken ? sha256(commitToken) : null;

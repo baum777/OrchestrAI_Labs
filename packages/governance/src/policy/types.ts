@@ -34,6 +34,7 @@ export type PolicyErrorCode =
   | "ROLE_REQUIRED"                // Required role missing (e.g., reviewer)
   | "CLIENT_ID_MISMATCH"           // ctx.clientId != capability.clientId
   | "OPERATION_NOT_ALLOWED"        // operationId not allowlisted for clientId
+  | "OPERATION_NOT_MAPPED"         // Operation not in permission matrix (default-deny)
   | "CROSS_TENANT_DENIED"          // Attempted cross-client access
   | "SCOPE_VIOLATION"              // projectId/clientId scope violation
   | "CONSTRAINT_VIOLATION"         // maxRows, allowedFields violated

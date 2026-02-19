@@ -7,7 +7,7 @@
 import type { AgentProfile } from '@shared/types/agent';
 import type { ToolContext, ToolCall, ToolResult } from '@agent-runtime/execution/tool-router';
 import type { Clock } from '@agent-system/governance-v2/runtime/clock';
-import type { ValidationResult } from '@agent-system/governance-v2/types/governance.types';
+import type { ValidationResult } from '@agent-system/governance-v2';
 
 /**
  * Skill identifier (e.g., "governance.workstream_validate")

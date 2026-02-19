@@ -7,9 +7,24 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Support both ESM (import.meta.url) and CommonJS/Jest environments
+// In Jest/CommonJS, we use process.cwd() as fallback since import.meta is not available
+// Note: This file is primarily used for loading policy files, which works fine with process.cwd()
+// in test environments since tests run from the repo root
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getDirname = (): string => {
+  // In Jest/CommonJS, __dirname is available as a global
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).__dirname !== 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (globalThis as any).__dirname;
+  }
+  // Fallback to process.cwd() for ESM environments or when __dirname is not available
+  return process.cwd();
+};
+
+const repoRootDirname = getDirname();
 
 /**
  * Resolves the repository root directory.
@@ -48,8 +63,8 @@ export function resolveRepoRoot(): string {
     depth++;
   }
 
-  // If not found from cwd, try from __dirname (fallback for tests)
-  currentDir = __dirname;
+  // If not found from cwd, try from repoRootDirname (fallback for tests)
+  currentDir = repoRootDirname;
   depth = 0;
   while (depth < maxDepth) {
     if (isValidRepoRoot(currentDir)) {

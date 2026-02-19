@@ -17,7 +17,7 @@ import { PolicyError } from "./errors.js";
 import { containsRawSql, applyConstraints, validateAllowedFields } from "@agent-system/customer-data";
 import type { Clock } from "@agent-system/governance-v2/runtime/clock";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
-import type { PolicyViolationAdvice } from "@agent-system/shared";
+import type { PolicyViolationAdvice, Permission } from "@agent-system/shared";
 import type { LicenseManager } from "../license/license-manager.js";
 
 // Re-export PolicyError and types for convenience
@@ -28,15 +28,45 @@ export interface ConsentStore {
   hasConsent(userId: string, consentType: string): Promise<boolean>;
 }
 
+/**
+ * Permission Resolver Interface
+ * 
+ * Resolves user permissions from roles and explicit permissions.
+ * Used by PolicyEngine to enforce least-privilege access control.
+ */
+export interface PermissionResolver {
+  /**
+   * Get all permissions for a user (from roles + explicit permissions)
+   */
+  getPermissions(userId: string): Promise<Permission[]>;
+  
+  /**
+   * Check if user has all required permissions
+   */
+  hasAllPermissions(userId: string, requiredPermissions: Permission[]): Promise<boolean>;
+  
+  /**
+   * Get all roles for a user
+   */
+  getRoles(userId: string): Promise<string[]>;
+}
+
 export class PolicyEngine {
   private readonly clock: Clock;
   private readonly licenseManager?: LicenseManager;
   private readonly consentStore?: ConsentStore;
+  private readonly permissionResolver?: PermissionResolver;
 
-  constructor(clock?: Clock, licenseManager?: LicenseManager, consentStore?: ConsentStore) {
+  constructor(
+    clock?: Clock,
+    licenseManager?: LicenseManager,
+    consentStore?: ConsentStore,
+    permissionResolver?: PermissionResolver
+  ) {
     this.clock = clock ?? new SystemClock();
     this.licenseManager = licenseManager;
     this.consentStore = consentStore;
+    this.permissionResolver = permissionResolver;
   }
 
   /**
@@ -100,6 +130,13 @@ export class PolicyEngine {
         remedyStep: "Projekt-Scope prüfen.",
         safetyLevel: "warning",
       },
+      OPERATION_NOT_MAPPED: {
+        code: "OPERATION_NOT_MAPPED",
+        advisorTitle: "Operation nicht in Berechtigungsmatrix",
+        humanExplanation: "Diese Operation ist nicht in der Berechtigungsmatrix definiert. Zugriff verweigert (Default-Deny).",
+        remedyStep: "Admin kontaktieren, um Operation zur Berechtigungsmatrix hinzuzufügen.",
+        safetyLevel: "critical",
+      },
       CLIENT_ID_MISMATCH: {
         code: "CLIENT_ID_MISMATCH",
         advisorTitle: "Konfigurationsfehler",
@@ -147,6 +184,64 @@ export class PolicyEngine {
   }
 
   /**
+   * Get required permissions for an operation.
+   * 
+   * Maps operation identifiers to required permissions.
+   * This is the central permission matrix for the system.
+   * 
+   * Returns null if operation is not in permission matrix (explicit deny).
+   * Returns empty array [] if operation requires no permissions (explicit allow).
+   */
+  getRequiredPermissions(operation: string): Permission[] | null {
+    // Permission matrix: operation → required permissions
+    const permissionMap: Record<string, Permission[]> = {
+      // Customer data operations
+      "customer_data.executeReadModel": ["customer_data.read"],
+      "customer_data.getEntity": ["customer_data.read"],
+      "customer_data.search": ["customer_data.read"],
+      "tool.customer_data.executeReadModel": ["customer_data.read"],
+      "tool.customer_data.getEntity": ["customer_data.read"],
+      "tool.customer_data.search": ["customer_data.read"],
+      
+      // Project operations
+      "project.phase.update": ["project.update"],
+      "project.manage": ["project.manage"],
+      
+      // Decision operations
+      "decision.create": ["decision.create"],
+      "decision.finalize": ["decision.create"], // Finalizing requires create permission
+      
+      // Review operations (role-based, not permission-based)
+      "review.approve": [], // Role-based (reviewer/admin/partner) - empty array = explicit allow
+      "review.reject": [], // Role-based (reviewer/admin/partner) - empty array = explicit allow
+      "review.request": ["review.request"],
+      
+      // Knowledge operations
+      "knowledge.search": ["knowledge.search"],
+      "knowledge.read": ["knowledge.read"],
+      
+      // Marketing operations (premium feature)
+      "tool.marketing.generateNarrative": ["marketing.generate"],
+      "marketing.generate": ["marketing.generate"],
+    };
+    
+    // Check exact match first
+    if (permissionMap[operation]) {
+      return permissionMap[operation];
+    }
+    
+    // Check prefix matches
+    for (const [op, perms] of Object.entries(permissionMap)) {
+      if (operation.startsWith(op + ".") || operation.startsWith("tool." + op + ".")) {
+        return perms;
+      }
+    }
+    
+    // Default: operation not in permission matrix (explicit deny)
+    return null;
+  }
+
+  /**
    * Authorize an operation. Throws PolicyError if unauthorized.
    * 
    * @param ctx - Policy context (userId, clientId, roles, permissions)
@@ -162,11 +257,92 @@ export class PolicyEngine {
   ): Promise<PolicyDecision> {
     const timestamp = this.clock.now().toISOString();
     
+    // Rule 0: Permission-Based Access Control (Least Privilege)
+    // If permissionResolver is available, use it to enforce permissions
+    const requiredPermissions = this.getRequiredPermissions(operation);
+    
+    // Explicit deny: operation not in permission matrix
+    if (requiredPermissions === null) {
+      throw new PolicyError(
+        `Operation '${operation}' is not in permission matrix. Access denied by default.`,
+        "OPERATION_NOT_MAPPED",
+        ctx,
+        operation,
+        this.getAdvisorAdvice("OPERATION_NOT_MAPPED")
+      );
+    }
+    
+    // Explicit allow: operation requires no permissions (empty array)
+    // Example: review.approve (role-based, not permission-based)
+    if (requiredPermissions.length === 0) {
+      // Operation explicitly allowed without permissions (role-based checks happen later)
+      // Continue to role-based checks
+    } else {
+      // Operation requires permissions: check if user has them
+      if (this.permissionResolver) {
+        // If ctx.permissions is provided, use it (from agent profile)
+        // Otherwise, resolve from user roles
+        let userPermissions: Permission[] = ctx.permissions ?? [];
+        
+        if (userPermissions.length === 0) {
+          // Resolve permissions from user roles
+          userPermissions = await this.permissionResolver.getPermissions(ctx.userId);
+        }
+        
+        // Check if user has all required permissions
+        const hasAll = await this.permissionResolver.hasAllPermissions(
+          ctx.userId,
+          requiredPermissions
+        );
+        
+        if (!hasAll) {
+          const missing = requiredPermissions.filter(p => !userPermissions.includes(p));
+          throw new PolicyError(
+            `Operation requires permissions: ${requiredPermissions.join(", ")}. Missing: ${missing.join(", ")}`,
+            "PERMISSION_DENIED",
+            ctx,
+            operation,
+            this.getAdvisorAdvice("PERMISSION_DENIED")
+          );
+        }
+      } else if (ctx.permissions) {
+        // Fallback: if no permissionResolver but ctx.permissions provided, check directly
+        const hasAll = requiredPermissions.every(p => ctx.permissions!.includes(p));
+        if (!hasAll) {
+          const missing = requiredPermissions.filter(p => !ctx.permissions!.includes(p));
+          throw new PolicyError(
+            `Operation requires permissions: ${requiredPermissions.join(", ")}. Missing: ${missing.join(", ")}`,
+            "PERMISSION_DENIED",
+            ctx,
+            operation,
+            this.getAdvisorAdvice("PERMISSION_DENIED")
+          );
+        }
+      } else {
+        // No permissionResolver and no ctx.permissions: deny access
+        throw new PolicyError(
+          `Operation requires permissions: ${requiredPermissions.join(", ")}. No permission resolver available.`,
+          "PERMISSION_DENIED",
+          ctx,
+          operation,
+          this.getAdvisorAdvice("PERMISSION_DENIED")
+        );
+      }
+    }
+    
     // Rule 1: Role-Based Access Control (RBAC)
+    // Review operations require reviewer/admin/partner role
     if (operation === "review.approve" || operation === "review.reject") {
-      if (!ctx.roles?.includes("reviewer") && 
-          !ctx.roles?.includes("admin") && 
-          !ctx.roles?.includes("partner")) {
+      let userRoles: string[] = ctx.roles ?? [];
+      
+      // If permissionResolver is available, resolve roles from DB
+      if (this.permissionResolver && userRoles.length === 0) {
+        userRoles = await this.permissionResolver.getRoles(ctx.userId);
+      }
+      
+      if (!userRoles.includes("reviewer") && 
+          !userRoles.includes("admin") && 
+          !userRoles.includes("partner")) {
         throw new PolicyError(
           "Review approval requires reviewer role",
           "ROLE_REQUIRED",
@@ -177,9 +353,16 @@ export class PolicyEngine {
       }
     }
     
-    // Rule 2: Permission-Based Access Control
+    // Rule 2: Permission-Based Access Control (legacy check for customer_data)
     if (operation.startsWith("customer_data.")) {
-      if (!ctx.permissions?.includes("customer_data.read")) {
+      let userPermissions: Permission[] = ctx.permissions ?? [];
+      
+      // If permissionResolver is available, resolve permissions from DB
+      if (this.permissionResolver && userPermissions.length === 0) {
+        userPermissions = await this.permissionResolver.getPermissions(ctx.userId);
+      }
+      
+      if (!userPermissions.includes("customer_data.read")) {
         throw new PolicyError(
           "Customer data access requires customer_data.read permission",
           "CAPABILITY_MISSING",

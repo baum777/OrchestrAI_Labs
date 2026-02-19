@@ -1,0 +1,90 @@
+{
+  "$schema": "../spec/skill-manifest.schema.yaml",
+  "$comment": "Skill Manifest Template - Copy this file and customize for your skill",
+  
+  "id": "your.namespace.skill_id",
+  "name": "Human-Readable Skill Name",
+  "version": "1.0.0",
+  "description": "Clear description of what this skill does (min 10 characters)",
+  
+  "tags": ["tag1", "tag2"],
+  "owners": ["@owner_role"],
+  "layer": "governance",
+  "autonomyTier": 2,
+  
+  "requiredPermissions": ["permission.required"],
+  "requiredTools": ["tool.required"],
+  "dependencies": [
+    {
+      "skillId": "other.skill.id",
+      "versionRange": "^1.0.0"
+    }
+  ],
+  "capabilityDomain": "governance",
+  
+  "customerDataAccess": {
+    "enabled": false,
+    "allowedOperations": []
+  },
+  
+  "contextRequirements": {
+    "projectId": false,
+    "clientId": false,
+    "userId": true
+  },
+  
+  "inputSchema": {
+    "type": "object",
+    "required": ["field1"],
+    "properties": {
+      "field1": {
+        "type": "string",
+        "description": "Field description"
+      }
+    }
+  },
+  
+  "outputSchema": {
+    "type": "object",
+    "required": ["status"],
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": ["ok", "error"]
+      }
+    }
+  },
+  
+  "sideEffects": [
+    {
+      "type": "read",
+      "resource": "resource_name",
+      "scope": "global"
+    }
+  ],
+  
+  "reviewPolicy": {
+    "mode": "none",
+    "requiresHumanFor": [],
+    "reviewerRoles": []
+  },
+  
+  "resources": {
+    "instructions": "instructions.md",
+    "examples": [],
+    "templates": []
+  },
+  
+  "telemetry": {
+    "trackExecution": true,
+    "trackLatency": true,
+    "trackErrors": true
+  },
+  
+  "governance": {
+    "generatesWorkstream": false,
+    "requiresDocumentHeader": false,
+    "timestampIntegrity": false
+  }
+}
+

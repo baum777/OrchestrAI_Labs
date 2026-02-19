@@ -12,9 +12,10 @@ import {
   createLicenseManager,
 } from "./customer-data.providers";
 import { ConsentService } from "../users/consent.service";
+import { UserRolesService } from "../users/user-roles.service";
 import { UsersModule } from "../users/users.module";
 import type { Pool } from "pg";
-import type { PolicyEngine } from "@governance/policy/policy-engine";
+import { PolicyEngine } from "@governance/policy/policy-engine";
 import type { LicenseManager } from "@governance/license/license-manager";
 import type {
   MultiSourceConnectorRegistry,
@@ -33,9 +34,13 @@ import type {
     },
     {
       provide: PolicyEngine,
-      useFactory: (licenseManager: LicenseManager, consentService: ConsentService) => 
-        createPolicyEngine(licenseManager, consentService),
-      inject: ["LicenseManager", ConsentService],
+      useFactory: (
+        licenseManager: LicenseManager,
+        consentService: ConsentService,
+        userRolesService: UserRolesService
+      ) => 
+        createPolicyEngine(licenseManager, consentService, userRolesService),
+      inject: ["LicenseManager", ConsentService, UserRolesService],
     },
     {
       provide: "MultiSourceConnectorRegistry",

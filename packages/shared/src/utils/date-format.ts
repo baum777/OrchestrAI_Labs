@@ -17,7 +17,11 @@
  * const utcDate = new Date("2026-02-18T23:30:00.000Z"); // UTC 23:30
  * formatBerlinDate(utcDate); // Returns "19.02.2026" (Berlin 00:30 next day)
  * ```
+ * 
+ * Note: This utility function accepts Date objects for formatting.
+ * For production code, prefer Clock abstraction and pass Date objects from clock.now().
  */
+// eslint-disable-next-line no-restricted-globals
 export function formatBerlinDate(date: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin",
@@ -32,7 +36,11 @@ export function formatBerlinDate(date: Date): string {
  * 
  * @param date - Date object (UTC or any timezone)
  * @returns Formatted date-time string in Berlin timezone (e.g., "19.02.2026 00:30")
+ * 
+ * Note: This utility function accepts Date objects for formatting.
+ * For production code, prefer Clock abstraction and pass Date objects from clock.now().
  */
+// eslint-disable-next-line no-restricted-globals
 export function formatBerlinDateTime(date: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin",
@@ -51,12 +59,18 @@ export function formatBerlinDateTime(date: Date): string {
  * @returns Formatted date string in Berlin timezone (e.g., "19.02.2026")
  * 
  * @throws Error if isoString is not a valid ISO-8601 timestamp
+ * 
+ * Note: Uses Date.parse() internally (allowed in shared utilities for ISO parsing).
+ * For production code, prefer Clock abstraction and pass Date objects directly.
  */
 export function formatBerlinDateFromISO(isoString: string): string {
-  const date = new Date(isoString);
-  if (isNaN(date.getTime())) {
+  // eslint-disable-next-line no-restricted-globals
+  const timestamp = Date.parse(isoString);
+  if (isNaN(timestamp)) {
     throw new Error(`Invalid ISO-8601 timestamp: ${isoString}`);
   }
+  // eslint-disable-next-line no-restricted-globals
+  const date = new Date(timestamp);
   return formatBerlinDate(date);
 }
 

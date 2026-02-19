@@ -1,0 +1,104 @@
+{
+  "$schema": "../../src/spec/skill-manifest.schema.yaml",
+  "id": "customer_data.read_safe",
+  "name": "Safe Customer Data Read",
+  "version": "1.0.0",
+  "description": "Safely reads customer data with policy enforcement (authorize, sanitize, redact)",
+  
+  "tags": ["customer_data", "policy", "read"],
+  "owners": ["@teamlead_orchestrator"],
+  "layer": "implementation",
+  "autonomyTier": 3,
+  
+  "requiredPermissions": ["customer_data.read"],
+  "requiredTools": ["tool.customer_data.executeReadModel"],
+  "dependencies": [],
+  "capabilityDomain": "customer_data",
+  
+  "customerDataAccess": {
+    "enabled": true,
+    "allowedOperations": ["executeReadModel"]
+  },
+  
+  "contextRequirements": {
+    "projectId": false,
+    "clientId": true,
+    "userId": true
+  },
+  
+  "inputSchema": {
+    "type": "object",
+    "required": ["clientId", "operationId"],
+    "properties": {
+      "clientId": {
+        "type": "string",
+        "description": "Client identifier"
+      },
+      "operationId": {
+        "type": "string",
+        "description": "Operation identifier (e.g., 'getCustomers')"
+      },
+      "params": {
+        "type": "object",
+        "description": "Operation parameters"
+      }
+    }
+  },
+  
+  "outputSchema": {
+    "type": "object",
+    "required": ["data", "metadata"],
+    "properties": {
+      "data": {
+        "type": "array",
+        "description": "Redacted data array"
+      },
+      "metadata": {
+        "type": "object",
+        "properties": {
+          "rowCount": { "type": "integer" },
+          "fieldsReturned": { "type": "array", "items": { "type": "string" } },
+          "latencyMs": { "type": "integer" },
+          "sourceType": { "type": "string" },
+          "resultHash": { "type": "string" },
+          "policyDecisionHash": { "type": "string" }
+        }
+      }
+    }
+  },
+  
+  "sideEffects": [
+    {
+      "type": "read",
+      "resource": "customer_data",
+      "scope": "client"
+    },
+    {
+      "type": "create",
+      "resource": "action_log",
+      "scope": "client"
+    }
+  ],
+  
+  "reviewPolicy": {
+    "mode": "required",
+    "reviewerRoles": ["reviewer_claude"]
+  },
+  
+  "resources": {
+    "instructions": "instructions.md"
+  },
+  
+  "telemetry": {
+    "trackExecution": true,
+    "trackLatency": true,
+    "trackErrors": true
+  },
+  
+  "governance": {
+    "generatesWorkstream": false,
+    "requiresDocumentHeader": false,
+    "timestampIntegrity": false
+  }
+}
+

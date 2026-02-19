@@ -1,0 +1,76 @@
+{
+  "$schema": "../../src/spec/skill-manifest.schema.yaml",
+  "id": "governance.doc_header_validate",
+  "name": "Document Header Validator",
+  "version": "1.0.0",
+  "description": "Validates markdown document headers for required governance fields (Version, Owner, Layer, Last Updated, DoD) and timestamp integrity",
+  
+  "tags": ["governance", "validation", "document"],
+  "owners": ["@teamlead_orchestrator"],
+  "layer": "governance",
+  "autonomyTier": 2,
+  
+  "requiredPermissions": ["governance.read"],
+  "requiredTools": [],
+  "dependencies": [],
+  "capabilityDomain": "governance",
+  
+  "customerDataAccess": {
+    "enabled": false
+  },
+  
+  "contextRequirements": {
+    "projectId": false,
+    "clientId": false,
+    "userId": true
+  },
+  
+  "inputSchema": {
+    "type": "object",
+    "required": ["filePath"],
+    "properties": {
+      "filePath": {
+        "type": "string",
+        "description": "Path to markdown file to validate"
+      }
+    }
+  },
+  
+  "outputSchema": {
+    "type": "object",
+    "required": ["status"],
+    "properties": {
+      "status": { "type": "string", "enum": ["pass", "blocked"] },
+      "reasons": { "type": "array", "items": { "type": "string" } }
+    }
+  },
+  
+  "sideEffects": [
+    {
+      "type": "read",
+      "resource": "document",
+      "scope": "global"
+    }
+  ],
+  
+  "reviewPolicy": {
+    "mode": "none"
+  },
+  
+  "resources": {
+    "instructions": "instructions.md"
+  },
+  
+  "telemetry": {
+    "trackExecution": true,
+    "trackLatency": true,
+    "trackErrors": true
+  },
+  
+  "governance": {
+    "generatesWorkstream": false,
+    "requiresDocumentHeader": true,
+    "timestampIntegrity": true
+  }
+}
+
