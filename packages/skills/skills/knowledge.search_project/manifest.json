@@ -1,0 +1,108 @@
+{
+  "$schema": "../../src/spec/skill-manifest.schema.yaml",
+  "id": "knowledge.search_project",
+  "name": "Project Knowledge Search",
+  "version": "1.0.0",
+  "description": "Searches project knowledge across decisions, reviews, and logs",
+  
+  "tags": ["knowledge", "search", "project"],
+  "owners": ["@teamlead_orchestrator"],
+  "layer": "implementation",
+  "autonomyTier": 2,
+  
+  "requiredPermissions": ["knowledge.read"],
+  "requiredTools": ["tool.knowledge.search"],
+  "dependencies": [],
+  "capabilityDomain": "knowledge",
+  
+  "customerDataAccess": {
+    "enabled": false
+  },
+  
+  "contextRequirements": {
+    "projectId": true,
+    "clientId": false,
+    "userId": true
+  },
+  
+  "inputSchema": {
+    "type": "object",
+    "required": ["projectId", "query"],
+    "properties": {
+      "projectId": {
+        "type": "string",
+        "description": "Project identifier"
+      },
+      "query": {
+        "type": "string",
+        "minLength": 2,
+        "description": "Search query (min 2 characters)"
+      },
+      "sources": {
+        "type": "array",
+        "items": { "type": "string", "enum": ["decisions", "reviews", "logs"] },
+        "default": ["decisions"],
+        "description": "Sources to search (default: decisions)"
+      },
+      "limit": {
+        "type": "integer",
+        "default": 10,
+        "maximum": 25,
+        "description": "Maximum results (default: 10, max: 25)"
+      }
+    }
+  },
+  
+  "outputSchema": {
+    "type": "object",
+    "required": ["results"],
+    "properties": {
+      "results": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "source": { "type": "string" },
+            "snippet": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  
+  "sideEffects": [
+    {
+      "type": "read",
+      "resource": "knowledge",
+      "scope": "project"
+    },
+    {
+      "type": "create",
+      "resource": "action_log",
+      "scope": "project"
+    }
+  ],
+  
+  "reviewPolicy": {
+    "mode": "none"
+  },
+  
+  "resources": {
+    "instructions": "instructions.md"
+  },
+  
+  "telemetry": {
+    "trackExecution": true,
+    "trackLatency": true,
+    "trackErrors": true
+  },
+  
+  "governance": {
+    "generatesWorkstream": false,
+    "requiresDocumentHeader": false,
+    "timestampIntegrity": false
+  }
+}
+

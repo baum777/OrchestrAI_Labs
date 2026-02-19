@@ -1,0 +1,88 @@
+{
+  "$schema": "../../src/spec/skill-manifest.schema.yaml",
+  "id": "governance.workstream_validate",
+  "name": "Workstream Validator",
+  "version": "1.0.0",
+  "description": "Validates a workstream against governance v2 rules (owner, scope, structural model, risks, layer, autonomy tier, DoD)",
+  
+  "tags": ["governance", "validation", "workstream"],
+  "owners": ["@teamlead_orchestrator"],
+  "status": "stable",
+  "layer": "governance",
+  "autonomyTier": 2,
+  
+  "requiredPermissions": ["governance.read"],
+  "requiredTools": [],
+  "dependencies": [],
+  "capabilityDomain": "governance",
+  
+  "customerDataAccess": {
+    "enabled": false
+  },
+  
+  "contextRequirements": {
+    "projectId": false,
+    "clientId": false,
+    "userId": true
+  },
+  
+  "inputSchema": {
+    "type": "object",
+    "required": ["workstream"],
+    "properties": {
+      "workstream": {
+        "type": "object",
+        "required": ["owner", "scope", "structuralModel", "risks", "layer", "autonomyTier", "definitionOfDone"],
+        "properties": {
+          "owner": { "type": "string" },
+          "scope": { "type": "array", "items": { "type": "string" } },
+          "structuralModel": { "type": "string" },
+          "risks": { "type": "array" },
+          "layer": { "type": "string", "enum": ["strategy", "architecture", "implementation", "governance"] },
+          "autonomyTier": { "type": "integer", "enum": [1, 2, 3, 4] },
+          "definitionOfDone": { "type": "string" }
+        }
+      }
+    }
+  },
+  
+  "outputSchema": {
+    "type": "object",
+    "required": ["status"],
+    "properties": {
+      "status": { "type": "string", "enum": ["pass", "blocked", "conflict", "clarification_required"] },
+      "reasons": { "type": "array", "items": { "type": "string" } },
+      "requiresReview": { "type": "boolean" }
+    }
+  },
+  
+  "sideEffects": [
+    {
+      "type": "read",
+      "resource": "workstream",
+      "scope": "global"
+    }
+  ],
+  
+  "reviewPolicy": {
+    "mode": "none"
+  },
+  
+  "resources": {
+    "instructions": "instructions.md",
+    "examples": []
+  },
+  
+  "telemetry": {
+    "trackExecution": true,
+    "trackLatency": true,
+    "trackErrors": true
+  },
+  
+  "governance": {
+    "generatesWorkstream": false,
+    "requiresDocumentHeader": false,
+    "timestampIntegrity": false
+  }
+}
+

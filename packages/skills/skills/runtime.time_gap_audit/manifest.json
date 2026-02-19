@@ -1,0 +1,90 @@
+{
+  "$schema": "../../src/spec/skill-manifest.schema.yaml",
+  "id": "runtime.time_gap_audit",
+  "name": "Time Gap Audit",
+  "version": "1.0.0",
+  "description": "Audits runtime state for time gaps (≥50 min) and logs gap events",
+  
+  "tags": ["runtime", "audit", "time"],
+  "owners": ["@teamlead_orchestrator"],
+  "layer": "governance",
+  "autonomyTier": 2,
+  
+  "requiredPermissions": ["governance.read"],
+  "requiredTools": ["tool.logs.append"],
+  "dependencies": [],
+  "capabilityDomain": "governance",
+  
+  "customerDataAccess": {
+    "enabled": false
+  },
+  
+  "contextRequirements": {
+    "projectId": false,
+    "clientId": false,
+    "userId": true
+  },
+  
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "thresholdMinutes": {
+        "type": "integer",
+        "default": 50,
+        "description": "Gap threshold in minutes (default: 50)"
+      }
+    }
+  },
+  
+  "outputSchema": {
+    "type": "object",
+    "required": ["gaps"],
+    "properties": {
+      "gaps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "gapMinutes": { "type": "integer" },
+            "lastSeen": { "type": "string" },
+            "now": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  
+  "sideEffects": [
+    {
+      "type": "read",
+      "resource": "runtime_state",
+      "scope": "global"
+    },
+    {
+      "type": "create",
+      "resource": "action_log",
+      "scope": "global"
+    }
+  ],
+  
+  "reviewPolicy": {
+    "mode": "none"
+  },
+  
+  "resources": {
+    "instructions": "instructions.md"
+  },
+  
+  "telemetry": {
+    "trackExecution": true,
+    "trackLatency": true,
+    "trackErrors": true
+  },
+  
+  "governance": {
+    "generatesWorkstream": false,
+    "requiresDocumentHeader": false,
+    "timestampIntegrity": false
+  }
+}
+
