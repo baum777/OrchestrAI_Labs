@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@agent-system/shared": "workspace:*",
-    "@agent-system/customer-data": "workspace:*"
+    "@agent-system/customer-data": "workspace:*",
+    "@agent-system/governance-v2": "workspace:*"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

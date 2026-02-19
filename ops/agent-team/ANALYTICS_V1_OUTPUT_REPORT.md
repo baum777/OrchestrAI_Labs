@@ -1,8 +1,8 @@
 # Analytics v1 — Output Report
 
-**Date:** 2026-02-19T20:00:00Z (Updated: 2026-02-19T21:00:00Z hardening)  
+**Date:** 2026-02-19T20:00:00Z (Updated: 2026-02-19T22:30:00Z security hardening)  
 **Owner:** @implementer_codex  
-**Status:** COMPLETE (Hardening applied)
+**Status:** COMPLETE (Hardening + Enterprise Security Compliance applied)
 
 ---
 
@@ -13,6 +13,15 @@
 - **Logging Integrity Audit** durchgeführt, dokumentiert in `team_findings.md`
 - **Performance-Indizes** für action_logs ergänzt (Migration 008)
 - **Tests:** Service-Unit, Controller-Smoke, Logging-Integrität
+
+### Enterprise Security Hardening (2026-02-19T22:30:00Z)
+
+- **AuthN:** All /analytics/* require X-User-Id (401 if missing)
+- **AuthZ:** analytics.read permission via PolicyEngine; 403 if missing
+- **Tenant Binding:** X-Client-Id required (fail closed); query params may only narrow, never expand
+- **ISO-UTC Timestamps:** lastSeenAt, lastTimeGapAt serialized via toISOString()
+- **Input Validation:** ValidationPipe + DateRangeValidator (from < to, max 90d)
+- **Migration 008 Check:** onModuleInit warns if indexes missing (non-fatal)
 
 ### Follow-up Hardening (2026-02-19T21:00:00Z)
 
@@ -143,10 +152,26 @@ pnpm -r test   # Fails on governance-v2; use pnpm -C apps/api test for api
 
 **Query params:** from, to (UTC ISO, default 7d, max 90d), projectId?, clientId?, agentId?
 
+**Required headers:** X-User-Id (AuthN), X-Client-Id (tenant binding). X-Project-Id optional.
+
 ---
+
+## Security Hardening Summary (Enterprise Compliance)
+
+| Control | Implementation |
+|---------|----------------|
+| AuthN | AnalyticsAuthGuard; X-User-Id required; 401 if missing |
+| AuthZ | PolicyEngine.authorize("analytics.read"); 403 if missing permission |
+| Tenant Binding | X-Client-Id required; query clientId/projectId must match or be omitted; fail closed |
+| ISO-UTC | lastSeenAt, lastTimeGapAt via Date.toISOString() |
+| Validation | ValidationPipe + DateRangeValidator (from < to, max 90d); 400 on invalid |
+| Migration 008 | onModuleInit checks indexes; WARN if missing (no crash) |
+
+**Permission:** analytics.read — granted to admin, reviewer via migration 009.
 
 ## Release Notes
 
 - **Analytics v1** is production-ready for read-only KPI dashboards.
 - **Migration 008** must be applied manually before use (no migration runner).
+- **Migration 009** adds analytics.read to admin/reviewer roles.
 - **review.access.denied** events now include project_id and client_id when available for correct analytics filtering.

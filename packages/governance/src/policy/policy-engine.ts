@@ -219,7 +219,10 @@ export class PolicyEngine {
       // Knowledge operations
       "knowledge.search": ["knowledge.search"],
       "knowledge.read": ["knowledge.read"],
-      
+
+      // Analytics operations (read-only KPIs)
+      "analytics.read": ["analytics.read"],
+
       // Marketing operations (premium feature)
       "tool.marketing.generateNarrative": ["marketing.generate"],
       "marketing.generate": ["marketing.generate"],

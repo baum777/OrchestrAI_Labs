@@ -23,6 +23,7 @@ export type Permission =
   | "review.approve"
   | "review.reject"
   | "customer_data.read"
+  | "analytics.read"
   | "marketing.generate";
 
 export type ToolRef =
