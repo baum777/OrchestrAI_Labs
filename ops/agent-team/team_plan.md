@@ -642,6 +642,9 @@ infrastructure/db/migrations/
 - [ ] PHASE 2: Reviewer Approval (@reviewer_claude) erforderlich
 - [ ] CUSTOMER DATA PLANE WS2: Reviewer Approval (@reviewer_claude) erforderlich (touches agents/** per policy_approval_rules.yaml)
 - [ ] CUSTOMER DATA PLANE Step 2 WS2: Reviewer Approval (@reviewer_claude) erforderlich (touches agents/** AND governance/** per policy_approval_rules.yaml)
+- [ ] COMPLIANCE HARDENING Phase 1: Reviewer Approval (@reviewer_claude) erforderlich (touches governance/**, users/**)
+- [ ] COMPLIANCE HARDENING Phase 2: Reviewer Approval (@reviewer_claude) erforderlich (touches governance/**, users/**, middleware/**)
+- [ ] COMPLIANCE HARDENING Phase 3: Reviewer Approval (@reviewer_claude) erforderlich (touches governance/**, infrastructure/**)
 
 ---
 
@@ -773,5 +776,326 @@ infrastructure/db/migrations/
 
 **Approval Gate:**
 - Touching agents/**, governance/**, customer-data/** requires @reviewer_claude approval before merge
+
+---
+
+## COMPLIANCE HARDENING — Phase 1: Kritische Blocker (0-2 Wochen)
+
+**Owner:** @implementer_codex  
+**Reviewer:** @reviewer_claude  
+**Autonomy Tier:** 3 (execute-with-approval)  
+**Layer:** implementation  
+**Status:** planning
+
+**Scope:**
+- `infrastructure/docker-compose.yml` (Secrets-Management)
+- `infrastructure/db/migrations/005_user_consents.sql` (new)
+- `infrastructure/db/migrations/006_data_deletion.sql` (new)
+- `apps/api/src/modules/users/consent.service.ts` (new)
+- `apps/api/src/modules/users/data-deletion.service.ts` (new)
+- `packages/governance/src/policy/policy-engine.ts` (Consent-Check)
+- `.github/workflows/secrets-scan.yml` (new)
+
+**Structural Model:**
+```
+infrastructure/db/migrations/
+├── 005_user_consents.sql          (consent tracking)
+└── 006_data_deletion.sql          (deletion audit)
+
+apps/api/src/modules/users/
+├── consent.service.ts              (consent CRUD)
+├── consent.controller.ts           (API endpoints)
+├── data-deletion.service.ts        (deletion + anonymization)
+└── data-deletion.controller.ts    (DELETE /users/:id/data)
+
+packages/governance/src/policy/
+└── policy-engine.ts                (consent check in authorize())
+
+.github/workflows/
+└── secrets-scan.yml                (truffleHog / git-secrets)
+```
+
+**Deliverables:**
+- R-003: Secrets aus docker-compose.yml entfernt, .env.example erstellt
+- R-003b: Secrets-Scanning in CI integriert (truffleHog / git-secrets)
+- R-001: Consent-Management-System (Tabelle + Service + API + PolicyHook)
+- R-002: DataDeletionService (Löschung + Log-Anonymisierung)
+
+**Definition of Done:**
+- [ ] Kein Secret im Repo (docker-compose.yml, .env.example)
+- [ ] CI fail bei Secret-Detection
+- [ ] Consent-Tabelle existiert (user_consents)
+- [ ] Consent-Check in PolicyEngine.authorize() (customer_data.*)
+- [ ] API-Endpoints: POST/DELETE/GET /users/:userId/consent
+- [ ] DataDeletionService anonymisiert action_logs korrekt
+- [ ] API-Endpoint: DELETE /users/:userId/data (mit Auth)
+- [ ] Tests: Consent fehlt → Zugriff blockiert
+- [ ] Tests: Consent widerrufen → Zugriff blockiert
+- [ ] Tests: DataDeletion anonymisiert Logs
+- [ ] Reviewer approval (@reviewer_claude)
+
+**Risks:**
+- **Risk 1:** Consent-Enforcement-Lücken (bypass paths)
+  - **Impact:** high (DSGVO-Verletzung)
+  - **Mitigation:** PolicyEngine als einziger Enforcement-Punkt, keine Bypass-Paths
+- **Risk 2:** Data-Deletion Race Conditions (concurrent access)
+  - **Impact:** medium (data loss)
+  - **Mitigation:** Transactional deletion, soft-delete für audit logs
+- **Risk 3:** Secrets-Scanning False Positives
+  - **Impact:** low (CI noise)
+  - **Mitigation:** Whitelist für bekannte false positives
+
+**Workstreams:**
+
+**WS1 — Secrets-Management (R-003, R-003b)** (Owner: @implementer_codex, Support: @ops_team)
+- Entferne Passwörter aus docker-compose.yml
+- Erstelle .env.example (ohne echte Secrets)
+- Integriere truffleHog / git-secrets in CI
+- Deliverable: Refactored docker-compose, .env.example, CI-Integration
+
+**WS2 — Consent-Management (R-001)** (Owner: @implementer_codex, Support: @reviewer_claude)
+- DB Migration: user_consents Tabelle
+- ConsentService: CRUD-Operationen
+- PolicyEngine: Consent-Check in authorize()
+- API-Endpoints: POST/DELETE/GET /users/:userId/consent
+- Deliverable: Consent-System vollständig integriert
+
+**WS3 — Data-Deletion (R-002)** (Owner: @implementer_codex, Support: @reviewer_claude)
+- DB Migration: data_deletion_audit Tabelle (optional)
+- DataDeletionService: Löschung + Anonymisierung
+- API-Endpoint: DELETE /users/:userId/data
+- Deliverable: Lösch-Service + Log-Anonymisierung
+
+**WS4 — QA Tests** (Owner: @observability_eval, Support: @implementer_codex)
+- Consent fehlt → Zugriff blockiert
+- Consent widerrufen → Zugriff blockiert
+- DataDeletion anonymisiert Logs korrekt
+- CI bricht bei Secret ab
+- Deliverable: Test-Suite für Phase 1
+
+**Approval Gate:**
+- Touching governance/**, users/** requires @reviewer_claude approval
+
+---
+
+## COMPLIANCE HARDENING — Phase 2: Compliance-Struktur (2-6 Wochen)
+
+**Owner:** @implementer_codex  
+**Reviewer:** @reviewer_claude  
+**Autonomy Tier:** 3 (execute-with-approval)  
+**Layer:** implementation  
+**Status:** planning
+
+**Scope:**
+- `infrastructure/db/migrations/007_user_roles.sql` (new)
+- `apps/api/src/modules/users/user-roles.service.ts` (new)
+- `packages/governance/src/policy/policy-engine.ts` (RBAC-Erweiterung)
+- `apps/api/src/filters/policy-error.filter.ts` (Error-Sanitization)
+- `apps/api/src/middleware/audit-log.middleware.ts` (new)
+
+**Structural Model:**
+```
+infrastructure/db/migrations/
+└── 007_user_roles.sql              (user_roles + permissions)
+
+apps/api/src/modules/users/
+└── user-roles.service.ts            (role management)
+
+packages/governance/src/policy/
+└── policy-engine.ts                 (RBAC + permission guard)
+
+apps/api/src/
+├── filters/
+│   └── policy-error.filter.ts       (production-safe errors)
+└── middleware/
+    └── audit-log.middleware.ts      (mandatory logging)
+```
+
+**Deliverables:**
+- R-004: Vollständiges RBAC (user_roles + permission matrix)
+- R-005: Mandatory Audit Logging (Middleware)
+- R-005b: Log Retention Policy (Config)
+- R-008: Error Sanitization (Production-safe ErrorFilter)
+
+**Definition of Done:**
+- [ ] user_roles Tabelle existiert
+- [ ] Permission-Mapping implementiert
+- [ ] PolicyEngine Permission Guard für alle Operationen
+- [ ] Role-Hierarchie (admin > reviewer > user)
+- [ ] Audit-Log-Middleware für alle kritischen Endpoints
+- [ ] Log-Retention-Config (7 Jahre audit, 90 Tage app)
+- [ ] ErrorFilter sanitized für Production
+- [ ] Tests: Role-switch, Unauthorized Access, Escalation Fail
+- [ ] Reviewer approval (@reviewer_claude)
+
+**Risks:**
+- **Risk 1:** Privilege Escalation (unauthorized role-switch)
+  - **Impact:** high (security breach)
+  - **Mitigation:** Role-Hierarchie-Validierung, Permission-Guard
+- **Risk 2:** Audit-Logging-Lücken (optional paths)
+  - **Impact:** high (compliance violation)
+  - **Mitigation:** Middleware als einziger Logging-Punkt, keine Bypass-Paths
+- **Risk 3:** Error-Sanitization zu aggressiv (Debugging erschwert)
+  - **Impact:** low (developer experience)
+  - **Mitigation:** Environment-basierte Sanitization (dev vs. prod)
+
+**Workstreams:**
+
+**WS1 — RBAC Implementation (R-004)** (Owner: @implementer_codex, Support: @reviewer_claude)
+- DB Migration: user_roles Tabelle
+- UserRolesService: Role-Management
+- PolicyEngine: Permission-Guard erweitern
+- Role-Hierarchie implementieren
+- Deliverable: Vollständiges RBAC-System
+
+**WS2 — Mandatory Audit Logging (R-005, R-005b)** (Owner: @implementer_codex, Support: @observability_eval)
+- Audit-Log-Middleware erstellen
+- Alle kritischen Endpoints instrumentieren
+- Log-Retention-Config definieren
+- Deliverable: Mandatory Logging + Retention Policy
+
+**WS3 — Error Sanitization (R-008)** (Owner: @implementer_codex, Support: @observability_eval)
+- ErrorFilter für Production erweitern
+- Environment-basierte Sanitization
+- Security-Headers setzen
+- Deliverable: Production-safe Error-Handling
+
+**WS4 — QA Tests** (Owner: @observability_eval, Support: @implementer_codex)
+- Role-switch Tests
+- Unauthorized Access Tests
+- Escalation Fail Cases
+- Audit-Logging-Coverage Tests
+- Deliverable: Test-Suite für Phase 2
+
+**Approval Gate:**
+- Touching governance/**, users/**, middleware/** requires @reviewer_claude approval
+
+---
+
+## COMPLIANCE HARDENING — Phase 3: Enterprise Hardening (6-12 Wochen)
+
+**Owner:** @implementer_codex  
+**Reviewer:** @reviewer_claude  
+**Autonomy Tier:** 2 (draft-only)  
+**Layer:** architecture  
+**Status:** planning
+
+**Scope:**
+- `packages/governance/src/policy/prompt-sanitizer.ts` (new)
+- `packages/governance/src/policy/dlp.ts` (new)
+- `docs/infrastructure-security.md` (new)
+- `infrastructure/gateway/` (new: TLS, Rate Limiting)
+- `infrastructure/monitoring/` (new: Alerting Pipeline)
+
+**Structural Model:**
+```
+packages/governance/src/policy/
+├── prompt-sanitizer.ts             (prompt injection protection)
+└── dlp.ts                          (data loss prevention)
+
+docs/
+└── infrastructure-security.md      (network diagram, TLS, firewall)
+
+infrastructure/
+├── gateway/
+│   └── hardened-gateway.ts         (TLS, rate limiting)
+└── monitoring/
+    └── alerting-pipeline.ts        (failed logins, unusual access)
+```
+
+**Deliverables:**
+- R-006: Prompt Sanitizer (Prompt-Injection-Schutz)
+- R-007: Data Loss Prevention (DLP) (Export Limits + Domain Blocking)
+- INF-001: Infrastructure Security Docs (Network Diagram)
+- INF-002: TLS / Rate Limiting (Hardened Gateway)
+- INF-003: Monitoring & Alerting (Alerting Pipeline)
+
+**Definition of Done:**
+- [ ] PromptSanitizer implementiert (FORBIDDEN_PATTERNS)
+- [ ] DLP-Service implementiert (MAX_EXPORT_ROWS, BLOCKED_DOMAINS)
+- [ ] Infrastructure-Security-Dokumentation erstellt
+- [ ] TLS für alle Verbindungen
+- [ ] Rate-Limiting für API-Endpoints
+- [ ] Alerting-Pipeline (Failed Logins, Unusual Access)
+- [ ] Tests: Prompt-Injection-Block, Export-Limit, Domain-Block
+- [ ] Reviewer approval (@reviewer_claude)
+
+**Risks:**
+- **Risk 1:** Prompt-Sanitization zu aggressiv (legitime Prompts blockiert)
+  - **Impact:** medium (functionality loss)
+  - **Mitigation:** Whitelist für bekannte legitime Patterns
+- **Risk 2:** DLP False Positives (legitime Exports blockiert)
+  - **Impact:** medium (user experience)
+  - **Mitigation:** Configurable thresholds, admin override
+- **Risk 3:** Infrastructure-Dokumentation veraltet
+  - **Impact:** low (maintenance burden)
+  - **Mitigation:** Automated documentation updates in CI
+
+**Workstreams:**
+
+**WS1 — Prompt Sanitizer (R-006)** (Owner: @implementer_codex, Support: @reviewer_claude)
+- PromptSanitizer implementieren
+- FORBIDDEN_PATTERNS definieren
+- Input-Validierung erweitern
+- Deliverable: Prompt-Injection-Schutz
+
+**WS2 — Data Loss Prevention (R-007)** (Owner: @implementer_codex, Support: @ops_team)
+- DLP-Service implementieren
+- Export-Limits definieren
+- Domain-Blocking implementieren
+- Deliverable: DLP-System
+
+**WS3 — Infrastructure Security (INF-001, INF-002, INF-003)** (Owner: @ops_team, Support: @reviewer_claude)
+- Infrastructure-Security-Dokumentation
+- TLS-Konfiguration
+- Rate-Limiting-Integration
+- Alerting-Pipeline
+- Deliverable: Hardened Infrastructure
+
+**WS4 — QA Tests** (Owner: @observability_eval, Support: @implementer_codex)
+- Prompt-Injection-Block Tests
+- Export-Limit Tests
+- Domain-Block Tests
+- Infrastructure-Security-Validation
+- Deliverable: Test-Suite für Phase 3
+
+**Approval Gate:**
+- Touching governance/**, infrastructure/** requires @reviewer_claude approval
+
+---
+
+## Compliance Hardening — Abhängigkeitslogik
+
+```
+Secrets Fix (R-003)
+    ↓
+Consent Layer (R-001)
+    ↓
+Data Deletion (R-002)
+    ↓
+RBAC (R-004)
+    ↓
+Audit Completion (R-005)
+    ↓
+DLP & Sanitization (R-006, R-007)
+    ↓
+Enterprise Readiness (INF-001, INF-002, INF-003)
+```
+
+**Kritische Erfolgsfaktoren:**
+- ✅ Keine "Compliance als Feature" – sondern als Systemlayer
+- ✅ PolicyEngine ist der zentrale Enforcement-Punkt
+- ✅ Audit Logging darf niemals optional sein
+- ✅ Secrets niemals im Repo
+- ✅ Timezone / Clock-Integrity sauber halten
+
+**Erwartete Compliance-Verbesserung:**
+
+| Phase | DSGVO | ISO 27001 | SOC 2 | Gesamt |
+|-------|-------|-----------|-------|--------|
+| **Jetzt** | 4/10 | 5/10 | 6/10 | 5/10 |
+| **Phase 1** | 7.5/10 | 7/10 | 6.5/10 | 7/10 |
+| **Phase 2** | 8.5/10 | 8/10 | 7.5/10 | 8/10 |
+| **Phase 3** | 9/10 | 9/10 | 8.5/10 | 9/10 |
 
 ---

@@ -5,7 +5,7 @@
  */
 
 import type { PolicyContext, PolicyErrorCode } from "./types.js";
-import type { PolicyViolationAdvice } from "@shared/types/governance";
+import type { PolicyViolationAdvice } from "@agent-system/shared";
 
 export class PolicyError extends Error {
   constructor(

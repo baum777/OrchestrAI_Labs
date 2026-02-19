@@ -4,7 +4,7 @@
  * Types for PolicyEngine authorization, sanitization, and redaction.
  */
 
-import type { Permission } from "@shared/types/agent";
+import type { Permission } from "@agent-system/shared";
 
 export type PolicyContext = {
   userId: string;              // Required: caller identity
@@ -42,7 +42,8 @@ export type PolicyErrorCode =
   | "PII_DETECTION"                // PII detected and redacted
   | "CAPABILITY_MISSING"           // Agent lacks required capability/permission
   | "TIME_GAP_DETECTED"            // Long time gap detected between operations
-  | "UNAUTHORIZED_ENTITY";         // Entity not on allowlist
+  | "UNAUTHORIZED_ENTITY"          // Entity not on allowlist
+  | "CONSENT_MISSING";             // User consent required but not granted (DSGVO)
 
 export type SanitizedParams = {
   operationId: string;
