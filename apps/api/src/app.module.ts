@@ -8,6 +8,7 @@ import { DecisionsModule } from "./modules/decisions/decisions.module";
 import { LogsModule } from "./modules/logs/logs.module";
 import { ReviewsModule } from "./modules/reviews/reviews.module";
 import { MonitoringModule } from "./modules/monitoring/monitoring.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { UsersModule } from "./modules/users/users.module";
 import { HealthController } from "./health/health.controller";
 import { AuditLogMiddleware } from "./middleware/audit-log.middleware";
@@ -26,6 +27,7 @@ import { LogRetentionJob } from "./jobs/log-retention.job";
     LogsModule,
     ReviewsModule,
     MonitoringModule,
+    AnalyticsModule,
     UsersModule,
   ],
   controllers: [HealthController],
