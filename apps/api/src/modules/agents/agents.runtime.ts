@@ -16,10 +16,28 @@ import type {
 } from "@agent-system/customer-data";
 import { generateResultHash } from "@agent-system/customer-data";
 import type { LicenseManager } from "@governance/license/license-manager";
+import { SkillRegistry, SkillLoader, SkillExecutor } from "@agent-system/skills";
+import { WorkstreamValidator } from "@agent-system/governance-v2";
 
 const profilesDir = path.join(process.cwd(), "packages/agent-runtime/src/profiles");
 const loader = new ProfileLoader({ profilesDir });
 loader.loadAll();
+
+// Skills setup (feature-flagged)
+const skillsEnabled = process.env.SKILLS_ENABLED === 'true';
+let skillRegistry: SkillRegistry | undefined;
+let skillLoader: SkillLoader | undefined;
+let skillExecutor: SkillExecutor | undefined;
+
+if (skillsEnabled) {
+  const skillsDir = path.join(process.cwd(), "packages/skills/skills");
+  skillRegistry = new SkillRegistry({ skillsDir });
+  skillRegistry.loadAll();
+  skillLoader = new SkillLoader(skillRegistry, skillsDir);
+  const workstreamValidator = new WorkstreamValidator();
+  const systemClock = new SystemClock();
+  skillExecutor = new SkillExecutor(systemClock, workstreamValidator);
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
@@ -688,6 +706,9 @@ export function createOrchestrator(
     reviewStore,
     logger,
     undefined, // governanceValidator
-    orchestratorClock
+    orchestratorClock,
+    skillRegistry, // Optional skill registry
+    skillExecutor, // Optional skill executor
+    skillLoader // Optional skill loader
   );
 }

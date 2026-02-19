@@ -15,6 +15,11 @@ export type AgentRunInput = {
     toolCalls: ToolCall[];
     reviewCommit?: { reviewId: string; commitToken: string };
   };
+  skillRequest?: {
+    skillId: string;
+    version?: string;
+    input: unknown;
+  };
 };
 
 export type ReviewRequest = {
@@ -78,10 +83,28 @@ export interface GovernanceWorkstreamValidator {
   }>;
 }
 
+// Optional skill dependencies (feature-flagged)
+interface SkillRegistry {
+  getManifest(skillId: string, version?: string): { id: string; version: string; requiredPermissions: string[]; requiredTools: string[]; reviewPolicy: { mode: string } } | null;
+}
+
+interface SkillExecutor {
+  compile(manifest: unknown, instructions: string, input: unknown, context: unknown): Promise<{ skillId: string; version: string; input: unknown; toolCalls: ToolCall[]; reviewRequired: boolean; reviewPolicy: { mode: string }; executionMode: string }>;
+  execute(plan: unknown, context: unknown, toolRouter?: ToolRouter): Promise<{ ok: boolean; output?: unknown; error?: string; toolCalls?: ToolCall[]; telemetry?: { skillRunId: string } }>;
+}
+
+interface SkillLoader {
+  loadInstructions(skillId: string): Promise<string | null>;
+}
+
 export class Orchestrator {
   private readonly clock: Clock;
   private readonly gapDetectionEnabled: boolean;
   private readonly gapThresholdMinutes: number;
+  private readonly skillsEnabled: boolean;
+  private readonly skillRegistry?: SkillRegistry;
+  private readonly skillExecutor?: SkillExecutor;
+  private readonly skillLoader?: SkillLoader;
 
   constructor(
     private readonly profiles: { getById(id: string): AgentProfile },
@@ -89,11 +112,18 @@ export class Orchestrator {
     private readonly reviewStore: ReviewStore,
     private readonly logger: ActionLogger,
     private readonly governanceValidator?: GovernanceWorkstreamValidator,
-    clock?: Clock
+    clock?: Clock,
+    skillRegistry?: SkillRegistry,
+    skillExecutor?: SkillExecutor,
+    skillLoader?: SkillLoader
   ) {
     this.clock = clock ?? new SystemClock();
     this.gapDetectionEnabled = process.env.TIME_GAP_DETECTION !== '0';
     this.gapThresholdMinutes = 50;
+    this.skillsEnabled = process.env.SKILLS_ENABLED === 'true';
+    this.skillRegistry = skillRegistry;
+    this.skillExecutor = skillExecutor;
+    this.skillLoader = skillLoader;
   }
 
   private static sha256Json(v: unknown): string {
@@ -175,6 +205,171 @@ export class Orchestrator {
         // Log error but don't block execution
         console.warn("Failed to save runtime state:", error);
       }
+    }
+
+    // Skill execution path (feature-flagged)
+    if (input.skillRequest && this.skillsEnabled) {
+      if (!this.skillRegistry || !this.skillExecutor || !this.skillLoader) {
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "skill.blocked.missing_dependencies",
+          input: input.skillRequest,
+          output: { reason: "SkillRegistry, SkillExecutor, or SkillLoader not available" },
+          ts: nowIso,
+          blocked: true,
+          reason: "Skills dependencies not configured",
+        });
+        return { status: "blocked", data: { reason: "SKILLS_DEPENDENCIES_MISSING" } };
+      }
+
+      const manifest = this.skillRegistry.getManifest(input.skillRequest.skillId, input.skillRequest.version);
+      if (!manifest) {
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "skill.blocked.not_found",
+          input: input.skillRequest,
+          output: { reason: "Skill not found" },
+          ts: nowIso,
+          blocked: true,
+          reason: "Skill not found",
+        });
+        return { status: "blocked", data: { reason: "SKILL_NOT_FOUND", skillId: input.skillRequest.skillId } };
+      }
+
+      // Check permissions
+      const hasPermission = manifest.requiredPermissions.every(perm => profile.permissions.includes(perm as Permission));
+      if (!hasPermission) {
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "skill.blocked.permission_denied",
+          input: input.skillRequest,
+          output: { reason: "Missing required permissions", required: manifest.requiredPermissions },
+          ts: nowIso,
+          blocked: true,
+          reason: "Permission denied",
+        });
+        return { status: "blocked", data: { reason: "SKILL_PERMISSION_DENIED", required: manifest.requiredPermissions } };
+      }
+
+      // Load instructions
+      const instructions = await this.skillLoader.loadInstructions(input.skillRequest.skillId);
+      if (!instructions) {
+        await this.logger.append({
+          agentId: profile.id,
+          userId: ctx.userId,
+          projectId: ctx.projectId,
+          clientId: ctx.clientId,
+          action: "skill.blocked.instructions_not_found",
+          input: input.skillRequest,
+          output: { reason: "Instructions not found" },
+          ts: nowIso,
+          blocked: true,
+          reason: "Instructions not found",
+        });
+        return { status: "blocked", data: { reason: "SKILL_INSTRUCTIONS_NOT_FOUND" } };
+      }
+
+      // Compile skill plan
+      const skillContext = {
+        skillId: input.skillRequest.skillId,
+        skillVersion: manifest.version,
+        agentProfile: profile,
+        toolContext: ctx,
+        clock: this.clock,
+        input: input.skillRequest.input,
+      };
+
+      const plan = await this.skillExecutor.compile(manifest, instructions, input.skillRequest.input, skillContext);
+
+      // Governance v2 validation (if generatesWorkstream)
+      // Note: For pilot skill, this is skipped (governance.generatesWorkstream: false)
+
+      // Review gate (if needed)
+      if (plan.reviewRequired && plan.reviewPolicy.mode === 'required') {
+        const gate = enforceReviewGate(profile, 'skill.execute' as Permission);
+        if (!gate.ok) {
+          const timestamp = this.clock.now().toISOString();
+          const req: ReviewRequest = {
+            id: `rev_${crypto.randomUUID()}`,
+            agentId: profile.id,
+            permission: 'skill.execute' as Permission,
+            payload: { skillId: input.skillRequest.skillId, version: manifest.version, input: input.skillRequest.input },
+            reviewerRoles: manifest.reviewPolicy.reviewerRoles || [],
+            createdAt: timestamp,
+            projectId: ctx.projectId,
+            clientId: ctx.clientId,
+            userId: ctx.userId,
+          };
+          await this.reviewStore.create(req);
+
+          await this.logger.append({
+            agentId: profile.id,
+            userId: ctx.userId,
+            projectId: ctx.projectId,
+            clientId: ctx.clientId,
+            action: "skill.blocked.review_required",
+            input: input.skillRequest,
+            output: { reviewId: req.id },
+            ts: timestamp,
+            blocked: true,
+            reason: gate.reason,
+          });
+
+          return { status: "blocked", data: { reason: gate.reason, reviewId: req.id } };
+        }
+      }
+
+      // Execute skill
+      const result = await this.skillExecutor.execute(plan, skillContext, this.toolRouter);
+
+      // Log skill execution
+      await this.logger.append({
+        agentId: profile.id,
+        userId: ctx.userId,
+        projectId: ctx.projectId,
+        clientId: ctx.clientId,
+        action: "skill.executed",
+        input: {
+          skillId: input.skillRequest.skillId,
+          version: manifest.version,
+          input: input.skillRequest.input,
+        },
+        output: {
+          ...result.output,
+          skillRunId: result.telemetry?.skillRunId,
+        },
+        ts: this.clock.now().toISOString(),
+        blocked: !result.ok,
+        reason: result.error,
+      });
+
+      return { status: result.ok ? "ok" : "blocked", data: result };
+    }
+
+    // If skillRequest provided but skills disabled, return blocked
+    if (input.skillRequest && !this.skillsEnabled) {
+      await this.logger.append({
+        agentId: profile.id,
+        userId: ctx.userId,
+        projectId: ctx.projectId,
+        clientId: ctx.clientId,
+        action: "skill.blocked.disabled",
+        input: input.skillRequest,
+        output: { reason: "Skills feature is disabled (SKILLS_ENABLED=false)" },
+        ts: nowIso,
+        blocked: true,
+        reason: "Skills disabled",
+      });
+      return { status: "blocked", data: { reason: "SKILLS_DISABLED" } };
     }
 
     await this.logger.append({
