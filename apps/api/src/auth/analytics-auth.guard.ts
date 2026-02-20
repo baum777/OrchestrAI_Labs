@@ -2,10 +2,11 @@
  * Analytics Auth Guard
  *
  * Enforces AuthN + AuthZ for /analytics/* endpoints.
- * - AuthN: Requires X-User-Id header (or req.user from JWT in production)
+ * - AuthN: Requires authenticated principal (req.user). In development only, X-User-Id header
+ *   is accepted when req.user is absent. Production must use JWT/session that populates req.user.
  * - AuthZ: Requires analytics.read permission via PolicyEngine
  *
- * For MVP: X-User-Id and X-User-Roles headers. In production: JWT token with claims.
+ * Header injection (X-User-Id, X-Client-Id) is for dev/testing only and MUST NOT be used in production.
  */
 
 import {
@@ -21,6 +22,8 @@ import type { PolicyContext } from "@governance/policy/policy-engine";
 import type { Permission } from "@agent-system/shared";
 
 export const ANALYTICS_OPERATION = "analytics.read";
+
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 @Injectable()
 export class AnalyticsAuthGuard implements CanActivate {
@@ -38,23 +41,32 @@ export class AnalyticsAuthGuard implements CanActivate {
       analyticsProjectId?: string;
     }>();
 
-    // --- AuthN: Extract userId ---
+    // --- AuthN: Require authenticated principal ---
+    // Production: req.user required (set by JWT/session middleware). Header-only = 401.
+    // Development/Test: Fallback to X-User-Id header for local/dev usage only.
     let userId: string | undefined;
 
     if (request.user?.userId) {
       userId = request.user.userId;
-    } else if (request.headers["x-user-id"]) {
+    } else if (!IS_PRODUCTION && request.headers["x-user-id"]) {
       userId = request.headers["x-user-id"] as string;
     }
 
     if (!userId?.trim()) {
       throw new UnauthorizedException(
-        "Authentication required: X-User-Id header or valid token must be provided"
+        IS_PRODUCTION
+          ? "Authentication required: valid token or session must provide authenticated principal"
+          : "Authentication required: provide req.user (JWT/session) or X-User-Id header (dev-only)"
       );
     }
 
-    // --- Tenant context (for Phase 3 binding) ---
-    const clientId = (request.headers["x-client-id"] as string | undefined)?.trim();
+    // --- Tenant context ---
+    // Production: clientId must come from req.user (verified). Header NOT accepted.
+    // Development: X-Client-Id header accepted for dev/test only.
+    const clientId =
+      IS_PRODUCTION
+        ? (request.user as { clientId?: string } | undefined)?.clientId?.trim()
+        : (request.headers["x-client-id"] as string | undefined)?.trim();
     const projectId = (request.headers["x-project-id"] as string | undefined)?.trim();
 
     // --- AuthZ: analytics.read permission ---
