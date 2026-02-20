@@ -1,8 +1,8 @@
 # Analytics v1 — Output Report
 
-**Date:** 2026-02-19T20:00:00Z (Updated: 2026-02-20T00:00:00Z compliance evidence)  
+**Date:** 2026-02-19T20:00:00Z (Updated: 2026-02-19T22:30:00Z security hardening)  
 **Owner:** @implementer_codex  
-**Status:** COMPLETE (Hardening + Compliance Evidence applied)
+**Status:** COMPLETE (Hardening + Enterprise Security Compliance applied)
 
 ---
 
@@ -16,13 +16,12 @@
 
 ### Enterprise Security Hardening (2026-02-19T22:30:00Z)
 
-- **AuthN:** All /analytics/* require authenticated principal; production: req.user only (401 if missing); dev: X-User-Id header fallback
-- **AuthZ:** analytics.read permission via PolicyEngine; 403 if missing permission
-- **Tenant Binding:** clientId required (fail closed); production: req.user.clientId; dev: X-Client-Id header; query params may only narrow, never expand
-- **ISO-UTC Timestamps:** lastSeenAt, lastTimeGapAt serialized via Date.toISOString()
-- **Input Validation:** ValidationPipe + DateRangeValidator (from < to, max 90d); 400 on invalid
+- **AuthN:** All /analytics/* require X-User-Id (401 if missing)
+- **AuthZ:** analytics.read permission via PolicyEngine; 403 if missing
+- **Tenant Binding:** X-Client-Id required (fail closed); query params may only narrow, never expand
+- **ISO-UTC Timestamps:** lastSeenAt, lastTimeGapAt serialized via toISOString()
+- **Input Validation:** ValidationPipe + DateRangeValidator (from < to, max 90d)
 - **Migration 008 Check:** onModuleInit warns if indexes missing (non-fatal)
-- **analytics.read:** Code-level in UserRolesService for admin/reviewer (no migration 009)
 
 ### Follow-up Hardening (2026-02-19T21:00:00Z)
 
@@ -153,24 +152,7 @@ pnpm -r test   # Fails on governance-v2; use pnpm -C apps/api test for api
 
 **Query params:** from, to (UTC ISO, default 7d, max 90d), projectId?, clientId?, agentId?
 
-**Auth / Tenant headers (dev-only):** X-User-Id, X-Client-Id, X-Project-Id. Production requires JWT/session populating req.user with userId and clientId.
-
----
-
-## Auth Model
-
-- **Production:** Analytics endpoints require authenticated principal (req.user). JWT or session middleware must set req.user with userId and clientId. Header injection is not accepted.
-- **Development/Test:** X-User-Id and X-Client-Id headers are accepted when req.user is absent. MUST NOT be used in production.
-
-**Statement:** Analytics endpoints require authenticated principal and enforce tenant-bound filtering. Fail closed when auth or tenant context is missing.
-
----
-
-## Tenant Binding Mechanism
-
-- **Bound clientId** comes from req.user.clientId (production) or X-Client-Id header (dev).
-- Query params clientId/projectId may only narrow results within the bound scope.
-- Mismatch (e.g. query clientId ≠ bound clientId) → 403 Forbidden.
+**Required headers:** X-User-Id (AuthN), X-Client-Id (tenant binding). X-Project-Id optional.
 
 ---
 
@@ -178,34 +160,18 @@ pnpm -r test   # Fails on governance-v2; use pnpm -C apps/api test for api
 
 | Control | Implementation |
 |---------|----------------|
-| AuthN | AnalyticsAuthGuard; production: req.user required; dev: X-User-Id fallback; 401 if missing |
+| AuthN | AnalyticsAuthGuard; X-User-Id required; 401 if missing |
 | AuthZ | PolicyEngine.authorize("analytics.read"); 403 if missing permission |
-| Tenant Binding | clientId required; production: req.user.clientId; dev: X-Client-Id; query mismatch → 403 |
+| Tenant Binding | X-Client-Id required; query clientId/projectId must match or be omitted; fail closed |
 | ISO-UTC | lastSeenAt, lastTimeGapAt via Date.toISOString() |
 | Validation | ValidationPipe + DateRangeValidator (from < to, max 90d); 400 on invalid |
 | Migration 008 | onModuleInit checks indexes; WARN if missing (no crash) |
-| analytics.read | Code-level in UserRolesService for admin/reviewer (no DB migration) |
 
----
-
-## Security Test Evidence
-
-| Test | Expected | Status |
-|------|----------|--------|
-| Unauthenticated | 401 | ✅ analytics-security.e2e.spec.ts |
-| No permission | 403 | ✅ analytics-security.e2e.spec.ts |
-| Missing tenant context | 403 | ✅ analytics-security.e2e.spec.ts |
-| Tenant mismatch (query ≠ bound) | 403 | ✅ analytics-security.e2e.spec.ts |
-| Valid request | 200 | ✅ analytics-security.e2e.spec.ts |
-| Invalid date (from > to) | 400 | ✅ analytics-security.e2e.spec.ts |
-| Date range > 90 days | 400 | ✅ analytics-security.e2e.spec.ts |
-
-No skipped security tests. Minimal bootstrap (mocked guard, no DB).
-
----
+**Permission:** analytics.read — granted to admin, reviewer via migration 009.
 
 ## Release Notes
 
 - **Analytics v1** is production-ready for read-only KPI dashboards.
 - **Migration 008** must be applied manually before use (no migration runner).
+- **Migration 009** adds analytics.read to admin/reviewer roles.
 - **review.access.denied** events now include project_id and client_id when available for correct analytics filtering.

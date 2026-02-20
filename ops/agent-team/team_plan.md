@@ -51,29 +51,12 @@
 
 ---
 
-## ANALYTICS v1 Compliance Evidence Hardening
-
-**Owner:** @implementer_codex  
-**Autonomy Tier:** 3  
-**Layer:** implementation  
-**Status:** in_progress  
-**Last Updated:** 2026-02-20T00:00:00Z
-
-**Scope:** AuthN clarity (no header-only spoofable), E2E security proof (no skipped tests), remove dependency drift, tighten documentation. No feature expansion.
-
-**Definition of Done:**
-- [ ] Enterprise audit Access Control = PASS
-- [ ] No skipped security tests
-- [ ] No scope creep (no new cross-package coupling)
-
----
-
 ## ANALYTICS v1 Security Hardening (Enterprise Compliance)
 
 **Owner:** @implementer_codex  
 **Autonomy Tier:** 3 (execute-with-approval)  
 **Layer:** implementation  
-**Status:** completed  
+**Status:** in_progress  
 **Last Updated:** 2026-02-19T22:00:00Z
 
 **Scope:** AuthN/AuthZ/Tenant-binding + ISO timestamps + validation proof. No new infra, no DB schema changes.

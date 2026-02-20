@@ -192,6 +192,9 @@ importers:
       '@agent-system/customer-data':
         specifier: workspace:*
         version: link:../customer-data
+      '@agent-system/governance-v2':
+        specifier: workspace:*
+        version: link:../governance-v2
       '@agent-system/shared':
         specifier: workspace:*
         version: link:../shared
