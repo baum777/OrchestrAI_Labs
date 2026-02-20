@@ -34,7 +34,7 @@ export class AnalyticsController {
     // Tenant binding: clientId required for tenant-scoped access (fail closed)
     if (!boundClientId) {
       throw new ForbiddenException(
-        "Tenant context required: X-Client-Id header must be provided for analytics access"
+        "Tenant context required: clientId must be provided (X-Client-Id in dev, req.user.clientId in production)"
       );
     }
 

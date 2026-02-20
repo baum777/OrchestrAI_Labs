@@ -79,14 +79,15 @@ export class UserRolesService implements PermissionResolver {
    * Get all permissions for a user (from roles + explicit permissions)
    */
   async getPermissions(userId: string): Promise<Permission[]> {
-    // Get permissions from roles
     const rolePermissions = await this.getPermissionsFromRoles(userId);
-    
-    // Get explicit permissions
     const explicitPermissions = await this.getExplicitPermissions(userId);
-    
-    // Combine and deduplicate
+    const roles = await this.getRoles(userId);
+
     const allPermissions = new Set<Permission>([...rolePermissions, ...explicitPermissions]);
+    // Code-level: analytics.read for admin/reviewer (avoids migration 009 coupling)
+    if (roles.includes("admin") || roles.includes("reviewer")) {
+      allPermissions.add("analytics.read");
+    }
     return Array.from(allPermissions);
   }
 

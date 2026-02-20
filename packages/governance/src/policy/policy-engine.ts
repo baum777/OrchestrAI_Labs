@@ -15,8 +15,8 @@ import type {
 } from "./types.js";
 import { PolicyError } from "./errors.js";
 import { containsRawSql, applyConstraints, validateAllowedFields } from "@agent-system/customer-data";
-import type { Clock } from "@agent-system/governance-v2/runtime/clock";
-import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+import type { Clock } from "../runtime/clock.js";
+import { SystemClock } from "../runtime/clock.js";
 import type { PolicyViolationAdvice, Permission } from "@agent-system/shared";
 import type { LicenseManager } from "../license/license-manager.js";
 
