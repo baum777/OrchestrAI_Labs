@@ -28,6 +28,7 @@
 | CUSTOMER DATA PLANE — Step 1-3 Integration | @implementer_codex | in_progress | `packages/customer-data/**`, `packages/governance/**`, `apps/api/src/modules/**`, `infrastructure/db/migrations/**` | 3 | Full Integration Implementation | Reviewer Approval Required |
 | ANALYTICS — v1 Read-only KPIs | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**` | 3 | Read-only analytics + logging audit | - |
 | ANALYTICS v1 Hardening (Follow-up) | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**`, `apps/api/src/modules/reviews/**`, `ops/agent-team/**` | 3 | Correctness, logging gap fix, migration wiring, monorepo tests | - |
+| **ANALYTICS v1 Security Hardening** | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**`, `packages/governance/**` | 3 | AuthN/AuthZ, tenant binding, ISO timestamps, validation proof | - |
 
 ---
 
@@ -47,6 +48,56 @@
 - [ ] pnpm -r test / pnpm -r lint include analytics
 
 **Risks:** Minimal — log write-site fix only; no DB migrations for gap fix.
+
+---
+
+## ANALYTICS v1 Compliance Evidence Hardening
+
+**Owner:** @implementer_codex  
+**Autonomy Tier:** 3  
+**Layer:** implementation  
+**Status:** in_progress  
+**Last Updated:** 2026-02-20T00:00:00Z
+
+**Scope:** AuthN clarity (no header-only spoofable), E2E security proof (no skipped tests), remove dependency drift, tighten documentation. No feature expansion.
+
+**Definition of Done:**
+- [ ] Enterprise audit Access Control = PASS
+- [ ] No skipped security tests
+- [ ] No scope creep (no new cross-package coupling)
+
+---
+
+## ANALYTICS v1 Security Hardening (Enterprise Compliance)
+
+**Owner:** @implementer_codex  
+**Autonomy Tier:** 3 (execute-with-approval)  
+**Layer:** implementation  
+**Status:** completed  
+**Last Updated:** 2026-02-19T22:00:00Z
+
+**Scope:** AuthN/AuthZ/Tenant-binding + ISO timestamps + validation proof. No new infra, no DB schema changes.
+
+**Deliverables:**
+- AuthN: Unauthenticated /analytics/* → 401
+- AuthZ: Authenticated without analytics.read → 403
+- Tenant binding: clientId/projectId from context; query mismatch → 403/400 (fail closed)
+- ISO-8601 UTC timestamps (lastSeenAt, lastTimeGapAt)
+- Input validation evidence (ValidationPipe proven)
+- Migration 008 detection (optional ops guardrail)
+
+**Definition of Done:**
+- [ ] Unauthenticated requests return 401
+- [ ] Authenticated without permission return 403
+- [ ] Tenant mismatch via query returns 403/400
+- [ ] lastSeenAt/lastTimeGapAt ISO-UTC
+- [ ] Invalid date params return 400
+- [ ] No KPI logic changes, no DB schema changes
+- [ ] pnpm -C apps/api test + lint pass
+
+**Risks:** Breaking dashboard access if auth/headers not configured; auth regressions.
+
+**Rollback Plan:** Revert AnalyticsController guards + tenant binding; restore query params passthrough.
 
 ---
 

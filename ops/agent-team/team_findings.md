@@ -16,6 +16,16 @@
 
 ---
 
+## ANALYTICS v1 Security Hardening — Enterprise Compliance (2026-02-19T22:00:00Z)
+
+**Finding:** Enterprise compliance audit NON-COMPLIANT due to: 1) Missing AuthN/AuthZ on /analytics/*, 2) Tenant isolation not enforced (clientId/projectId freely selectable via query), 3) Timestamps not guaranteed ISO-UTC (MAX(created_at)::text), 4) Input validation evidence unclear, 5) Migration 008 detection optional.
+
+**Impact:** High — Compliance gap, potential cross-tenant data access.
+
+**Action:** Security Hardening Run (Phases 1–7) — AuthN via X-User-Id guard, AuthZ via PolicyEngine analytics.read, Tenant binding via X-Client-Id required, ISO timestamps in service, ValidationPipe on controller.
+
+---
+
 ## ANALYTICS v1 — Logging Integrity Audit (2026-02-19T19:00:00Z)
 
 ### 1. Event Inventory (ActionLogger Usage)

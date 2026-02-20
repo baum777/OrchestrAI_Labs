@@ -1,8 +1,14 @@
-import { Inject, Injectable, Optional } from "@nestjs/common";
+import { Inject, Injectable, Optional, OnModuleInit, Logger } from "@nestjs/common";
 import { PG_POOL } from "../../db/db.module";
 import type { Pool } from "pg";
 import type { Clock } from "@agent-system/governance-v2/runtime/clock";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+
+const MIGRATION_008_INDEXES = [
+  "idx_action_logs_action",
+  "idx_action_logs_created_at",
+  "idx_action_logs_client_time",
+] as const;
 
 export type AnalyticsOverview = {
   totalEvents: number;
@@ -49,14 +55,34 @@ export type TimeStats = {
 };
 
 @Injectable()
-export class AnalyticsService {
+export class AnalyticsService implements OnModuleInit {
   private readonly clock: Clock;
+  private readonly logger = new Logger(AnalyticsService.name);
 
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
     @Optional() clock?: Clock
   ) {
     this.clock = clock ?? new SystemClock();
+  }
+
+  async onModuleInit(): Promise<void> {
+    try {
+      const { rows } = await this.pool.query<{ indexname: string }>(
+        `SELECT indexname FROM pg_indexes WHERE tablename = 'action_logs'`
+      );
+      const existing = new Set(rows.map((r) => r.indexname));
+      const missing = MIGRATION_008_INDEXES.filter((idx) => !existing.has(idx));
+      if (missing.length > 0) {
+        this.logger.warn(
+          `Analytics migration 008 indexes missing: ${missing.join(", ")}. ` +
+            `Apply: psql -d $DATABASE -f infrastructure/db/migrations/008_analytics_indexes.sql ` +
+            `Performance may be degraded for analytics queries.`
+        );
+      }
+    } catch {
+      // Non-fatal: do not crash on init
+    }
   }
 
   private resolveDateRange(from?: string, to?: string): {
@@ -218,14 +244,14 @@ export class AnalyticsService {
       executed: string;
       blocked: string;
       avg_duration: string | null;
-      last_seen: string | null;
+      last_seen_ts: Date | null;
     }>(
       `SELECT
         COALESCE(al.output_json->>'skillId', al.input_json->>'skillId', 'unknown') as skill_id,
         COUNT(*) FILTER (WHERE al.action = 'skill.executed')::text as executed,
         COUNT(*) FILTER (WHERE al.action LIKE 'skill.blocked.%')::text as blocked,
         AVG((al.output_json->>'skillDurationMs')::numeric) FILTER (WHERE al.action = 'skill.executed')::text as avg_duration,
-        MAX(al.created_at)::text as last_seen
+        MAX(al.created_at) as last_seen_ts
       FROM action_logs al
       WHERE ${baseWhere}
         AND (al.action = 'skill.executed' OR al.action LIKE 'skill.blocked.%')
@@ -257,13 +283,20 @@ export class AnalyticsService {
       const avgDuration =
         row.avg_duration != null ? parseFloat(row.avg_duration) : null;
 
+      const lastSeenAt =
+        row.last_seen_ts instanceof Date
+          ? row.last_seen_ts.toISOString()
+          : row.last_seen_ts != null
+            ? new Date(row.last_seen_ts).toISOString()
+            : null;
+
       result.push({
         skillId,
         executed,
         blocked,
         blockReasons,
         avgDurationMs: avgDuration,
-        lastSeenAt: row.last_seen ?? null,
+        lastSeenAt,
       });
     }
     return result;
@@ -405,8 +438,8 @@ export class AnalyticsService {
         `SELECT COUNT(*)::text as count FROM action_logs al WHERE al.created_at >= $1::timestamptz AND al.created_at <= $2::timestamptz AND al.action = 'TIME_GAP_DETECTED'${filterClause}`,
         params
       ),
-      this.pool.query<{ last: string }>(
-        `SELECT MAX(al.created_at)::text as last FROM action_logs al WHERE al.created_at >= $1::timestamptz AND al.created_at <= $2::timestamptz AND al.action = 'TIME_GAP_DETECTED'${filterClause}`,
+      this.pool.query<{ last: Date | null }>(
+        `SELECT MAX(al.created_at) as last FROM action_logs al WHERE al.created_at >= $1::timestamptz AND al.created_at <= $2::timestamptz AND al.action = 'TIME_GAP_DETECTED'${filterClause}`,
         params
       ),
       this.pool.query<{ date: string; count: string }>(
@@ -418,9 +451,17 @@ export class AnalyticsService {
       ),
     ]);
 
+    const lastTimeGapRaw = lastRes.rows[0]?.last;
+    const lastTimeGapAt =
+      lastTimeGapRaw instanceof Date
+        ? lastTimeGapRaw.toISOString()
+        : lastTimeGapRaw != null
+          ? new Date(lastTimeGapRaw).toISOString()
+          : null;
+
     return {
       timeGapDetected: parseInt(countRes.rows[0]?.count ?? "0", 10),
-      lastTimeGapAt: lastRes.rows[0]?.last ?? null,
+      lastTimeGapAt,
       dailyTrend: trendRes.rows.map((r) => ({
         date: r.date,
         count: parseInt(r.count, 10),

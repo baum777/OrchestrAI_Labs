@@ -21,6 +21,7 @@ describe("AnalyticsService", () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    mockQuery.mockResolvedValue({ rows: [] }); // Default for onModuleInit index check
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AnalyticsService,

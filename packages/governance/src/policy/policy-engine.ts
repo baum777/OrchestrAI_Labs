@@ -15,8 +15,8 @@ import type {
 } from "./types.js";
 import { PolicyError } from "./errors.js";
 import { containsRawSql, applyConstraints, validateAllowedFields } from "@agent-system/customer-data";
-import type { Clock } from "@agent-system/governance-v2/runtime/clock";
-import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+import type { Clock } from "../runtime/clock.js";
+import { SystemClock } from "../runtime/clock.js";
 import type { PolicyViolationAdvice, Permission } from "@agent-system/shared";
 import type { LicenseManager } from "../license/license-manager.js";
 
@@ -219,7 +219,10 @@ export class PolicyEngine {
       // Knowledge operations
       "knowledge.search": ["knowledge.search"],
       "knowledge.read": ["knowledge.read"],
-      
+
+      // Analytics operations (read-only KPIs)
+      "analytics.read": ["analytics.read"],
+
       // Marketing operations (premium feature)
       "tool.marketing.generateNarrative": ["marketing.generate"],
       "marketing.generate": ["marketing.generate"],
