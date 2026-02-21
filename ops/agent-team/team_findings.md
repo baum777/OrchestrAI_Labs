@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-21T08:53:32Z  
+**Last Updated:** 2026-02-21T10:14:55Z  
 **Definition of Done:**
 - [ ] Findings haben Timestamp, Owner, Impact, Suggested Action
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -87,6 +87,9 @@
 ---
 
 ## Entries
+
+- 2026-02-21T10:14:55Z — [@teamlead_orchestrator] GT-Drift bestaetigt: `docs/golden-tasks/tasks` enthielt GT-001..GT-008, waehrend `testdata/golden-tasks/index.json` nur GT-001/GT-002 registrierte und `ops/agent-team/golden_tasks.yaml` fachfremde GT-Namen fuer denselben ID-Bereich nutzte — Integritaetsrisiko fuer CI/Review-Nachweise — Canonical Registry `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md` einfuehren und mit Validatoren technisch synchronisieren
+- 2026-02-21T10:14:55Z — [@teamlead_orchestrator] Blueprint- und PR-Governance war nur guideline-basiert — Keine technische Durchsetzung fuer Header-/Section-Compliance — Neue warn-only Validatoren + CI-Schritte fuer Blueprint, Golden Tasks und PR-Schema implementieren (Phase-2 strict toggle vorbereitet)
 
 - 2026-02-21T08:53:32Z — [@teamlead_orchestrator] `docs/DOCS_BLUEPRINT_SPEC.md` fehlte als geforderte Source-of-Truth fuer Doku-Topologie und Trigger-Logik — Ohne zentrale Spezifikation entstehen widerspruechliche, nicht pruefbare Regeln ueber mehrere Dateien — Canonical Blueprint Spec eingefuehrt und als Referenz fuer Layer, Trigger-Mapping und PR-Ausgabeformat gesetzt
 - 2026-02-21T08:53:32Z — [@teamlead_orchestrator] `PR_DESCRIPTION.md` war als zustandsspezifischer Bericht belegt statt als wiederverwendbares Template — Uneinheitliche PR-Outputs und fehlende Pflichtsektionen (Risk/Rollback/Verification) — Datei auf blueprint-konformes Template mit verpflichtenden Sections normalisiert

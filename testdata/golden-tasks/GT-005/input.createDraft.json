@@ -1,0 +1,33 @@
+{
+  "title": "Scope Creep Request in Delivery Phase",
+  "owner": "agent-system",
+  "assumptions": [
+    "Additional features are not launch-critical.",
+    "Budget headroom is insufficient for all requested scope.",
+    "Deferral can preserve launch timeline."
+  ],
+  "alternatives": [
+    "Reject new feature requests",
+    "Move requests into phase 2 backlog",
+    "Accept requests and tolerate budget overrun"
+  ],
+  "risks": [
+    "Budget overrun",
+    "Team frustration",
+    "Release delay"
+  ],
+  "successCriteria": [
+    "Launch date maintained",
+    "Budget variance remains controlled",
+    "Scope decisions are documented and reviewable"
+  ],
+  "nextSteps": [
+    "Re-prioritize backlog",
+    "Communicate decision rationale",
+    "Create phase-2 delivery plan"
+  ],
+  "clientContext": "FinTech project under fixed release constraints.",
+  "commsContext": "Weekly delivery steering.",
+  "clientImplications": "Undocumented scope changes can create governance breaches.",
+  "goal": "Control scope creep without breaking delivery governance."
+}

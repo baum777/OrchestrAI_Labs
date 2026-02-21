@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-21T08:53:32Z  
+**Last Updated:** 2026-02-21T10:14:55Z  
 **Definition of Done:**
 - [ ] Alle Workstreams haben Owner, Scope, Autonomy Tier, Layer, Structural Model, Risks, DoD
 - [ ] Milestones sind definiert und trackbar
@@ -30,6 +30,7 @@
 | ANALYTICS v1 Hardening (Follow-up) | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**`, `apps/api/src/modules/reviews/**`, `ops/agent-team/**` | 3 | Correctness, logging gap fix, migration wiring, monorepo tests | - |
 | **ANALYTICS v1 Security Hardening** | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**`, `packages/governance/**` | 3 | AuthN/AuthZ, tenant binding, ISO timestamps, validation proof | - |
 | DOCS — Blueprint Alignment & Agent Handling Consolidation | @teamlead_orchestrator | in_progress | `docs/**`, `README.md`, `AGENTS.md`, `PR_DESCRIPTION.md`, `ops/agent-team/**` | 2 (draft-only) | Inventory, conflict analysis, canonical blueprint + PR template | Reviewer approval required (`ops/agent-team/**`) |
+| ENFORCEMENT — Blueprint & Golden Task Governance Layer | @teamlead_orchestrator | in_progress | `scripts/**`, `.github/workflows/**`, `docs/golden-tasks/**`, `testdata/golden-tasks/**`, `ops/agent-team/**`, `PR_DESCRIPTION.md` | 2 (draft+pr-ready) | Implement warn-only governance validators + CI steps + registry sync | Reviewer approval required (`ops/agent-team/**`, ci changes) |
 
 ---
 
@@ -99,6 +100,81 @@ ops/agent-team/
   - `docs/DOCS_BLUEPRINT_ALIGNMENT_DRAFT.md`
   - `PR_DESCRIPTION.md`
   - `ops/agent-team/team_*.md`
+
+---
+
+## ENFORCEMENT — Blueprint & Golden Task Governance Layer
+
+**Owner:** @teamlead_orchestrator  
+**Autonomy Tier:** 2 (draft+pr-ready, warn-only)  
+**Layer:** governance  
+**Status:** in_progress  
+**Last Updated:** 2026-02-21T10:14:55Z
+
+**Scope:**
+- `scripts/validate-blueprint.ts`
+- `scripts/validate-golden-tasks.ts`
+- `scripts/validate-pr-template.ts`
+- `.github/workflows/timestamp-integrity.yml`
+- `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md`
+- `docs/golden-tasks/README.md`
+- `testdata/golden-tasks/**`
+- `ops/agent-team/golden_tasks.yaml`
+- `ops/agent-team/policy_approval_rules.yaml`
+- `PR_DESCRIPTION.md`
+- mandatory artifacts (`team_plan.md`, `team_findings.md`, `team_progress.md`, `team_decisions.md`)
+
+**Structural Model:**
+```
+scripts/
+├── validate-blueprint.ts
+├── validate-golden-tasks.ts
+└── validate-pr-template.ts
+
+docs/golden-tasks/
+└── GOLDEN_TASK_REGISTRY.md
+
+testdata/golden-tasks/
+└── GT-00X fixtures
+
+.github/workflows/
+└── timestamp-integrity.yml (enforcement steps, phase-1 warn-only)
+```
+
+**Definition of Done:**
+- [ ] Blueprint Header-Checks fuer geaenderte docs implementiert (warn-only)
+- [ ] Canonical Layer Mapping technisch geprueft
+- [ ] Golden Task Registry als canonical SoT eingefuehrt
+- [ ] Drift-Check Docs/Testdata/Ops technisch implementiert (warn-only)
+- [ ] PR Template Pflichtsektionen technisch geprueft (warn-only)
+- [ ] CI integriert mit Warn-Only-Rollout (Phase 1)
+- [ ] Approval-Regel fuer Blueprint/GoldenTask-Changes ergaenzt
+- [ ] Mandatory Ops-Artefakte append-only aktualisiert
+
+**Risks:**
+- **Risk 1:** False positives bei Header-/Schema-Checks  
+  - **Impact:** medium  
+  - **Mitigation:** Phase-1 warn-only, strict per `ENFORCEMENT_STRICT=1` erst in Phase 2
+- **Risk 2:** Registry-Sync bei neuen GTs wird vergessen  
+  - **Impact:** medium  
+  - **Mitigation:** Validator zwingt Registry/Testdata/Ops-Abgleich
+- **Risk 3:** CI-Laufzeit steigt  
+  - **Impact:** low  
+  - **Mitigation:** Lightweight Scripts ohne externe Services
+
+**Approval Triggers:**
+- `ci_or_build` (Workflow-Änderung)
+- `prompt_or_agent_core` (ops/agent-team)
+- `blueprint_or_golden_task_change` (neue Regel)
+
+**Rollback Plan:**
+- Revert der Enforcement-Commits fuer:
+  - `scripts/validate-*.ts`
+  - `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md`
+  - `.github/workflows/timestamp-integrity.yml`
+  - `ops/agent-team/golden_tasks.yaml`
+  - `ops/agent-team/policy_approval_rules.yaml`
+  - `PR_DESCRIPTION.md`
 
 ---
 

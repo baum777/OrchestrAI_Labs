@@ -1,0 +1,33 @@
+{
+  "title": "Attempted Commit Without Review",
+  "owner": "agent-system",
+  "assumptions": [
+    "A commit without review must be blocked.",
+    "Escalation logging should capture governance violations.",
+    "Finalization is only allowed with approved review and commit token."
+  ],
+  "alternatives": [
+    "Proceed with mandatory review flow",
+    "Attempt direct finalization without review",
+    "Abort decision finalization"
+  ],
+  "risks": [
+    "Governance bypass attempts",
+    "Release delay due to missing approvals",
+    "Audit gaps if escalation is not logged"
+  ],
+  "successCriteria": [
+    "Bypass attempt is blocked",
+    "Escalation event is logged",
+    "Finalization can proceed only after proper review"
+  ],
+  "nextSteps": [
+    "Initiate formal review",
+    "Capture escalation evidence",
+    "Finalize after approved commit token"
+  ],
+  "clientContext": "Delivery team under deadline pressure.",
+  "commsContext": "PM and reviewer workflow alignment.",
+  "clientImplications": "Governance integrity must prevail over speed pressure.",
+  "goal": "Prove enforcement blocks commit-without-review paths."
+}

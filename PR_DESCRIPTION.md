@@ -1,20 +1,20 @@
 # PR DESCRIPTION TEMPLATE
 
-**Zweck:** Standardisierte, blueprint-konforme PR-Beschreibung fuer dieses Repo.  
+**Purpose:** Standardisierte, blueprint-konforme PR-Beschreibung fuer dieses Repo.  
 **Scope:** Alle Aenderungen in Code, Doku, Ops und Governance-Artefakten.  
 **Owner:** @teamlead_orchestrator  
-**Last Updated:** 2026-02-21T08:51:07Z  
+**Last Updated:** 2026-02-21T10:09:38Z  
 **Layer:** operations
 
 ---
 
-## 1) Change Summary
+## Change Summary
 
 - [ ] Was wurde geaendert? (kurze Bullet-Liste)
 - [ ] Welche Module/Pfade sind betroffen?
 - [ ] Warum war die Aenderung notwendig?
 
-## 2) Risk Assessment
+## Risk Assessment
 
 **Risk Level:** [Low | Medium | High]
 
@@ -22,28 +22,33 @@
 - [ ] Hauptrisiko 2 + Begruendung
 - [ ] Mitigation je Risiko
 
-## 3) Rollback Strategy
+## Rollback Strategy
 
 - [ ] Konkrete Dateien/Commits fuer Revert
 - [ ] Was bleibt bei Rollback unveraendert?
 - [ ] Gibt es Migrations-/Datenfolgen?
 
-## 4) Verification
+## Verification Plan
 
-### 4.1 Checks
+### Checks
 - [ ] Lint/Typecheck/Test Befehle
 - [ ] Ergebnis je Check (pass/fail + ggf. Hinweis)
 
-### 4.2 Golden Tasks
+## Golden Task Impact
+- [ ] Ich habe den Golden-Task-Impact bewertet (none | docs-only | fixtures | ci-contract)
+- [ ] Relevante Golden Tasks und Registry-Eintraege wurden geprueft
+- [ ] Bei Blueprint-SoT-Aenderung wurde Impact explizit dokumentiert
+
+## Verification (Golden Tasks)
 - [ ] Relevante Golden Tasks benannt
 - [ ] Ausgefuehrt oder bewusst nicht ausgefuehrt (mit Begruendung, z. B. Tier-2 docs-only)
 - [ ] Evidence-Referenzen (Datei/Log)
 
-## 5) Files Touched
+## Files Touched
 
 - [ ] Vollstaendige Pfadliste der geaenderten Dateien
 
-## 6) Approval Gates (policy_approval_rules.yaml)
+## Approval Gates (policy_approval_rules.yaml)
 
 - [ ] Trigger geprueft: `large_change`
 - [ ] Trigger geprueft: `destructive_ops`
@@ -52,12 +57,12 @@
 - [ ] Trigger geprueft: `prod_config`
 - [ ] Erforderliche Approvals dokumentiert
 
-## 7) Open Questions / Escalations
+## Open Questions / Escalations
 
 - [ ] Offene Punkte (falls vorhanden)
 - [ ] Scope-/Policy-Eskalationen (falls vorhanden)
 
-## 8) Ops Evidence (Mandatory)
+## Ops Evidence Updated
 
 - [ ] `ops/agent-team/team_plan.md` aktualisiert
 - [ ] `ops/agent-team/team_findings.md` aktualisiert

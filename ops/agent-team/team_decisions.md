@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-21T08:53:32Z  
+**Last Updated:** 2026-02-21T10:14:55Z  
 **Definition of Done:**
 - [ ] Jede Decision hat: date, decision, rationale, alternatives, implications, owner, layer
 - [ ] Layer-Tag pro Decision vorhanden
@@ -24,6 +24,19 @@
 ---
 
 ## Decisions
+
+- date: 2026-02-21
+  decision: Blueprint wird als technisch erzwungene Governance-Layer eingefuehrt (3-Layer Enforcement: Blueprint, Golden Tasks, PR Schema)
+  rationale: Reine Richtlinien erzeugen Drift und sind in CI nicht belastbar pruefbar. Technische Validatoren mit warn-only Rollout reduzieren Risiko ohne destruktive Migration.
+  alternatives:
+    - Nur manuelle Review-Disziplin (verworfen, da nicht skalierbar)
+    - Sofort strict/fail-on-error in CI (verworfen, da zu hohes Umstellungsrisiko)
+  implications:
+    - Neue Skripte `scripts/validate-blueprint.ts`, `scripts/validate-golden-tasks.ts`, `scripts/validate-pr-template.ts`
+    - CI-Schritte laufen in Phase 1 warn-only; Phase 2 per Toggle strict
+    - Canonical Registry `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md` ist SoT fuer GT-IDs
+  owner: @teamlead_orchestrator
+  layer: governance
 
 - date: 2026-02-21
   decision: `docs/DOCS_BLUEPRINT_SPEC.md` als zentrale Canonical-Spezifikation fuer Doku-Topologie, Trigger-Mapping und PR-Output verpflichtend fuehren

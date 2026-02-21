@@ -1,0 +1,33 @@
+{
+  "title": "GDPR Tracking Risk Assessment",
+  "owner": "agent-system",
+  "assumptions": [
+    "Consent management can be introduced without major downtime.",
+    "EU data residency is feasible but expensive.",
+    "Legal review must approve the selected option."
+  ],
+  "alternatives": [
+    "Disable tracking completely",
+    "Implement consent-based tracking",
+    "Migrate tracking infrastructure to EU-only stack"
+  ],
+  "risks": [
+    "Regulatory penalties",
+    "Analytics signal loss",
+    "Implementation delay before audit deadline"
+  ],
+  "successCriteria": [
+    "No critical GDPR findings after remediation",
+    "Decision approved by legal and DPO",
+    "Tracking behavior is auditable"
+  ],
+  "nextSteps": [
+    "Map current data flows",
+    "Implement consent controls",
+    "Schedule DPO sign-off"
+  ],
+  "clientContext": "E-commerce platform under active compliance audit.",
+  "commsContext": "Legal and engineering review board.",
+  "clientImplications": "Compliance decision directly impacts campaign tracking.",
+  "goal": "Close GDPR risk with clear governance and evidence."
+}

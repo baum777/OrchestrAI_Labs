@@ -1,0 +1,33 @@
+{
+  "title": "Marketing Strategy Switch: Outbound to Inbound",
+  "owner": "agent-system",
+  "assumptions": [
+    "Inbound can produce qualified leads after ramp-up.",
+    "Sales team can adapt to inbound lead handling.",
+    "Content infrastructure can be built before Q2."
+  ],
+  "alternatives": [
+    "Full inbound switch",
+    "Hybrid outbound and inbound model",
+    "Optimize outbound only"
+  ],
+  "risks": [
+    "Sales team resistance",
+    "Content setup delay",
+    "Lead quality dip during transition"
+  ],
+  "successCriteria": [
+    "Inbound infrastructure live by Q2",
+    "Lead volume maintained",
+    "Sales handover process stabilized"
+  ],
+  "nextSteps": [
+    "Create content plan",
+    "Define inbound funnel ownership",
+    "Schedule sales enablement sessions"
+  ],
+  "clientContext": "B2B consulting firm evaluating strategic demand generation pivot.",
+  "commsContext": "Monthly steering with marketing and sales leads.",
+  "clientImplications": "Budget reallocation and process changes affect sales planning.",
+  "goal": "Choose a sustainable growth strategy with clear governance."
+}

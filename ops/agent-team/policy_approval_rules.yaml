@@ -38,3 +38,14 @@ rules:
       approver_roles: ["teamlead_orchestrator", "reviewer_claude"]
     deny_if_matches: [".env", ".env.local"]
 
+  - id: blueprint_or_golden_task_change
+    match:
+      touches_paths_any:
+        - "docs/DOCS_BLUEPRINT_SPEC.md"
+        - "docs/golden-tasks/**"
+        - "testdata/golden-tasks/**"
+        - "scripts/validate-*.ts"
+    require:
+      approvals: 1
+      approver_roles: ["reviewer_claude"]
+

@@ -1,9 +1,9 @@
 # DOCS BLUEPRINT SPEC
 
-**Zweck:** Verbindliche Struktur und Regeln fuer Dokumentation, Agent-Handling und Change-Evidence im Repo.  
+**Purpose:** Verbindliche Struktur und Regeln fuer Dokumentation, Agent-Handling und Change-Evidence im Repo.  
 **Scope:** Root-Dokumente, `docs/**`, `ops/agent-team/**`, PR-Ausgabeformat.  
 **Owner:** @teamlead_orchestrator  
-**Last Updated:** 2026-02-21T08:51:07Z  
+**Last Updated:** 2026-02-21T10:09:38Z  
 **Layer:** strategy
 
 ---
@@ -50,6 +50,18 @@ Terminologie MUSS repo-konform sein:
 
 ## 4) Canonical Dokumentklassen
 
+### 4.0 Canonical Layer Map (enforced)
+
+| Layer | Canonical File |
+|---|---|
+| strategy | `docs/produktlogik-spezifikation.md` |
+| architecture | `docs/ist-zustand-agent-system.md` |
+| implementation | `docs/decisions.md` |
+| operations | `docs/governance.md` |
+| evidence | `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md` |
+
+Der Layer Map MUSS eindeutig sein (genau eine Canonical-Datei pro Layer).
+
 ### 4.1 Root
 - `README.md` (canonical: Architektur-/Modul-Ueberblick)
 - `AGENTS.md` (canonical: Agent Guardrails)
@@ -77,6 +89,10 @@ Alle anderen Dokus SOLLEN als **derived** oder **evidence** gekennzeichnet werde
 | CI/Governance Gate Aenderung | `team_progress.md` + `team_findings.md` + Approval Trigger pruefen | `docs/governance.md` referenzieren | Merge-Empfehlung ohne notwendige Approvals | Evidence in separatem Ops-Report |
 | Doku-Refactor ohne Code | `team_progress.md` | `team_findings.md` (Konflikte/Gaps) | stille Moves/Renames | deprecate-notice mit Canonical-Verweis |
 | Golden-Task-relevante Aenderung | Verifikationsteil MUSS relevante Golden Tasks nennen | Ausfuehrung je Autonomy Tier planen | Golden-Task-Relevanz weglassen | Task-Ausfuehrung + Evidence anhangen |
+
+Zusatzregel:
+- Wenn `docs/DOCS_BLUEPRINT_SPEC.md` geaendert wird, MUSS die PR-Beschreibung den Abschnitt
+  **Golden Task Impact** enthalten.
 
 ---
 
