@@ -4,7 +4,7 @@ import {
   coerceGovernanceStatusResponse,
   fetchGovernanceStatus,
   type GovernanceStatusResponse,
-} from "../../../../../lib/github/governanceArtifact";
+} from "../../../../lib/github/governanceArtifact";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
