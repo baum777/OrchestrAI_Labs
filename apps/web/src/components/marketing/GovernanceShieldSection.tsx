@@ -1,6 +1,6 @@
 "use client";
 
-import { AdvisorCard } from "../governance/AdvisorCard.js";
+import { AdvisorCard } from "../governance/AdvisorCard";
 import type { PolicyViolationAdvice } from "@shared/types/governance";
 
 export function GovernanceShieldSection() {

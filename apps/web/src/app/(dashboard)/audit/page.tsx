@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchApi } from "../../../lib/api-client.js";
-import { clock } from "../../../lib/clock.js";
+import { fetchApi } from "../../../lib/api-client";
+import { clock } from "../../../lib/clock";
 
 interface AuditLogEntry {
   id: string;

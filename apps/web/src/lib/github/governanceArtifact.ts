@@ -580,7 +580,6 @@ export function coerceGovernanceStatusResponse(input: unknown): GovernanceStatus
   const meta = asRecord(r.meta);
   const summary = asRecord(r.summary);
   const checks = asRecord(r.checks);
-  const prs = Array.isArray(r.prs) ? r.prs : [];
   if (!meta || !summary || !checks) return null;
   if (!asString(meta.generatedAt) || !asRecord(meta.workflow) || !asRecord(meta.artifact)) return null;
   if (!asString(summary.overall) || !asRecord(summary.counts)) return null;
