@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-18T13:00:00+01:00  
+**Last Updated:** 2026-02-21T08:02:06Z  
 **Definition of Done:**
 - [ ] Findings haben Timestamp, Owner, Impact, Suggested Action
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -88,6 +88,7 @@
 
 ## Entries
 
+- 2026-02-21T08:02:06Z — [@implementer_codex] Es gibt kein dediziertes Repo-Dokument mit kompakter Produktlogik-Spezifikation (Kurzbeschreibung + fachliche Muss-Regeln) — Uneinheitliche Kommunikation von Scope, Invarianten und Ablauf zwischen Pitch, Architektur und Operations-Doku — Neues Referenzdokument `docs/produktlogik-spezifikation.md` anlegen und im `README.md` verlinken
 - 2026-02-15T17:57:43Z — [GPT-5.2] Test-Harness Drift: `apps/api/package.json` referenziert `test/golden-tasks/golden-tasks.e2e.spec.ts`, aber `apps/api/test/**` enthält aktuell nur `test/app.e2e-spec.ts` Placeholder — `pnpm -C apps/api test:golden` ist im IST-Zustand nicht ausführbar — Test-only Harness-Dateien (jest config + utils + golden specs) wiederherstellen/neu anlegen, ohne Produktcode zu ändern
 - 2026-02-15T17:57:43Z — [GPT-5.2] Reale Governance-Block Reasons (Runtime) existieren bereits und sind testbar — Finalize: `finalize_review_not_found`, `finalize_review_not_approved`, `finalize_project_mismatch`, `finalize_invalid_status` (in `DecisionsService.finalizeFromDraft` via `logEscalation`); Commit-Run: `invalid_commit_token`, `commit_mismatch`, `payload_tamper` (in `Orchestrator.run`, action='escalation', `input.reason`) — Tests sollen `action_logs` (action='escalation', blocked=true, input_json.reason) assertieren
 - 2026-02-14T00:00:00Z — [GPT-5.2] Keine bestehende Partner-/Vertriebs-Doku gefunden — Onboarding-Paper muss neu erstellt werden — Neues Dokument in `docs/geschaeftspartner-onboarding-konzept.md` anlegen, konsistent zum Produktüberblick in `README.md`

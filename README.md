@@ -161,6 +161,7 @@ agent-system/
 
 - **[IST-Zustand](docs/ist-zustand-agent-system.md)**: Vollständige Dokumentation des aktuellen Systemzustands (inkl. Architektur)
 - **[Onepager Architektur](docs/onepager-agentensystem-architektur.md)**: Kompakter Architekturüberblick
+- **[Produktlogik Spezifikation](docs/produktlogik-spezifikation.md)**: Kurzbeschreibung und fachlicher Ablauf der Kernlogik
 - **[Decisions](docs/decisions.md)**: Decision Lifecycle und API-Dokumentation
 - **[Governance](docs/governance.md)**: Governance-Prinzipien und Policy-Enforcement
 - **[Drift Playbook](docs/drift_playbook.md)**: Monitoring-Metriken und Maßnahmen

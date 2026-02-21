@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-18T13:00:00+01:00  
+**Last Updated:** 2026-02-21T08:02:06Z  
 **Definition of Done:**
 - [ ] Alle Workstreams haben Owner, Scope, Autonomy Tier, Layer, Structural Model, Risks, DoD
 - [ ] Milestones sind definiert und trackbar
@@ -808,6 +808,7 @@ packages/agent-runtime/src/orchestrator/
 | Agentensystem Onepager (Pitch + Architektur) | GPT-5.2 (Cloud Agent) | in_progress | `docs/onepager-agentensystem-pitch.md`, `docs/onepager-agentensystem-architektur.md`, `ops/agent-team/*` | T1 (Docs-only) | Pitch- und Architektur-Onepager aus `docs/ist-zustand-agent-system.md` ableiten und schreiben | — |
 | Geschäftspartner-Onboarding (Business Paper) | GPT-5.2 (Cloud Agent) | pending | `docs/geschaeftspartner-onboarding-konzept.md`, `ops/agent-team/*` | T1 (Docs-only) | Onboarding-Paper strukturieren und schreiben (ohne Tech-Stack) | — |
 | BLOCK 10 · Governance-Bypass Tests (E2E) | GPT-5.2 (Cloud Agent) | in_progress | `apps/api/test/**`, `apps/api/jest.config.cjs`, `apps/api/package.json`, `ops/agent-team/*` | T2 (Tests-only) | Golden E2E Suite um negative Bypass-Fälle erweitern (Escalation + action_logs asserted), ohne Produktcode-Änderungen | Missing/unstimmiger Test-Harness im Repo (test:golden zeigt auf nicht vorhandene Datei) |
+| Produktlogik — Kurzbeschreibung + Spezifikation | @implementer_codex | completed | `docs/produktlogik-spezifikation.md`, `README.md`, `ops/agent-team/*` | T1 (Docs-only) | ✅ Kurzbeschreibung + Spezifikation erstellt und verlinkt | — |
 
 ## Milestones
 - [ ] M1: Agentensystem Onepager (Pitch) fertig
