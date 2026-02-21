@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-21T08:02:06Z  
+**Last Updated:** 2026-02-21T08:53:32Z  
 **Definition of Done:**
 - [ ] Alle Workstreams haben Owner, Scope, Autonomy Tier, Layer, Structural Model, Risks, DoD
 - [ ] Milestones sind definiert und trackbar
@@ -29,6 +29,76 @@
 | ANALYTICS — v1 Read-only KPIs | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**` | 3 | Read-only analytics + logging audit | - |
 | ANALYTICS v1 Hardening (Follow-up) | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**`, `apps/api/src/modules/reviews/**`, `ops/agent-team/**` | 3 | Correctness, logging gap fix, migration wiring, monorepo tests | - |
 | **ANALYTICS v1 Security Hardening** | @implementer_codex | in_progress | `apps/api/src/modules/analytics/**`, `packages/governance/**` | 3 | AuthN/AuthZ, tenant binding, ISO timestamps, validation proof | - |
+| DOCS — Blueprint Alignment & Agent Handling Consolidation | @teamlead_orchestrator | in_progress | `docs/**`, `README.md`, `AGENTS.md`, `PR_DESCRIPTION.md`, `ops/agent-team/**` | 2 (draft-only) | Inventory, conflict analysis, canonical blueprint + PR template | Reviewer approval required (`ops/agent-team/**`) |
+
+---
+
+## DOCS — Blueprint Alignment & Agent Handling Consolidation
+
+**Owner:** @teamlead_orchestrator  
+**Autonomy Tier:** 2 (draft-only)  
+**Layer:** strategy  
+**Status:** in_progress  
+**Last Updated:** 2026-02-21T08:53:32Z
+
+**Scope:**
+- `docs/**`
+- `README.md`
+- `AGENTS.md`
+- `PR_DESCRIPTION.md`
+- `ops/agent-team/team_plan.md`
+- `ops/agent-team/team_findings.md`
+- `ops/agent-team/team_progress.md`
+- `ops/agent-team/team_decisions.md`
+
+**Structural Model:**
+```
+docs/
+├── DOCS_BLUEPRINT_SPEC.md              # canonical blueprint
+├── DOCS_BLUEPRINT_ALIGNMENT_DRAFT.md   # inventory + conflicts + proposed moves
+└── (existing domain docs)
+
+root/
+├── README.md
+├── AGENTS.md
+└── PR_DESCRIPTION.md
+
+ops/agent-team/
+├── team_plan.md
+├── team_findings.md
+├── team_progress.md
+└── team_decisions.md
+```
+
+**Definition of Done:**
+- [ ] Inventory table vorhanden (`path|layer|purpose|canonical?|duplicates-with|action|risk`)
+- [ ] Konflikte und Gaps dokumentiert
+- [ ] Canonical Blueprint Spec vorhanden und referenzierbar
+- [ ] Trigger -> Pflicht-Doku/Evidence Mapping normativ dokumentiert (MUSS/DARF NICHT/SOLL/KANN)
+- [ ] PR-Ausgabeformat standardisiert (Change Summary, Risk, Rollback, Verification)
+- [ ] Mandatory Ops-Artefakte aktualisiert (Plan/Findings/Progress/Decisions)
+
+**Risks:**
+- **Risk 1:** Dokumentationsdrift durch verteilte Regeltexte  
+  - **Impact:** medium  
+  - **Mitigation:** Eine explizite canonical Spezifikation + abgeleitete Inventarliste
+- **Risk 2:** Neue SoT-Duplikate durch unklare Rollen von Partner-/Marketing-Dokus  
+  - **Impact:** medium  
+  - **Mitigation:** Canonical-Markierung und proposed move/deprecate Plan ohne stille Renames
+- **Risk 3:** Approval-Regeln werden uebersehen  
+  - **Impact:** high  
+  - **Mitigation:** expliziter Abschnitt "Approval Gates" in PR-Template
+
+**Approval Triggers:**
+- `prompt_or_agent_core` greift, da `ops/agent-team/**` beruehrt wird
+- Merge-Empfehlung nur mit erforderlichem Reviewer-Approval
+
+**Rollback Plan:**
+- `git revert` der Dokumentations-Commits fuer:
+  - `docs/DOCS_BLUEPRINT_SPEC.md`
+  - `docs/DOCS_BLUEPRINT_ALIGNMENT_DRAFT.md`
+  - `PR_DESCRIPTION.md`
+  - `ops/agent-team/team_*.md`
 
 ---
 
