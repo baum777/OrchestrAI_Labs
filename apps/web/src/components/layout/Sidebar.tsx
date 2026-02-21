@@ -12,7 +12,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Fleet Monitor", href: "/fleet", icon: "🚀" },
   { label: "Approval Inbox", href: "/approval", icon: "📬" },
-  { label: "Governance Matrix", href: "/governance", icon: "🛡️" },
+  { label: "Governance", href: "/governance", icon: "🛡️" },
   { label: "Audit Ledger", href: "/audit", icon: "📋" },
 ];
 

@@ -1,145 +1,117 @@
-"use client";
+import { headers } from "next/headers";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+import type { GovernanceStatusResponse } from "../../../lib/github/governanceArtifact";
+import { GovernanceKpis } from "./_components/GovernanceKpis";
+import { GovernanceTable } from "./_components/GovernanceTable";
 
-import { useEffect, useState } from "react";
-import { clock } from "../../../lib/clock";
-
-interface CapabilityInfo {
-  clientId: string;
-  operations: string[];
-  sources: string[];
-  tier?: "free" | "standard" | "premium";
-  premiumFeatures?: string[];
+function getBaseUrl(): string {
+  const h = headers();
+  const proto = h.get("x-forwarded-proto") ?? "http";
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  return `${proto}://${host}`;
 }
 
-export default function GovernanceMatrixPage() {
-  const [capabilities, setCapabilities] = useState<CapabilityInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, _setError] = useState<string | null>(null);
+function safeBranch(input: string | string[] | undefined): string {
+  const raw = Array.isArray(input) ? input[0] : input;
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) return "main";
+  if (!/^[A-Za-z0-9._/-]+$/.test(trimmed)) return "main";
+  return trimmed;
+}
 
-  useEffect(() => {
-    // TODO: Replace with actual API endpoint for capabilities
-    // For now, we'll simulate with mock data
-    // In production: fetchApi("/governance/capabilities")
-    clock.setTimeout(() => {
-      // Mock data - replace with actual API call
-      setCapabilities([
-        {
-          clientId: "test-agency-1",
-          operations: ["GetCustomer", "SearchCustomers"],
-          sources: ["mock"],
-          tier: "standard",
-          premiumFeatures: [],
-        },
-        {
-          clientId: "acme-corp",
-          operations: ["GetCustomer", "GetOrder", "SearchProducts"],
-          sources: ["postgres", "rest_crm"],
-          tier: "premium",
-          premiumFeatures: ["marketer"],
-        },
-      ]);
-      setLoading(false);
-    }, 500);
-  }, []);
+async function loadStatus(branch: string): Promise<GovernanceStatusResponse> {
+  const baseUrl = getBaseUrl();
+  const url = `${baseUrl}/api/governance/status?branch=${encodeURIComponent(branch)}&includePRs=1`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    const clock = new SystemClock();
+    return {
+      meta: {
+        generatedAt: clock.now().toISOString(),
+        branch,
+        workflow: { name: "timestamp-integrity", file: "timestamp-integrity.yml" },
+        artifact: { name: "governance-status" },
+      },
+      summary: {
+        overall: "WARN",
+        counts: { blueprintViolations: 0, goldenTasksIssues: 0, prNonCompliant: 0, openPrs: 0 },
+      },
+      checks: {
+        blueprint: { violations: [] },
+        goldenTasks: { items: [], counts: { total: 0, issues: 0 } },
+        prGovernance: { warnOnly: true },
+      },
+      prs: [],
+      error: { code: "api_failed", message: `API Fehler: ${res.status} ${res.statusText}` },
+    };
+  }
+  return (await res.json()) as GovernanceStatusResponse;
+}
+
+export default async function GovernancePage(props: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
+  const sp = props.searchParams ?? {};
+  const branch = safeBranch(sp.branch);
+
+  const currentBranch = process.env.VERCEL_GIT_COMMIT_REF ?? process.env.GITHUB_REF_NAME;
+  const branchOptions = Array.from(new Set(["main", branch, currentBranch].filter(Boolean))) as string[];
+
+  const status = await loadStatus(branch);
+  const hasArtifact = !status.error || status.error.code !== "artifact_missing";
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Governance Matrix</h1>
-        <p className="text-gray-600 mt-1">Client-spezifische Capabilities und Berechtigungen</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Governance</h1>
+          <p className="text-gray-600 mt-1">Warn-only Übersicht aus CI Artifact</p>
+        </div>
+
+        <form className="flex flex-wrap items-center gap-2" action="/governance" method="get">
+          <label className="text-sm text-gray-600">
+            Branch
+            <select
+              name="branch"
+              defaultValue={branch}
+              className="ml-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+            >
+              {branchOptions.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-900 border border-yellow-200">
+            Warn-only
+          </span>
+
+          <button
+            type="submit"
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+          >
+            Refresh
+          </button>
+        </form>
       </div>
 
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          <p className="mt-4 text-gray-600">Lade Capabilities...</p>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">{error}</p>
-        </div>
-      ) : (
-        <div className="grid gap-6">
-          {capabilities.map((cap) => (
-            <div
-              key={cap.clientId}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-semibold text-gray-900">{cap.clientId}</h2>
-                  {cap.tier === "premium" && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gradient-to-r from-yellow-400 to-orange-500 text-white shadow-sm">
-                      ⭐ Premium
-                    </span>
-                  )}
-                </div>
-                <span className="text-sm text-gray-500">
-                  {cap.operations.length} Operation{cap.operations.length !== 1 ? "en" : ""}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Erlaubte Operationen</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {cap.operations.map((op) => (
-                      <span
-                        key={op}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
-                      >
-                        {op}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Datenquellen</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {cap.sources.map((source) => (
-                      <span
-                        key={source}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
-                      >
-                        {source}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {cap.premiumFeatures && cap.premiumFeatures.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">Premium-Module</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {cap.premiumFeatures.map((feature) => (
-                        <span
-                          key={feature}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200"
-                        >
-                          {feature === "marketer" && "📊 "}
-                          {feature === "marketer" ? "Generalist Marketer" : feature}
-                        </span>
-                      ))}
-                    </div>
-                    {cap.premiumFeatures.includes("marketer") && (
-                      <div className="mt-2 text-xs text-gray-600 bg-purple-50 p-2 rounded">
-                        <strong>Premium-Modul aktiv:</strong> Nutze mathematisches KPI-Parsing für validierte Werbetexte.
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+      {status.error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="text-sm text-yellow-900 font-semibold">Hinweis</div>
+          <div className="text-sm text-yellow-800 mt-1">
+            {status.error.message}
+            {!hasArtifact && (
+              <span className="ml-2 text-yellow-800 font-medium">No artifact available yet.</span>
+            )}
+          </div>
         </div>
       )}
 
-      {capabilities.length === 0 && !loading && (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <p className="text-gray-500">Keine Capabilities konfiguriert</p>
-        </div>
-      )}
+      <GovernanceKpis status={status} />
+
+      <GovernanceTable status={status} />
     </div>
   );
 }
