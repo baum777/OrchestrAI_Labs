@@ -12,6 +12,31 @@ export const dynamic = "force-dynamic";
 const TTL_MS = 60_000;
 const cache = new Map<string, { ts: number; data: GovernanceStatusResponse }>();
 
+function emptyResponse(branch: string, error: GovernanceStatusResponse["error"]): GovernanceStatusResponse {
+  const clock = new SystemClock();
+  return {
+    meta: {
+      generatedAt: clock.now().toISOString(),
+      branch,
+      repo: process.env.GITHUB_REPOSITORY,
+      commitSha: process.env.GITHUB_SHA ?? process.env.VERCEL_GIT_COMMIT_SHA,
+      workflow: { name: "timestamp-integrity", file: "timestamp-integrity.yml" },
+      artifact: { name: "governance-status" },
+    },
+    summary: {
+      overall: "WARN",
+      counts: { blueprintViolations: 0, goldenTasksIssues: 0, prNonCompliant: 0, openPrs: 0 },
+    },
+    checks: {
+      blueprint: { violations: [] },
+      goldenTasks: { items: [], counts: { total: 0, issues: 0 } },
+      prGovernance: { warnOnly: true },
+    },
+    prs: [],
+    error,
+  };
+}
+
 function asBoolFlag(value: string | null): boolean | undefined {
   if (value === null) return undefined;
   const v = value.trim();
@@ -35,6 +60,8 @@ function mockResponse(branch: string): GovernanceStatusResponse {
     meta: {
       generatedAt: nowIso,
       branch,
+      repo: process.env.GITHUB_REPOSITORY,
+      commitSha: process.env.GITHUB_SHA ?? process.env.VERCEL_GIT_COMMIT_SHA,
       workflow: {
         name: "timestamp-integrity",
         file: "timestamp-integrity.yml",
@@ -103,33 +130,48 @@ function mockResponse(branch: string): GovernanceStatusResponse {
 }
 
 export async function GET(request: NextRequest) {
-  const clock = new SystemClock();
-  const { searchParams } = new URL(request.url);
-  const branch = safeBranch(searchParams.get("branch")) ?? "main";
-  const includePRs = asBoolFlag(searchParams.get("includePRs")) ?? true;
+  try {
+    const clock = new SystemClock();
+    const { searchParams } = new URL(request.url);
+    const branch = safeBranch(searchParams.get("branch")) ?? "main";
+    const includePRs = asBoolFlag(searchParams.get("includePRs")) ?? true;
 
-  const cacheKey = `${branch}::${includePRs ? "prs1" : "prs0"}`;
-  const cached = cache.get(cacheKey);
-  const now = clock.now().getTime();
-  if (cached && now - cached.ts < TTL_MS) {
-    return NextResponse.json(cached.data, { status: 200 });
+    const cacheKey = `${branch}::${includePRs ? "prs1" : "prs0"}`;
+    const cached = cache.get(cacheKey);
+    const now = clock.now().getTime();
+    if (cached && now - cached.ts < TTL_MS) {
+      return NextResponse.json(cached.data, { status: 200 });
+    }
+
+    if (!process.env.GITHUB_TOKEN && process.env.NODE_ENV !== "production") {
+      const data = mockResponse(branch);
+      cache.set(cacheKey, { ts: now, data });
+      return NextResponse.json(data, { status: 200 });
+    }
+
+    const data = await fetchGovernanceStatus({ branch, includePRs, token: process.env.GITHUB_TOKEN });
+    const coerced = coerceGovernanceStatusResponse(data) ?? data;
+
+    // Ensure stable envelope fields + never leak secrets (meta only).
+    coerced.meta.repo = coerced.meta.repo ?? process.env.GITHUB_REPOSITORY;
+    coerced.meta.commitSha = coerced.meta.commitSha ?? (process.env.GITHUB_SHA ?? process.env.VERCEL_GIT_COMMIT_SHA);
+
+    cache.set(cacheKey, { ts: now, data: coerced });
+    return NextResponse.json(coerced, {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
+      },
+    });
+  } catch (e) {
+    const branch = "main";
+    const error = {
+      code: "unhandled_exception",
+      message: "Unerwarteter Fehler im Governance API Handler (warn-only).",
+      hint: "Bitte Logs prüfen und erneut versuchen. Response bleibt absichtlich HTTP 200 (Phase-1).",
+      details: { error: e instanceof Error ? e.message : "unknown" },
+    };
+    return NextResponse.json(emptyResponse(branch, error), { status: 200 });
   }
-
-  if (!process.env.GITHUB_TOKEN && process.env.NODE_ENV !== "production") {
-    const data = mockResponse(branch);
-    cache.set(cacheKey, { ts: now, data });
-    return NextResponse.json(data, { status: 200 });
-  }
-
-  const data = await fetchGovernanceStatus({ branch, includePRs, token: process.env.GITHUB_TOKEN });
-  const coerced = coerceGovernanceStatusResponse(data) ?? data;
-
-  cache.set(cacheKey, { ts: now, data: coerced });
-  return NextResponse.json(coerced, {
-    status: 200,
-    headers: {
-      "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
-    },
-  });
 }
 

@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-21T20:35:42Z  
+**Last Updated:** 2026-02-21T23:18:18Z  
 **Definition of Done:**
 - [ ] Alle Einträge haben Timestamp, Owner, Action, Result, Links/Refs, Next
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -17,6 +17,8 @@
 ---
 
 ## Entries
+
+- 2026-02-21T23:18:18Z — [@implementer_codex] Final polish: server-only Token-Safety + Rate-limit Degradation + Audit Deeplinks — `GITHUB_TOKEN` bleibt strikt server-side (server-only Guard + Route try/catch), API liefert auch bei GitHub Rate-Limit/Netzwerkfehlern stabil HTTP 200 + error envelope; Audit Tab zeigt Branch/Commit/Workflow/Artifact Links — `apps/web/src/lib/github/governanceArtifact.ts`, `apps/web/src/app/api/governance/status/route.ts`, `apps/web/src/app/(dashboard)/governance/_components/GovernanceTable.tsx`, `PR_DESCRIPTION.md` — Next: Screenshots lokal erstellen und in PR anhängen (Pfadvorschlag in PR_DESCRIPTION.md)
 
 - 2026-02-21T20:35:42Z — [@implementer_codex] Minimal Governance Dashboard (Phase-1 warn-only) implementiert — `/governance` rendert mit echten CI-Daten (wenn Artifact vorhanden) und bleibt UI-safe bei Fehlern; API `/api/governance/status` lädt letzten erfolgreichen Run + Artifact `governance-status` → `governance-status.json`, 60s Cache, optionales PR-Enrichment (open PRs + Section-Parsing) — `apps/web/src/app/(dashboard)/governance/**`, `apps/web/src/app/api/governance/status/route.ts`, `apps/web/src/lib/github/governanceArtifact.ts` — Next: CI-Workflow muss `governance-status` Artifact uploaden, damit Live-Daten sichtbar sind
 

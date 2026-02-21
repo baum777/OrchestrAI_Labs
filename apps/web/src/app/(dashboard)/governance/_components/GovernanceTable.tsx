@@ -78,7 +78,26 @@ function buildRows(status: GovernanceStatusResponse, tab: TabKey): Row[] {
       details: pr,
     }));
   }
+  const commitUrl =
+    status.meta.repo && status.meta.commitSha
+      ? `https://github.com/${status.meta.repo}/commit/${status.meta.commitSha}`
+      : undefined;
   const rows: Row[] = [
+    {
+      id: "audit-branch",
+      title: "Branch",
+      status: status.meta.branch,
+      isIssue: false,
+      details: { branch: status.meta.branch },
+    },
+    {
+      id: "audit-commit",
+      title: "Commit",
+      status: status.meta.commitSha ?? "unknown",
+      url: commitUrl,
+      isIssue: false,
+      details: { repo: status.meta.repo, commitSha: status.meta.commitSha },
+    },
     {
       id: "audit-generatedAt",
       title: "Generated At",

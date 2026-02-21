@@ -46,6 +46,14 @@
 ### Checks
 - [x] `pnpm -C apps/web lint` — pass
 - [x] `pnpm -C apps/web build` — pass
+- [x] API Error-Envelope Smoke (manuell): Token fehlt / Artifact fehlt / Rate-limit → **HTTP 200** + `{ meta, summary=WARN, checks blocks, prs: [] , error{code,message,hint} }`
+
+## Screenshots
+
+- [ ] `docs/screenshots/governance-overview.png` (Overview inkl. KPI Cards + Tabs)
+- [ ] `docs/screenshots/governance-blueprint-drawer.png` (Blueprint Tab mit geöffnetem Drawer)
+
+Hinweis: In der Cloud-Agent-Umgebung wird kein Browser/Screenshot-Tool mitgeliefert; Screenshots bitte lokal aus der UI erstellen und an die PR anhängen.
 
 ## Golden Task Impact
 - [x] Ich habe den Golden-Task-Impact bewertet (**ci-contract**: neues CI-Artifact wird konsumiert; keine Registry/Fixtures geändert)

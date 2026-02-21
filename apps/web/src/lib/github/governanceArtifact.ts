@@ -1,3 +1,4 @@
+import "server-only";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 import { inflateRawSync } from "node:zlib";
 
@@ -6,6 +7,7 @@ export type GovernanceOverall = "PASS" | "WARN" | "FAIL";
 export type GovernanceStatusError = {
   code: string;
   message: string;
+  hint?: string;
   details?: Record<string, unknown>;
 };
 
@@ -13,6 +15,8 @@ export type GovernanceStatusResponse = {
   meta: {
     generatedAt: string;
     branch: string;
+    repo?: string;
+    commitSha?: string;
     workflow: {
       name: string;
       file: string;
@@ -144,6 +148,7 @@ function buildBaseResponse(params: {
     meta: {
       generatedAt: params.generatedAt,
       branch: params.branch,
+      repo: defaultRepo(),
       workflow: {
         name: DEFAULT_WORKFLOW_NAME,
         file: DEFAULT_WORKFLOW_FILE,
@@ -240,18 +245,29 @@ async function githubApiJson<T>(
   path: string,
   init?: RequestInit
 ): Promise<{ ok: true; data: T } | { ok: false; status: number; message: string }> {
-  const res = await fetch(`https://api.github.com${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-      ...(init?.headers ?? {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`https://api.github.com${path}`, {
+      ...init,
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (e) {
+    return { ok: false, status: 0, message: e instanceof Error ? e.message : "network_error" };
+  }
 
   if (!res.ok) {
-    return { ok: false, status: res.status, message: res.statusText };
+    try {
+      const err = (await res.json()) as unknown;
+      const m = asString(asRecord(err)?.message);
+      return { ok: false, status: res.status, message: m ?? res.statusText };
+    } catch {
+      return { ok: false, status: res.status, message: res.statusText };
+    }
   }
   const data = (await res.json()) as T;
   return { ok: true, data };
@@ -261,17 +277,31 @@ async function githubApiBuffer(
   token: string,
   url: string
 ): Promise<{ ok: true; data: Buffer } | { ok: false; status: number; message: string }> {
-  const res = await fetch(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-    redirect: "follow",
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      redirect: "follow",
+    });
+  } catch (e) {
+    return { ok: false, status: 0, message: e instanceof Error ? e.message : "network_error" };
+  }
   if (!res.ok) return { ok: false, status: res.status, message: res.statusText };
   const ab = await res.arrayBuffer();
   return { ok: true, data: Buffer.from(ab) };
+}
+
+function hintForGithubStatus(status: number, message: string): string | undefined {
+  if (status === 0) return "Netzwerkfehler (Fetch). Bitte später erneut versuchen.";
+  if (status === 401) return "Token fehlt/ungültig. Prüfe `GITHUB_TOKEN` (Secrets) und Repo-Zugriff.";
+  if (status === 403 && /rate limit/i.test(message)) return "GitHub Rate-Limit erreicht. Warte auf Reset und retry.";
+  if (status === 403) return "Forbidden: Token scopes/permissions prüfen (Actions/Artifacts/PRs lesen).";
+  if (status === 429) return "Too Many Requests: GitHub throttling. Bitte später erneut versuchen.";
+  return undefined;
 }
 
 function unzipFile(zip: Buffer, fileName: string): Buffer {
@@ -365,6 +395,7 @@ async function getLatestSuccessfulRun(params: {
       error: {
         code: "github_workflow_runs_failed",
         message: `GitHub workflow runs konnten nicht geladen werden (${res.status} ${res.message}).`,
+        hint: hintForGithubStatus(res.status, res.message),
       },
     };
   }
@@ -386,6 +417,7 @@ async function getRunArtifacts(params: {
       error: {
         code: "github_artifacts_failed",
         message: `GitHub artifacts konnten nicht geladen werden (${res.status} ${res.message}).`,
+        hint: hintForGithubStatus(res.status, res.message),
       },
     };
   }
@@ -407,6 +439,7 @@ async function getOpenPrs(params: {
       error: {
         code: "github_open_prs_failed",
         message: `Open PRs konnten nicht geladen werden (${res.status} ${res.message}).`,
+        hint: hintForGithubStatus(res.status, res.message),
       },
     };
   }
@@ -431,14 +464,18 @@ export async function fetchGovernanceStatus(params: {
     return buildBaseResponse({
       branch,
       generatedAt,
-      error: { code: "invalid_repo", message: `Ungültiges Repo-Format: ${repo}` },
+      error: { code: "invalid_repo", message: `Ungültiges Repo-Format: ${repo}`, hint: "Erwarte Format owner/repo." },
     });
   }
   if (!token) {
     return buildBaseResponse({
       branch,
       generatedAt,
-      error: { code: "missing_github_token", message: "GITHUB_TOKEN ist nicht gesetzt." },
+      error: {
+        code: "missing_github_token",
+        message: "GITHUB_TOKEN ist nicht gesetzt.",
+        hint: "In CI/Prod als Secret setzen. Dev nutzt Mock-Response (nur non-prod).",
+      },
     });
   }
 
@@ -450,7 +487,11 @@ export async function fetchGovernanceStatus(params: {
     return buildBaseResponse({
       branch,
       generatedAt,
-      error: { code: "no_successful_run", message: "Kein erfolgreicher Workflow-Run gefunden." },
+      error: {
+        code: "no_successful_run",
+        message: "Kein erfolgreicher Workflow-Run gefunden.",
+        hint: "Workflow muss mindestens einmal erfolgreich auf diesem Branch gelaufen sein.",
+      },
     });
   }
 
@@ -464,7 +505,11 @@ export async function fetchGovernanceStatus(params: {
       branch,
       generatedAt,
       run: runRes.run,
-      error: { code: "artifact_missing", message: `Artifact '${GOVERNANCE_ARTIFACT_NAME}' nicht gefunden.` },
+      error: {
+        code: "artifact_missing",
+        message: `Artifact '${GOVERNANCE_ARTIFACT_NAME}' nicht gefunden.`,
+        hint: "CI muss das Artifact `governance-status` hochladen, bevor Live-Daten verfügbar sind.",
+      },
     });
   }
 
@@ -475,7 +520,11 @@ export async function fetchGovernanceStatus(params: {
       generatedAt,
       run: runRes.run,
       artifact,
-      error: { code: "artifact_download_failed", message: `Artifact Download fehlgeschlagen (${zipRes.status} ${zipRes.message}).` },
+      error: {
+        code: "artifact_download_failed",
+        message: `Artifact Download fehlgeschlagen (${zipRes.status} ${zipRes.message}).`,
+        hint: hintForGithubStatus(zipRes.status, zipRes.message),
+      },
     });
   }
 
@@ -493,6 +542,7 @@ export async function fetchGovernanceStatus(params: {
       error: {
         code: "artifact_parse_failed",
         message: "Artifact konnte nicht gelesen/geparst werden (ZIP/JSON).",
+        hint: "Prüfe, ob ZIP `governance-status.json` enthält und gültiges JSON ist.",
         details: { error: e instanceof Error ? e.message : "unknown" },
       },
     });
