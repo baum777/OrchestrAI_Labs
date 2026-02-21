@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-21T10:14:55Z  
+**Last Updated:** 2026-02-21T10:18:09Z  
 **Definition of Done:**
 - [ ] Alle Einträge haben Timestamp, Owner, Action, Result, Links/Refs, Next
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -17,6 +17,8 @@
 ---
 
 ## Entries
+
+- 2026-02-21T10:18:09Z — [@teamlead_orchestrator] Enforcement-Validatoren ausgefuehrt und stabilisiert — Erstlauf zeigte fehlende Runtime-Abhaengigkeit fuer ts-node (`tsconfig-paths/register`); behoben via root devDependency + Parser-Fix im PR-Validator; danach Suite gruen im warn-only Modus — `package.json`, `pnpm-lock.yaml`, `scripts/validate-pr-template.ts` — Finalen Fix-Commit pushen und Output-Paket erstellen
 
 - 2026-02-21T10:14:55Z — [@teamlead_orchestrator] Enforcement-Implementierung gestartet (Tier-2, non-destructive) — Read-Order erneut ausgefuehrt; Zielarchitektur auf 3 Layer konkretisiert (Blueprint/GoldenTask/PR-Schema) — `README.md`, `AGENTS.md`, `ops/agent-team/*`, `docs/**`, `testdata/golden-tasks/**`, `PR_DESCRIPTION.md`, `.cursor/rules/**` — Validatoren + Registry + CI + Ops-Updates umsetzen
 - 2026-02-21T10:14:55Z — [@teamlead_orchestrator] Warn-only Governance Validatoren implementiert — Neue Skripte fuer Blueprint-Struktur, Golden-Task-Integritaet und PR-Schema erstellt; root scripts + ts-node/typescript hinzugefuegt — `scripts/validate-blueprint.ts`, `scripts/validate-golden-tasks.ts`, `scripts/validate-pr-template.ts`, `package.json`, `pnpm-lock.yaml` — CI-Schritte integrieren und Registry/Fixtures synchronisieren

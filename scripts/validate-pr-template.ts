@@ -36,13 +36,19 @@ function main(): void {
     }
   }
 
-  const goldenImpactSectionMatch = content.match(
-    /##\s+Golden Task Impact\b([\s\S]*?)(?:\n##\s+|\n?$)/m
-  );
-  if (!goldenImpactSectionMatch) {
+  const lines = content.split("\n");
+  const sectionStart = lines.findIndex((line) => /^##\s+Golden Task Impact\b/.test(line.trim()));
+  if (sectionStart === -1) {
     issues.push("Section '## Golden Task Impact' fehlt oder ist nicht parsebar");
   } else {
-    const sectionBody = goldenImpactSectionMatch[1] ?? "";
+    const bodyLines: string[] = [];
+    for (let i = sectionStart + 1; i < lines.length; i++) {
+      if (/^##\s+/.test(lines[i].trim())) {
+        break;
+      }
+      bodyLines.push(lines[i]);
+    }
+    const sectionBody = bodyLines.join("\n");
     const checkboxRegex = /-\s*\[[ xX]\]\s+/;
     if (!checkboxRegex.test(sectionBody)) {
       issues.push("Section '## Golden Task Impact' enthaelt keine Checkbox");
