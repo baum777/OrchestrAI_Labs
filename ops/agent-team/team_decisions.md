@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-18T13:00:00+01:00  
+**Last Updated:** 2026-02-21T08:02:06Z  
 **Definition of Done:**
 - [ ] Jede Decision hat: date, decision, rationale, alternatives, implications, owner, layer
 - [ ] Layer-Tag pro Decision vorhanden
@@ -24,6 +24,19 @@
 ---
 
 ## Decisions
+
+- date: 2026-02-21
+  decision: Produktlogik als kurzes, eigenstaendiges Spezifikationsdokument unter `docs/produktlogik-spezifikation.md` fuehren
+  rationale: Die Produktlogik war ueber mehrere Artefakte verteilt (Pitch, Architektur, IST-Zustand), aber ohne kompakten Fachvertrag. Ein dediziertes Kurzformat reduziert Interpretationsspielraum.
+  alternatives:
+    - Produktlogik nur in `README.md` ergaenzen (verworfen, da zu unstrukturiert fuer Spezifikationszwecke)
+    - Produktlogik als Abschnitt in `docs/ist-zustand-agent-system.md` pflegen (verworfen, da Detaildokument statt Kurzreferenz)
+  implications:
+    - Neues Dokument `docs/produktlogik-spezifikation.md` als kompakte Referenz
+    - `README.md` erhaelt expliziten Link auf die Produktlogik-Spezifikation
+    - Team-Artefakte (`team_plan`, `team_findings`, `team_progress`) verweisen auf diesen Docs-only Workstream
+  owner: @implementer_codex
+  layer: strategy
 
 - date: 2026-02-14
   decision: Geschäftspartner-Onboarding als Business-Dokument in `docs/` pflegen
