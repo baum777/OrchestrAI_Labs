@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { clock } from "../../lib/clock.js";
+import { clock } from "../../lib/clock";
 
 // Note: In a real implementation, these would be imported from the packages
 // For now, we'll simulate the behavior client-side

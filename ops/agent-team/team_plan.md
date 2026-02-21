@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-21T10:14:55Z  
+**Last Updated:** 2026-02-21T20:35:42Z  
 **Definition of Done:**
 - [ ] Alle Workstreams haben Owner, Scope, Autonomy Tier, Layer, Structural Model, Risks, DoD
 - [ ] Milestones sind definiert und trackbar
@@ -19,6 +19,7 @@
 | PHASE 1 — Deterministic Structure Hardening | @implementer_codex | completed | `ops/agent-team/**` | 3 | ✅ Abgeschlossen | - |
 | PHASE 2 — Validation Engine | @implementer_codex | todo | `packages/governance-v2/**` | 3 | Workstream Validator implementieren | Reviewer Approval |
 | CI STABILIZATION — Phase 2 CI Closure | @teamlead_orchestrator | completed | `.github/workflows/**`, `apps/web/**`, `ops/agent-team/**` | 2 | ✅ CI-blocking issues fixed, TODO list created | - |
+| GOV UI — Phase 1 Governance Dashboard (warn-only) | @implementer_codex | completed | `apps/web/src/app/(dashboard)/governance/**`, `apps/web/src/app/api/governance/**`, `apps/web/src/lib/github/**` | 2 | ✅ Minimal `/governance` + `/api/governance/status` shipped | - |
 | PHASE 3 — Clarification Layer | @implementer_codex | todo | `packages/governance-v2/clarification/**` | 3 | Ambiguity Detection implementieren | - |
 | PHASE 4 — CI Integration + Continuous Audit | @observability_eval | todo | `.github/workflows/**`, `packages/governance-v2/audit/**` | 2 | Governance Linter erstellen | - |
 | SKILLS — Phase 0-1: Scaffold + Pilot Skill | @implementer_codex | in_progress | `packages/skills/**`, `packages/agent-runtime/src/orchestrator/**`, `apps/api/src/modules/agents/**` | 3 | Implement skill layer foundation + pilot skill | Reviewer Approval Required |

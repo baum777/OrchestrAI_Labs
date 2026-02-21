@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-21T10:18:09Z  
+**Last Updated:** 2026-02-21T20:35:42Z  
 **Definition of Done:**
 - [ ] Findings haben Timestamp, Owner, Impact, Suggested Action
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -87,6 +87,8 @@
 ---
 
 ## Entries
+
+- 2026-02-21T20:35:42Z — [@implementer_codex] Next.js App-Routing/Build war im IST an mehreren Stellen inkonsistent (doppelte Routen, `.js` Import-Suffixe, CJS-Config in ESM-Workspace, tsconfig moduleResolution, transitive Typecheck über `@agent-system/shared` → `@agent-system/governance-v2`) — Impact: Web-Build brach ab, was Feature-Delivery blockiert — Suggested action: Root-Duplikate unter `/legacy/*` bündeln, interne Imports ohne `.js` halten (oder bundler resolution nutzen), PostCSS/Tailwind Config als `.cjs`, und `packages/shared` Clock-Imports direkt aus `@agent-system/governance-v2/runtime/clock` statt aus dem Governance-v2 Root, um Bridge-Exports/undeclared deps nicht in Web-Typecheck zu ziehen
 
 - 2026-02-21T10:18:09Z — [@teamlead_orchestrator] `ts-node` Runtime im Root erwartete `tsconfig-paths/register`, wodurch Erstlauf der neuen Validatoren scheiterte — Enforcement-Checks waeren in CI instabil trotz korrekter Logik — Root-Dependency `tsconfig-paths` hinzugefuegt und PR-Validator-Section-Parser robust auf line-basiertes Parsing umgestellt
 

@@ -5,7 +5,7 @@
  * Implements timestamp_correction_rate metric.
  */
 
-import { SystemClock, type Clock } from '@agent-system/governance-v2';
+import { SystemClock, type Clock } from "@agent-system/governance-v2/runtime/clock";
 import type { TimestampCorrectionEvent } from './timestamp-integrity.js';
 
 export interface TimestampCorrectionMetrics {

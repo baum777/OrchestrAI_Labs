@@ -1,9 +1,9 @@
 "use client";
 
-import { InteractiveTrustDemo } from "../../components/marketing/InteractiveTrustDemo.js";
-import { GovernanceShieldSection } from "../../components/marketing/GovernanceShieldSection.js";
-import { AuditLedgerViewSection } from "../../components/marketing/AuditLedgerViewSection.js";
-import { MultiTenantSafetySection } from "../../components/marketing/MultiTenantSafetySection.js";
+import { InteractiveTrustDemo } from "../../components/marketing/InteractiveTrustDemo";
+import { GovernanceShieldSection } from "../../components/marketing/GovernanceShieldSection";
+import { AuditLedgerViewSection } from "../../components/marketing/AuditLedgerViewSection";
+import { MultiTenantSafetySection } from "../../components/marketing/MultiTenantSafetySection";
 import Link from "next/link";
 
 export default function MarketingLandingPage() {

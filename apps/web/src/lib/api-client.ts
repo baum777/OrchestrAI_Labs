@@ -1,4 +1,4 @@
-import type { PolicyViolationAdvice } from "@shared/types/governance";
+import type { PolicyViolationAdvice } from "@agent-system/shared";
 
 export interface PolicyErrorResponse {
   statusCode: number;

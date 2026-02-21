@@ -1,7 +1,7 @@
 "use client";
 
-import { AdvisorCard } from "../governance/AdvisorCard.js";
-import type { PolicyViolationAdvice } from "@shared/types/governance";
+import { AdvisorCard } from "../governance/AdvisorCard";
+import type { PolicyViolationAdvice } from "@agent-system/shared";
 
 export function GovernanceShieldSection() {
   // Example PII leak scenario

@@ -1,22 +1,10 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM"],
     "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["packages/shared/src/*"],
-      "@agent-runtime/*": ["packages/agent-runtime/src/*"],
-      "@governance/*": ["packages/governance/src/*"],
-      "@agent-system/shared": ["packages/shared/src"],
-      "@agent-system/agent-runtime": ["packages/agent-runtime/src"],
-      "@agent-system/workflow": ["packages/workflow/src"],
-      "@agent-system/knowledge": ["packages/knowledge/src"],
-      "@agent-system/governance": ["packages/governance/src"],
-      "@agent-system/governance-v2": ["packages/governance-v2/src"],
-      "@agent-system/customer-data": ["packages/customer-data/src"]
-    },
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
