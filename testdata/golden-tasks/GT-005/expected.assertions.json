@@ -1,0 +1,13 @@
+{
+  "expect": {
+    "draftStatus": "draft",
+    "reviewIdPresent": false,
+    "requiredFieldsNonEmpty": [
+      "assumptions",
+      "alternatives",
+      "risks",
+      "successCriteria",
+      "nextSteps"
+    ]
+  }
+}

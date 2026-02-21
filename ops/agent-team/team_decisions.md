@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-21T08:02:06Z  
+**Last Updated:** 2026-02-21T10:14:55Z  
 **Definition of Done:**
 - [ ] Jede Decision hat: date, decision, rationale, alternatives, implications, owner, layer
 - [ ] Layer-Tag pro Decision vorhanden
@@ -24,6 +24,45 @@
 ---
 
 ## Decisions
+
+- date: 2026-02-21
+  decision: Blueprint wird als technisch erzwungene Governance-Layer eingefuehrt (3-Layer Enforcement: Blueprint, Golden Tasks, PR Schema)
+  rationale: Reine Richtlinien erzeugen Drift und sind in CI nicht belastbar pruefbar. Technische Validatoren mit warn-only Rollout reduzieren Risiko ohne destruktive Migration.
+  alternatives:
+    - Nur manuelle Review-Disziplin (verworfen, da nicht skalierbar)
+    - Sofort strict/fail-on-error in CI (verworfen, da zu hohes Umstellungsrisiko)
+  implications:
+    - Neue Skripte `scripts/validate-blueprint.ts`, `scripts/validate-golden-tasks.ts`, `scripts/validate-pr-template.ts`
+    - CI-Schritte laufen in Phase 1 warn-only; Phase 2 per Toggle strict
+    - Canonical Registry `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md` ist SoT fuer GT-IDs
+  owner: @teamlead_orchestrator
+  layer: governance
+
+- date: 2026-02-21
+  decision: `docs/DOCS_BLUEPRINT_SPEC.md` als zentrale Canonical-Spezifikation fuer Doku-Topologie, Trigger-Mapping und PR-Output verpflichtend fuehren
+  rationale: Die geforderte Blueprint-SoT fehlte, waehrend Regeln auf mehrere Dateien verteilt waren. Eine normative Canonical-Quelle reduziert Interpretationsspielraum und macht Review/Testbarkeit moeglich.
+  alternatives:
+    - Weiterarbeit nur mit verstreuten Regeln in `README.md`/`ops/agent-team/*`/`docs/*` (verworfen, da drift-anfaellig)
+    - Nur Inventory-Dokument ohne normative Spezifikation (verworfen, da keine verbindliche Prioritaet/Normsprache)
+  implications:
+    - Neue Canonical-Datei `docs/DOCS_BLUEPRINT_SPEC.md`
+    - Trigger -> Pflicht-Doku/Evidence Mapping ist explizit dokumentiert
+    - PR-Struktur wird ueber `PR_DESCRIPTION.md` standardisiert
+  owner: @teamlead_orchestrator
+  layer: strategy
+
+- date: 2026-02-21
+  decision: Partner-/Marketing-Dokumente als derived Material behandeln; Moves/Renames nur als Proposed Plan dokumentieren
+  rationale: Es existieren inhaltliche Ueberlappungen zu canonical Systemdokus. Sofortige strukturelle Verschiebungen wuerden Scope vergroessern und koennten unbeabsichtigte Referenzbrueche verursachen.
+  alternatives:
+    - Sofortige Umbenennung/Verschiebung mehrerer Verzeichnisse (verworfen, da nicht minimal-invasiv im Tier-2-Draft)
+    - Keine Trennung in canonical vs derived (verworfen, da SoT-Unklarheit bestehen bleibt)
+  implications:
+    - `docs/DOCS_BLUEPRINT_ALIGNMENT_DRAFT.md` dokumentiert deprecate/propose-move Plan
+    - Keine destruktiven oder stillen Renames in diesem Schritt
+    - Folgeworkstream fuer kontrollierte Migration erforderlich
+  owner: @teamlead_orchestrator
+  layer: strategy
 
 - date: 2026-02-21
   decision: Produktlogik als kurzes, eigenstaendiges Spezifikationsdokument unter `docs/produktlogik-spezifikation.md` fuehren

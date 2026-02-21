@@ -37,3 +37,21 @@ jobs:
         run: pnpm lint:clock
         continue-on-error: false
 
+      - name: Validate Blueprint Structure
+        run: pnpm blueprint:check
+        env:
+          ENFORCEMENT_STRICT: "0" # Phase 1: warn-only; set to "1" in Phase 2
+        continue-on-error: false
+
+      - name: Validate Golden Tasks
+        run: pnpm golden-tasks:check
+        env:
+          ENFORCEMENT_STRICT: "0" # Phase 1: warn-only; set to "1" in Phase 2
+        continue-on-error: false
+
+      - name: Validate PR Governance Schema
+        run: pnpm pr:check
+        env:
+          ENFORCEMENT_STRICT: "0" # Phase 1: warn-only; set to "1" in Phase 2
+        continue-on-error: false
+

@@ -1,9 +1,22 @@
 # Golden Tasks
 
+**Purpose:** Regeln und Betriebsrahmen fuer Golden Task Definitionen im Repo.  
+**Scope:** `docs/golden-tasks/**`, `testdata/golden-tasks/**`, `ops/agent-team/golden_tasks.yaml`.  
+**Owner:** @teamlead_orchestrator  
+**Layer:** evidence  
+**Last Updated:** 2026-02-21T10:09:38Z
+
 Golden Tasks sind **stabile, reproduzierbare Test-Szenarien** für das Agent-System. Sie dienen als:
 - **Demo-Szenarien**: Realistische Entscheidungssituationen für Präsentationen
 - **E2E-Tests**: Baseline für Regression-Tests und Qualitätssicherung
 - **Source of Truth**: Dokumentierte Erwartungen für System-Verhalten
+
+## Canonical Registry
+
+- **Canonical SoT:** `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md`
+- Registry muss synchron sein mit:
+  - `testdata/golden-tasks/**`
+  - `ops/agent-team/golden_tasks.yaml`
 
 ## Regeln
 

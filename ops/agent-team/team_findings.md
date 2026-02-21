@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-21T08:02:06Z  
+**Last Updated:** 2026-02-21T10:18:09Z  
 **Definition of Done:**
 - [ ] Findings haben Timestamp, Owner, Impact, Suggested Action
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -87,6 +87,17 @@
 ---
 
 ## Entries
+
+- 2026-02-21T10:18:09Z — [@teamlead_orchestrator] `ts-node` Runtime im Root erwartete `tsconfig-paths/register`, wodurch Erstlauf der neuen Validatoren scheiterte — Enforcement-Checks waeren in CI instabil trotz korrekter Logik — Root-Dependency `tsconfig-paths` hinzugefuegt und PR-Validator-Section-Parser robust auf line-basiertes Parsing umgestellt
+
+- 2026-02-21T10:14:55Z — [@teamlead_orchestrator] GT-Drift bestaetigt: `docs/golden-tasks/tasks` enthielt GT-001..GT-008, waehrend `testdata/golden-tasks/index.json` nur GT-001/GT-002 registrierte und `ops/agent-team/golden_tasks.yaml` fachfremde GT-Namen fuer denselben ID-Bereich nutzte — Integritaetsrisiko fuer CI/Review-Nachweise — Canonical Registry `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md` einfuehren und mit Validatoren technisch synchronisieren
+- 2026-02-21T10:14:55Z — [@teamlead_orchestrator] Blueprint- und PR-Governance war nur guideline-basiert — Keine technische Durchsetzung fuer Header-/Section-Compliance — Neue warn-only Validatoren + CI-Schritte fuer Blueprint, Golden Tasks und PR-Schema implementieren (Phase-2 strict toggle vorbereitet)
+
+- 2026-02-21T08:53:32Z — [@teamlead_orchestrator] `docs/DOCS_BLUEPRINT_SPEC.md` fehlte als geforderte Source-of-Truth fuer Doku-Topologie und Trigger-Logik — Ohne zentrale Spezifikation entstehen widerspruechliche, nicht pruefbare Regeln ueber mehrere Dateien — Canonical Blueprint Spec eingefuehrt und als Referenz fuer Layer, Trigger-Mapping und PR-Ausgabeformat gesetzt
+- 2026-02-21T08:53:32Z — [@teamlead_orchestrator] `PR_DESCRIPTION.md` war als zustandsspezifischer Bericht belegt statt als wiederverwendbares Template — Uneinheitliche PR-Outputs und fehlende Pflichtsektionen (Risk/Rollback/Verification) — Datei auf blueprint-konformes Template mit verpflichtenden Sections normalisiert
+- 2026-02-21T08:53:32Z — [@teamlead_orchestrator] Dokumentationsregeln sind ueber Root/Docs/Partner/Marketing verstreut und teils redundant — Drift-Risiko bei Governance-/Lifecycle-Aussagen und unklare Canonical-Quelle — Vollstaendige Inventory+Conflict Tabelle erstellt (`docs/DOCS_BLUEPRINT_ALIGNMENT_DRAFT.md`) und Canonical/derived Trennung festgelegt
+- 2026-02-21T08:53:32Z — [@teamlead_orchestrator] Golden-Task-Evidence ist inkonsistent (8 Task-Dokumente vs. 2 Fixture-Eintraege in `testdata/golden-tasks/index.json`; `minimum_required: 25`) — Verifikation kann uneinheitlich ausfallen — Im Draft als Gap dokumentiert; Follow-up Workstream fuer Fixture-/Baseline-Abgleich empfohlen
+- 2026-02-21T08:53:32Z — [@teamlead_orchestrator] Kurzdocs `docs/project-phases.md` und `docs/agent-types.md` kollidieren mit detailierteren Canonical-Quellen — Gefahr von semantischer Doppelpflege — Als deprecate-Kandidaten mit Verweisstrategie im Alignment-Draft markiert (ohne destructive/move Aktion)
 
 - 2026-02-21T08:02:06Z — [@implementer_codex] Es gibt kein dediziertes Repo-Dokument mit kompakter Produktlogik-Spezifikation (Kurzbeschreibung + fachliche Muss-Regeln) — Uneinheitliche Kommunikation von Scope, Invarianten und Ablauf zwischen Pitch, Architektur und Operations-Doku — Neues Referenzdokument `docs/produktlogik-spezifikation.md` anlegen und im `README.md` verlinken
 - 2026-02-15T17:57:43Z — [GPT-5.2] Test-Harness Drift: `apps/api/package.json` referenziert `test/golden-tasks/golden-tasks.e2e.spec.ts`, aber `apps/api/test/**` enthält aktuell nur `test/app.e2e-spec.ts` Placeholder — `pnpm -C apps/api test:golden` ist im IST-Zustand nicht ausführbar — Test-only Harness-Dateien (jest config + utils + golden specs) wiederherstellen/neu anlegen, ohne Produktcode zu ändern

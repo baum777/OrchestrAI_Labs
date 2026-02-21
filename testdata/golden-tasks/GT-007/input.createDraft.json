@@ -1,0 +1,33 @@
+{
+  "title": "Campaign Failure Budget Loss Mitigation",
+  "owner": "agent-system",
+  "assumptions": [
+    "Current campaign channel mix underperformed.",
+    "Q2 plan must be adjusted to avoid repeated loss.",
+    "Finance approval is mandatory for budget reallocation."
+  ],
+  "alternatives": [
+    "Shift spend to lower-risk channels",
+    "Reduce campaign budget and narrow objectives",
+    "Replace agency and keep budget level"
+  ],
+  "risks": [
+    "Repeated budget loss",
+    "Lead volume instability",
+    "Delayed Q2 launch"
+  ],
+  "successCriteria": [
+    "Q2 ROI target is approved and measurable",
+    "Budget loss threshold reduced",
+    "Decision rationale is auditable"
+  ],
+  "nextSteps": [
+    "Complete post-mortem",
+    "Approve revised media plan",
+    "Set campaign governance checkpoints"
+  ],
+  "clientContext": "Retail campaign with significant quarter loss.",
+  "commsContext": "Marketing-finance joint review.",
+  "clientImplications": "Budget controls and accountability must be explicit.",
+  "goal": "Recover campaign performance with controlled risk."
+}

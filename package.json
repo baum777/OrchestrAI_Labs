@@ -15,13 +15,19 @@
     "build": "pnpm -r build",
     "test:governance": "tsx scripts/test-governance-integrity.ts",
     "validate:timestamps": "tsx scripts/validate-timestamp-integrity.ts",
-    "lint:clock": "eslint . --ext .ts,.tsx"
+    "lint:clock": "eslint . --ext .ts,.tsx",
+    "blueprint:check": "ts-node scripts/validate-blueprint.ts",
+    "golden-tasks:check": "ts-node scripts/validate-golden-tasks.ts",
+    "pr:check": "ts-node scripts/validate-pr-template.ts"
   },
   "engines": {
     "node": ">=20"
   },
   "packageManager": "pnpm@9.8.0",
   "devDependencies": {
-    "tsx": "^4.21.0"
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

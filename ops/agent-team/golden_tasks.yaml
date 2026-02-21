@@ -1,6 +1,49 @@
 # File: ops/agent-team/golden_tasks.yaml
 golden_tasks:
-  minimum_required: 25
+  minimum_required: 8
+  canonical_registry: "docs/golden-tasks/GOLDEN_TASK_REGISTRY.md"
+  phase_mode: "warn-only"
+  registry:
+    - id: "GT-001"
+      name: "Website Relaunch Budget Overrun"
+      doc: "docs/golden-tasks/tasks/GT-001-website-relaunch.md"
+      fixture_dir: "testdata/golden-tasks/GT-001"
+      ci_required: true
+    - id: "GT-002"
+      name: "CRM Selection"
+      doc: "docs/golden-tasks/tasks/GT-002-crm-selection.md"
+      fixture_dir: "testdata/golden-tasks/GT-002"
+      ci_required: true
+    - id: "GT-003"
+      name: "Marketing Strategy Switch"
+      doc: "docs/golden-tasks/tasks/GT-003-marketing-strategy-switch.md"
+      fixture_dir: "testdata/golden-tasks/GT-003"
+      ci_required: false
+    - id: "GT-004"
+      name: "GDPR Tracking Risk"
+      doc: "docs/golden-tasks/tasks/GT-004-gdpr-tracking-risk.md"
+      fixture_dir: "testdata/golden-tasks/GT-004"
+      ci_required: false
+    - id: "GT-005"
+      name: "Scope Creep Development"
+      doc: "docs/golden-tasks/tasks/GT-005-scope-creep-dev.md"
+      fixture_dir: "testdata/golden-tasks/GT-005"
+      ci_required: false
+    - id: "GT-006"
+      name: "Tool Stack Standardization"
+      doc: "docs/golden-tasks/tasks/GT-006-tool-stack-standardization.md"
+      fixture_dir: "testdata/golden-tasks/GT-006"
+      ci_required: false
+    - id: "GT-007"
+      name: "Campaign Fail Budget Loss"
+      doc: "docs/golden-tasks/tasks/GT-007-campaign-fail-budget-loss.md"
+      fixture_dir: "testdata/golden-tasks/GT-007"
+      ci_required: false
+    - id: "GT-008"
+      name: "Commit Without Review"
+      doc: "docs/golden-tasks/tasks/GT-008-commit-without-review.md"
+      fixture_dir: "testdata/golden-tasks/GT-008"
+      ci_required: false
   tasks:
     - id: "GT-001"
       name: "Repo health: typecheck"

@@ -1,0 +1,33 @@
+{
+  "title": "Tool Stack Standardization Decision",
+  "owner": "agent-system",
+  "assumptions": [
+    "Standardized tooling will reduce onboarding overhead.",
+    "Migration effort is manageable within quarter timeline.",
+    "Cross-team alignment is required before rollout."
+  ],
+  "alternatives": [
+    "Adopt tool stack A",
+    "Adopt tool stack B",
+    "Keep heterogeneous stack with governance guardrails"
+  ],
+  "risks": [
+    "Migration slippage",
+    "Feature mismatch",
+    "Team adoption resistance"
+  ],
+  "successCriteria": [
+    "Selected tool stack is approved with review",
+    "Migration plan accepted by engineering leads",
+    "No critical productivity regression after rollout"
+  ],
+  "nextSteps": [
+    "Finalize decision criteria",
+    "Pilot migration in one team",
+    "Approve phased rollout plan"
+  ],
+  "clientContext": "Software agency consolidating engineering workflows.",
+  "commsContext": "CTO-led architecture forum.",
+  "clientImplications": "Standardization impacts delivery cost and quality.",
+  "goal": "Pick a maintainable tool strategy with governance traceability."
+}
