@@ -7,7 +7,7 @@
  * Source of truth: UTC ISO-8601 via Clock abstraction.
  */
 
-import { SystemClock, type Clock } from '@agent-system/governance-v2';
+import { SystemClock, type Clock } from "@agent-system/governance-v2/runtime/clock";
 
 export interface TimestampPair {
   createdAt: string;
