@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { clock } from "../../lib/clock";
+import { clock } from "../../../lib/clock";
 
 interface AuditLogEntry {
   id: string;

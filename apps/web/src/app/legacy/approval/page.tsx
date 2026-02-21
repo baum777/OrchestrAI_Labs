@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchApi, PolicyError } from "../../lib/api-client";
-import { AdvisorCard } from "../../components/governance/AdvisorCard";
+import { fetchApi, PolicyError } from "../../../lib/api-client";
+import { AdvisorCard } from "../../../components/governance/AdvisorCard";
 import type { DecisionDraft } from "@shared/types/decision";
 
 export default function ApprovalInboxPage() {
