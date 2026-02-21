@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @teamlead_orchestrator  
 **Layer:** strategy  
-**Last Updated:** 2026-02-21T10:14:55Z  
+**Last Updated:** 2026-02-21T20:35:42Z  
 **Definition of Done:**
 - [ ] Jede Decision hat: date, decision, rationale, alternatives, implications, owner, layer
 - [ ] Layer-Tag pro Decision vorhanden
@@ -24,6 +24,19 @@
 ---
 
 ## Decisions
+
+- date: 2026-02-21
+  decision: Phase-1 Governance Dashboard bleibt warn-only und liest den Status read-only aus dem CI Artifact `governance-status` via GitHub Actions API (inkl. minimaler ZIP-Extraction + 60s In-Memory-Cache)
+  rationale: Schnell mergebar, geringes Risiko (keine neue Infra, keine Strict Toggles), UI kann live auf CI-Evidence zeigen; bei fehlendem Artifact muss die UI safe degradieren (kein Crash)
+  alternatives:
+    - Zusätzliche Dependencies für ZIP-Parsing (verworfen, um `package.json`/Lockfile-Änderungen zu vermeiden)
+    - Strict/Fail-Closed UI (verworfen, da Phase-1 explizit warn-only)
+    - Komplexe Visuals/Charts/PDF (verworfen, out-of-scope für Minimal)
+  implications:
+    - Neue Web-Route `/governance` mit KPIs + Tabs/Tabellen; API `/api/governance/status` liefert minimalen Contract inkl. Error-Fallbacks
+    - Artifact muss in CI tatsächlich hochgeladen werden, sonst zeigt UI korrekt "No artifact available yet"
+  owner: @implementer_codex
+  layer: implementation
 
 - date: 2026-02-21
   decision: Blueprint wird als technisch erzwungene Governance-Layer eingefuehrt (3-Layer Enforcement: Blueprint, Golden Tasks, PR Schema)

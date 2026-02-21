@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-21T10:19:12Z  
+**Last Updated:** 2026-02-21T20:35:42Z  
 **Definition of Done:**
 - [ ] Alle Einträge haben Timestamp, Owner, Action, Result, Links/Refs, Next
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -17,6 +17,8 @@
 ---
 
 ## Entries
+
+- 2026-02-21T20:35:42Z — [@implementer_codex] Minimal Governance Dashboard (Phase-1 warn-only) implementiert — `/governance` rendert mit echten CI-Daten (wenn Artifact vorhanden) und bleibt UI-safe bei Fehlern; API `/api/governance/status` lädt letzten erfolgreichen Run + Artifact `governance-status` → `governance-status.json`, 60s Cache, optionales PR-Enrichment (open PRs + Section-Parsing) — `apps/web/src/app/(dashboard)/governance/**`, `apps/web/src/app/api/governance/status/route.ts`, `apps/web/src/lib/github/governanceArtifact.ts` — Next: CI-Workflow muss `governance-status` Artifact uploaden, damit Live-Daten sichtbar sind
 
 - 2026-02-21T10:19:12Z — [@teamlead_orchestrator] Finale Enforcement-Verifikation nach Push ausgefuehrt — `pnpm blueprint:check`, `pnpm golden-tasks:check`, `pnpm pr:check` erfolgreich (Phase-1 warn-only); Arbeitsbaum sauber — `scripts/validate-*.ts`, `docs/golden-tasks/GOLDEN_TASK_REGISTRY.md`, `PR_DESCRIPTION.md`, `.github/workflows/timestamp-integrity.yml` — Abschluss-Output paketieren
 
