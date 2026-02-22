@@ -5,7 +5,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { SkillRegistry } from '../src/registry/skill-registry.js';
 import path from 'node:path';
-import fs from 'node:fs';
 
 describe('SkillRegistry', () => {
   let registry: SkillRegistry;
