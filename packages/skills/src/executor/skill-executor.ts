@@ -9,7 +9,7 @@
 
 import { z } from 'zod';
 import type { Clock } from '@agent-system/governance-v2/runtime/clock';
-import type { ToolRouter, ToolCall, ToolResult } from "@agent-system/agent-runtime";
+import type { ToolRouter, ToolResult } from "@agent-system/agent-runtime";
 import type { WorkstreamValidator, ValidationResult } from '@agent-system/governance-v2';
 import type {
   SkillManifest,
@@ -34,9 +34,9 @@ export class SkillExecutor {
    */
   async compile(
     manifest: SkillManifest,
-    instructions: string,
+    _instructions: string,
     input: unknown,
-    context: SkillExecutionContext
+    _context: SkillExecutionContext
   ): Promise<SkillPlan> {
     // Validate input against schema
     // For pilot skill, use hardcoded Zod schema (JSON Schema conversion would require ajv)
@@ -47,7 +47,7 @@ export class SkillExecutor {
           owner: z.string().min(1),
           scope: z.array(z.string()).min(1),
           structuralModel: z.string().min(1),
-          risks: z.array(z.any()),
+          risks: z.array(z.unknown()),
           layer: z.enum(['strategy', 'architecture', 'implementation', 'governance']),
           autonomyTier: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
           definitionOfDone: z.string().min(1),
@@ -109,8 +109,8 @@ export class SkillExecutor {
             };
           }
 
-          const input = plan.input as { workstream: unknown };
-          const result: ValidationResult = this.workstreamValidator.validate(input.workstream as any);
+          const input = plan.input as { workstream: Record<string, unknown> };
+          const result: ValidationResult = this.workstreamValidator.validate(input.workstream);
 
           const executionTimeMs = context.clock.now().getTime() - startTime;
           const telemetry = this.telemetryCollector.createTelemetry(

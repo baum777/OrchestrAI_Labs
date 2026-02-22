@@ -5,7 +5,7 @@
  * Called during discovery to fail fast on invalid manifests.
  */
 
-import type { SkillManifest, SkillStatus } from '../spec/skill-spec.js';
+import type { SkillManifest } from '../spec/skill-spec.js';
 import { SkillRegistry } from './skill-registry.js';
 
 export interface ManifestValidationError {
@@ -29,6 +29,8 @@ export function assertSkillManifest(manifest: unknown): asserts manifest is Skil
     throw new Error('Manifest schema validation failed: unknown error');
   }
 
+  // After zod validation, we can safely cast to SkillManifest
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   const m = manifest as SkillManifest;
 
   // Policy constraints

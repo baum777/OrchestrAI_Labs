@@ -36,7 +36,7 @@ export function checkSkillPermissions(
   profile: AgentProfile
 ): GuardrailCheckResult {
   const missingPermissions = manifest.requiredPermissions.filter(
-    perm => !profile.permissions.includes(perm as Permission)
+    (perm: string) => !profile.permissions.includes(perm as Permission)
   );
   if (missingPermissions.length > 0) {
     return {
@@ -67,7 +67,7 @@ export function checkSkillStatusDisabled(manifest: SkillManifest): GuardrailChec
  */
 export function checkSideEffectsReviewGate(
   manifest: SkillManifest,
-  plan: SkillPlan
+  _plan: SkillPlan
 ): GuardrailCheckResult {
   const hasWriteSideEffects = manifest.sideEffects.some(
     se => se.type === 'create' || se.type === 'update' || se.type === 'delete'

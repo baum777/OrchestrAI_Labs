@@ -37,7 +37,7 @@ describe('Skill Manifest Validator', () => {
 
   it('should reject manifest without status', () => {
     const invalid = { ...validManifest };
-    delete (invalid as any).status;
+    delete (invalid as unknown as Record<string, unknown>).status;
     expect(() => assertSkillManifest(invalid)).toThrow();
   });
 
