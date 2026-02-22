@@ -2,6 +2,7 @@
 module.exports = {
   rootDir: ".",
   testEnvironment: "node",
+  setupFiles: ["<rootDir>/test/jest.env.setup.ts"],
   testMatch: [
     "<rootDir>/test/**/*.e2e.spec.ts",
     "<rootDir>/test/**/*.spec.ts",
@@ -19,6 +20,9 @@ module.exports = {
       },
     ],
   },
+  transformIgnorePatterns: [
+    "node_modules/(?!(@agent-system|@agent-runtime|@governance|@shared)/)",
+  ],
   moduleNameMapper: {
     "^@shared/(.*)$": "<rootDir>/../../packages/shared/src/$1",
     "^@agent-runtime/(.*)$": "<rootDir>/../../packages/agent-runtime/src/$1",

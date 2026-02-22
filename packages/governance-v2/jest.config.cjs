@@ -6,10 +6,9 @@ module.exports = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@agent-system/shared$': '<rootDir>/../../packages/shared/src/index.ts',
     '^@agent-system/governance$': '<rootDir>/../../packages/governance/src/index.ts',
-    '^@agent-system/governance-v2$': '<rootDir>/../../packages/governance-v2/src/index.ts',
-    '^@agent-system/governance-v2/runtime/clock$': '<rootDir>/../../packages/governance-v2/src/runtime/clock.ts',
+    '^@agent-system/governance-v2$': '<rootDir>/src/index.ts',
+    '^@agent-system/governance-v2/runtime/clock$': '<rootDir>/src/runtime/clock.ts',
     '^@agent-system/customer-data$': '<rootDir>/../../packages/customer-data/src/index.ts',
-    '^@shared/types/agent$': '<rootDir>/../../packages/shared/src/types/agent.ts',
   },
   transform: {
     '^.+\\.ts$': ['ts-jest', {
@@ -22,4 +21,3 @@ module.exports = {
     '!src/**/*.d.ts',
   ],
 };
-

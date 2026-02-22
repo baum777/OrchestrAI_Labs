@@ -1,4 +1,4 @@
-import type { KnowledgeItem } from "../models/knowledge-item";
+import type { KnowledgeItem } from "../models/knowledge-item.js";
 import type { Clock } from "@agent-system/governance-v2/runtime/clock";
 import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
 

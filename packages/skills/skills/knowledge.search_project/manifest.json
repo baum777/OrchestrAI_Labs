@@ -86,7 +86,7 @@
   ],
   
   "reviewPolicy": {
-    "mode": "none"
+    "mode": "draft_only"
   },
   
   "resources": {

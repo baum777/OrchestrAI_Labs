@@ -10,31 +10,19 @@ import { loadState, saveState } from '../runtime-state-store.js';
 
 describe('RuntimeStateStore', () => {
   let tempDir: string;
-  let originalRepoRoot: string | undefined;
 
   beforeEach(() => {
-    // Create temporary directory for tests
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'runtime-state-test-'));
-    originalRepoRoot = process.env.REPO_ROOT;
-    process.env.REPO_ROOT = tempDir;
   });
 
   afterEach(() => {
-    // Cleanup
-    if (originalRepoRoot) {
-      process.env.REPO_ROOT = originalRepoRoot;
-    } else {
-      delete process.env.REPO_ROOT;
-    }
-    
-    // Remove temp directory
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
 
   it('loads empty state if file does not exist', () => {
-    const state = loadState();
+    const state = loadState(tempDir);
     expect(state).toEqual({});
   });
 
@@ -43,8 +31,8 @@ describe('RuntimeStateStore', () => {
       last_seen_at: '2026-02-18T10:57:00.000Z',
     };
 
-    saveState(testState);
-    const loaded = loadState();
+    saveState(testState, tempDir);
+    const loaded = loadState(tempDir);
 
     expect(loaded.last_seen_at).toBe('2026-02-18T10:57:00.000Z');
   });
@@ -54,8 +42,8 @@ describe('RuntimeStateStore', () => {
       last_seen_at: '2026-02-18T10:57:00.000Z',
     };
 
-    saveState(testState);
-    
+    saveState(testState, tempDir);
+
     const stateFilePath = path.join(tempDir, 'ops', 'agent-team', 'runtime_state.json');
     expect(fs.existsSync(stateFilePath)).toBe(true);
   });
@@ -65,13 +53,13 @@ describe('RuntimeStateStore', () => {
       last_seen_at: 'invalid-date',
     };
 
-    expect(() => saveState(invalidState)).toThrow('Invalid ISO-8601 timestamp');
+    expect(() => saveState(invalidState, tempDir)).toThrow('Invalid ISO-8601 timestamp');
   });
 
   it('handles missing last_seen_at', () => {
     const state = {};
-    saveState(state);
-    const loaded = loadState();
+    saveState(state, tempDir);
+    const loaded = loadState(tempDir);
     expect(loaded).toEqual({});
   });
 });

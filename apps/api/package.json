@@ -4,13 +4,16 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "start": "node dist/main.js",
+    "start": "node dist/apps/api/src/main.js",
     "start:dev": "ts-node -r tsconfig-paths/register src/main.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "test": "jest",
     "test:golden": "jest --runTestsByPath test/golden-tasks/golden-tasks.e2e.spec.ts test/golden-tasks/governance-bypass.e2e.spec.ts",
-    "test:compliance": "jest test/compliance"
+    "test:compliance": "jest test/compliance",
+    "test:e2e:db:setup": "ts-node test/db/apply-e2e-schema.ts",
+    "test:e2e:db:reset": "ts-node test/db/apply-e2e-schema.ts --reset",
+    "test:e2e": "pnpm run test:e2e:db:setup && jest --testPathPattern='e2e.spec.ts'"
   },
   "dependencies": {
     "@agent-system/agent-runtime": "workspace:*",
@@ -38,6 +41,7 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^6.3.0",
     "@typescript-eslint/parser": "^6.3.0",
+    "dotenv": "^17.3.1",
     "eslint": "^8.52.0",
     "jest": "^30.2.0",
     "supertest": "^7.2.2",

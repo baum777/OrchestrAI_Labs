@@ -1,6 +1,6 @@
 "use client";
 
-import { clock } from "../../lib/clock.js";
+import { clock } from "../../lib/clock";
 
 export function AuditLedgerViewSection() {
   // Sample audit log entries for demo
