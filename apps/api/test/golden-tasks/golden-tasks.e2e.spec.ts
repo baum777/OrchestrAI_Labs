@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import { createTestApp } from "../_utils/createTestApp";
 import { seedProject } from "../_utils/seed";
-import type { SuperTest, Test } from "supertest";
+import type supertest from "supertest";
 
 describe("golden-tasks (smoke)", () => {
   const databaseUrl = process.env.DATABASE_URL;
@@ -9,7 +9,7 @@ describe("golden-tasks (smoke)", () => {
 
   let pool: Pool;
   let closeApp: () => Promise<void>;
-  let request: SuperTest<Test>;
+  let request: ReturnType<typeof supertest>;
 
   beforeAll(async () => {
     if (!databaseUrl) throw new Error("DATABASE_URL must be set to run Golden Task tests.");

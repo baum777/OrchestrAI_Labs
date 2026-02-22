@@ -8,12 +8,12 @@ export class CreateDecisionDraftDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(1)
-  title: string;
+  title!: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(1)
-  owner: string;
+  owner!: string;
 
   @IsOptional()
   @IsString()
@@ -22,7 +22,7 @@ export class CreateDecisionDraftDto {
   @IsArray()
   @ArrayMinSize(1, { message: "assumptions must contain at least 1 item" })
   @IsString({ each: true })
-  assumptions: string[];
+  assumptions!: string[];
 
   @IsOptional()
   @IsString()
@@ -31,12 +31,12 @@ export class CreateDecisionDraftDto {
   @IsArray()
   @ArrayMinSize(1, { message: "alternatives must contain at least 1 item" })
   @IsString({ each: true })
-  alternatives: string[];
+  alternatives!: string[];
 
   @IsArray()
   @ArrayMinSize(1, { message: "risks must contain at least 1 item" })
   @IsString({ each: true })
-  risks: string[];
+  risks!: string[];
 
   @IsOptional()
   @IsString()
@@ -57,12 +57,12 @@ export class CreateDecisionDraftDto {
   @IsArray()
   @ArrayMinSize(1, { message: "successCriteria must contain at least 1 item" })
   @IsString({ each: true })
-  successCriteria: string[];
+  successCriteria!: string[];
 
   @IsArray()
   @ArrayMinSize(1, { message: "nextSteps must contain at least 1 item" })
   @IsString({ each: true })
-  nextSteps: string[];
+  nextSteps!: string[];
 
   @IsOptional()
   @IsString()
