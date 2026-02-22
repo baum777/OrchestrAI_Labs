@@ -36,10 +36,8 @@ export class ReportGenerator {
    */
   private ensureFreshClock(): void {
     const now = this.clock.now();
-    const nowISO = now.toISOString();
-    // eslint-disable-next-line no-restricted-globals
-    const gapMs = new Date(nowISO).getTime() - new Date(this.lastClockRefreshISO).getTime();
-    
+    const gapMs = now.getTime() - this.clock.parseISO(this.lastClockRefreshISO).getTime();
+
     if (gapMs >= this.TIME_GAP_THRESHOLD_MS) {
       // Refresh clock after time gap
       this.clock = new SystemClock();
