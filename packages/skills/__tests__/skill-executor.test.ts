@@ -19,7 +19,8 @@ describe('SkillExecutor', () => {
   const skillsDir = path.join(process.cwd(), 'packages/skills/skills');
 
   beforeEach(() => {
-    clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
+    clock = new FakeClock();
+    clock.set(clock.parseISO('2026-02-18T10:00:00.000Z'));
     const workstreamValidator = new WorkstreamValidator();
     executor = new SkillExecutor(clock, workstreamValidator);
     registry = new SkillRegistry({ skillsDir });

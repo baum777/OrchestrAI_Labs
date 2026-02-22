@@ -7,7 +7,6 @@ import {
   checkSkillsEnabled,
   checkSkillPermissions,
   checkSkillStatusDisabled,
-  checkSideEffectsReviewGate,
   runSkillGuardrails,
 } from '../src/guardrails/skill-guardrails.js';
 import type { SkillManifest, SkillPlan, AgentProfile } from '../src/spec/skill-spec.js';

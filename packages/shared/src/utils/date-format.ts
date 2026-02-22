@@ -69,7 +69,7 @@ export function formatBerlinDateFromISO(isoString: string): string {
   if (isNaN(timestamp)) {
     throw new Error(`Invalid ISO-8601 timestamp: ${isoString}`);
   }
-  // eslint-disable-next-line no-restricted-globals
+  // eslint-disable-next-line no-restricted-globals, no-restricted-syntax
   const date = new Date(timestamp);
   return formatBerlinDate(date);
 }
