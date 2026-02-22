@@ -6,6 +6,9 @@
  * Display: Berlin timezone (Europe/Berlin) for German locale.
  */
 
+import type { Clock } from "@agent-system/governance-v2/runtime/clock";
+import { SystemClock } from "@agent-system/governance-v2/runtime/clock";
+
 /**
  * Formats a Date object to Berlin date format (DD.MM.YYYY).
  * 
@@ -14,14 +17,13 @@
  * 
  * @example
  * ```ts
- * const utcDate = new Date("2026-02-18T23:30:00.000Z"); // UTC 23:30
+ * const utcDate = clock.parseISO("2026-02-18T23:30:00.000Z"); // UTC 23:30
  * formatBerlinDate(utcDate); // Returns "19.02.2026" (Berlin 00:30 next day)
  * ```
  * 
  * Note: This utility function accepts Date objects for formatting.
  * For production code, prefer Clock abstraction and pass Date objects from clock.now().
  */
-// eslint-disable-next-line no-restricted-globals
 export function formatBerlinDate(date: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin",
@@ -40,7 +42,6 @@ export function formatBerlinDate(date: Date): string {
  * Note: This utility function accepts Date objects for formatting.
  * For production code, prefer Clock abstraction and pass Date objects from clock.now().
  */
-// eslint-disable-next-line no-restricted-globals
 export function formatBerlinDateTime(date: Date): string {
   return new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin",
@@ -60,17 +61,17 @@ export function formatBerlinDateTime(date: Date): string {
  * 
  * @throws Error if isoString is not a valid ISO-8601 timestamp
  * 
- * Note: Uses Date.parse() internally (allowed in shared utilities for ISO parsing).
- * For production code, prefer Clock abstraction and pass Date objects directly.
+ * Note: Uses Clock.parseISO for governance compliance.
+ * For production code, prefer passing Date objects directly to formatBerlinDate.
  */
-export function formatBerlinDateFromISO(isoString: string): string {
-  // eslint-disable-next-line no-restricted-globals
-  const timestamp = Date.parse(isoString);
-  if (isNaN(timestamp)) {
+export function formatBerlinDateFromISO(
+  isoString: string,
+  clock: Clock = new SystemClock()
+): string {
+  const date = clock.parseISO(isoString);
+  if (Number.isNaN(date.getTime())) {
     throw new Error(`Invalid ISO-8601 timestamp: ${isoString}`);
   }
-  // eslint-disable-next-line no-restricted-globals, no-restricted-syntax
-  const date = new Date(timestamp);
   return formatBerlinDate(date);
 }
 
