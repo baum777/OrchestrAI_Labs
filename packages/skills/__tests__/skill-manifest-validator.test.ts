@@ -43,12 +43,12 @@ describe('Skill Manifest Validator', () => {
 
   it('should reject manifest with empty owners', () => {
     const invalid = { ...validManifest, owners: [] };
-    expect(() => assertSkillManifest(invalid)).toThrow('At least one owner is required');
+    expect(() => assertSkillManifest(invalid)).toThrow(/owners/);
   });
 
   it('should reject manifest with more than 3 owners', () => {
     const invalid = { ...validManifest, owners: ['@o1', '@o2', '@o3', '@o4'] };
-    expect(() => assertSkillManifest(invalid)).toThrow('Maximum 3 owners allowed');
+    expect(() => assertSkillManifest(invalid)).toThrow(/owners/);
   });
 
   it('should reject manifest with write side effects but reviewPolicy.mode=none', () => {

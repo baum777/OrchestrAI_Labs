@@ -56,7 +56,8 @@ describe('Orchestrator + Skill Integration', () => {
   let skillRegistry: SkillRegistry;
   let skillLoader: SkillLoader;
   let skillExecutor: SkillExecutor;
-  const skillsDir = path.join(process.cwd(), 'packages/skills/skills');
+  // Resolve skills dir relative to monorepo (test runs from packages/agent-runtime)
+  const skillsDir = path.join(process.cwd(), '..', 'skills', 'skills');
 
   beforeEach(() => {
     clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
@@ -128,9 +129,23 @@ describe('Orchestrator + Skill Integration', () => {
   });
 
   it('should block skill execution when SKILLS_ENABLED=false', async () => {
+    // Orchestrator reads SKILLS_ENABLED at construction - create new instance with disabled flag
+    const originalEnv = process.env.SKILLS_ENABLED;
     process.env.SKILLS_ENABLED = 'false';
+    const disabledOrchestrator = new Orchestrator(
+      new MockProfiles(),
+      new ToolRouter({}),
+      new MockReviewStore() as never,
+      new MockActionLogger() as never,
+      undefined,
+      clock,
+      skillRegistry,
+      skillExecutor,
+      skillLoader
+    );
+    process.env.SKILLS_ENABLED = originalEnv;
 
-    const result = await orchestrator.run(
+    const result = await disabledOrchestrator.run(
       { userId: 'user-1' },
       {
         agentId: 'test-agent',

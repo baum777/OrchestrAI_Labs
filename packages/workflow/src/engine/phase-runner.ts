@@ -1,10 +1,10 @@
-import { WorkflowDefinition, ProjectPhase } from "../models/project-phase";
+import { WorkflowDefinition, ProjectPhase } from "../models/project-phase.js";
 
 export class PhaseRunner {
   constructor(private readonly definition: WorkflowDefinition) {}
 
   getPhase(id: string): ProjectPhase | undefined {
-    return this.definition.phases.find((phase) => phase.id === id);
+    return this.definition.phases.find((phase: ProjectPhase) => phase.id === id);
   }
 
   getNextPhase(currentId: string): ProjectPhase | undefined {

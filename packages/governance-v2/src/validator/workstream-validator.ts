@@ -36,7 +36,7 @@ export class WorkstreamValidator {
     }
 
     // Risks validation
-    if (!workstream.risks || workstream.risks.length === 0) {
+    if (!workstream.risks || !Array.isArray(workstream.risks)) {
       reasons.push('Risks must be structured (can be empty array if no risks)');
     } else {
       // Validate risk structure

@@ -6,9 +6,11 @@ import { describe, it, expect, beforeEach } from '@jest/globals';
 import { SkillRegistry } from '../src/registry/skill-registry.js';
 import path from 'node:path';
 
+// Resolve skills dir relative to package root (Jest runs from packages/skills)
+const skillsDir = path.join(process.cwd(), 'skills');
+
 describe('SkillRegistry', () => {
   let registry: SkillRegistry;
-  const skillsDir = path.join(process.cwd(), 'packages/skills/skills');
 
   beforeEach(() => {
     registry = new SkillRegistry({ skillsDir });

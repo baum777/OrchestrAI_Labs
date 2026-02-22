@@ -49,13 +49,15 @@ describe('resolveRepoRoot', () => {
     expect(fs.existsSync(path.join(repoRoot, 'pnpm-workspace.yaml'))).toBe(true);
   });
 
-  it('should throw error if repo root not found', () => {
-    // Change to temp directory (unlikely to be repo root)
-    const tempDir = os.tmpdir();
-    process.chdir(tempDir);
-    delete process.env.REPO_ROOT;
-
-    expect(() => resolveRepoRoot()).toThrow('Repository root not found');
+  it('should throw error when REPO_ROOT points to invalid path', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'repo-root-invalid-'));
+    process.env.REPO_ROOT = tempDir;
+    try {
+      expect(() => resolveRepoRoot()).toThrow('REPO_ROOT environment variable set to invalid path');
+    } finally {
+      delete process.env.REPO_ROOT;
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });
 

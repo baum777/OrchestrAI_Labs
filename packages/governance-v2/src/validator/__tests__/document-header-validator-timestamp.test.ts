@@ -96,7 +96,7 @@ describe('DocumentHeaderValidator - Timestamp Policy', () => {
       const result = validator.validateContent(content);
       
       expect(result.status).toBe('pass');
-      expect(result.reasons).toBeUndefined();
+      expect(result.reasons).toEqual([]);
     });
 
     it('passes valid ISO-8601 timestamp in past', () => {
@@ -113,7 +113,7 @@ describe('DocumentHeaderValidator - Timestamp Policy', () => {
       const result = validator.validateContent(content);
       
       expect(result.status).toBe('pass');
-      expect(result.reasons).toBeUndefined();
+      expect(result.reasons).toEqual([]);
     });
   });
 });

@@ -9,7 +9,8 @@ import {
   checkSkillStatusDisabled,
   runSkillGuardrails,
 } from '../src/guardrails/skill-guardrails.js';
-import type { SkillManifest, SkillPlan, AgentProfile } from '../src/spec/skill-spec.js';
+import type { SkillManifest, SkillPlan } from '../src/spec/skill-spec.js';
+import type { AgentProfile } from '@agent-system/shared';
 
 describe('Skill Guardrails', () => {
   const validManifest: SkillManifest = {
@@ -22,8 +23,8 @@ describe('Skill Guardrails', () => {
     status: 'stable',
     layer: 'implementation',
     autonomyTier: 3,
-    requiredPermissions: ['test.read'],
-    requiredTools: ['tool.test.execute'],
+    requiredPermissions: ['knowledge.read'],
+    requiredTools: ['tool.knowledge.search'],
     sideEffects: [{ type: 'read', resource: 'test' }],
     reviewPolicy: { mode: 'none' },
     inputSchema: { type: 'object' },
@@ -40,7 +41,7 @@ describe('Skill Guardrails', () => {
     skillId: 'test.skill',
     version: '1.0.0',
     input: {},
-    toolCalls: [{ tool: 'tool.test.execute', input: {} }],
+    toolCalls: [{ tool: 'tool.knowledge.search', input: {} }],
     reviewRequired: false,
     reviewPolicy: { mode: 'none' },
     executionMode: 'tool_plan',
@@ -51,8 +52,8 @@ describe('Skill Guardrails', () => {
     name: 'Test Agent',
     role: 'knowledge',
     objectives: ['test'],
-    permissions: ['test.read'],
-    tools: ['tool.test.execute'],
+    permissions: ['knowledge.read'],
+    tools: ['tool.knowledge.search'],
     escalationRules: [],
     memoryScopes: [],
     reviewPolicy: { mode: 'none', requiresHumanFor: [], reviewerRoles: [] },
@@ -87,7 +88,7 @@ describe('Skill Guardrails', () => {
 
   describe('checkSkillStatusDisabled', () => {
     it('should block disabled skills', () => {
-      const manifest = { ...validManifest, status: 'disabled' };
+      const manifest = { ...validManifest, status: 'disabled' as const };
       const result = checkSkillStatusDisabled(manifest);
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe('skill_disabled');
@@ -112,7 +113,7 @@ describe('Skill Guardrails', () => {
     });
 
     it('should fail when skill is disabled', () => {
-      const manifest = { ...validManifest, status: 'disabled' };
+      const manifest = { ...validManifest, status: 'disabled' as const };
       const result = runSkillGuardrails(manifest, validPlan, validProfile, true);
       expect(result.allowed).toBe(false);
       expect(result.reason).toBe('skill_disabled');

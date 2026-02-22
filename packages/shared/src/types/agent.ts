@@ -24,7 +24,8 @@ export type Permission =
   | "review.reject"
   | "customer_data.read"
   | "analytics.read"
-  | "marketing.generate";
+  | "marketing.generate"
+  | "governance.read";
 
 export type ToolRef =
   | "tool.knowledge.search"

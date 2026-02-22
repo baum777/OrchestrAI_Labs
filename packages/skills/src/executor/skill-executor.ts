@@ -42,15 +42,16 @@ export class SkillExecutor {
     // For pilot skill, use hardcoded Zod schema (JSON Schema conversion would require ajv)
     let validatedInput: unknown;
     if (manifest.id === 'governance.workstream_validate') {
+      // Relaxed schema to allow validation to happen in execute() via WorkstreamValidator
       const workstreamSchema = z.object({
         workstream: z.object({
-          owner: z.string().min(1),
-          scope: z.array(z.string()).min(1),
-          structuralModel: z.string().min(1),
+          owner: z.string(),
+          scope: z.array(z.string()),
+          structuralModel: z.string(),
           risks: z.array(z.unknown()),
-          layer: z.enum(['strategy', 'architecture', 'implementation', 'governance']),
+          layer: z.string(),
           autonomyTier: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
-          definitionOfDone: z.string().min(1),
+          definitionOfDone: z.string(),
         }),
       });
       validatedInput = workstreamSchema.parse(input);

@@ -15,12 +15,13 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
-**Owner:** @test
-**Layer:** implementation
-**Erstellt:** 2026-02-13
-**Aktualisiert:** 2026-02-15
-**Definition of Done:**
-- Test`;
+|**Owner:** @test
+|**Layer:** implementation
+|**Last Updated:** 2026-02-13
+|**Erstellt:** 2026-02-13
+|**Aktualisiert:** 2026-02-15
+|**Definition of Done:**
+|- Test`;
 
       const result = validator.validateContent(content);
 
@@ -33,12 +34,13 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
-**Owner:** @test
-**Layer:** implementation
-**Erstellt:** 2026-02-13
-**Aktualisiert:** 2024-01-15
-**Definition of Done:**
-- Test`;
+|**Owner:** @test
+|**Layer:** implementation
+|**Last Updated:** 2026-02-13
+|**Erstellt:** 2026-02-13
+|**Aktualisiert:** 2024-01-15
+|**Definition of Done:**
+|- Test`;
 
       const result = validator.validateContent(content);
 
@@ -51,12 +53,12 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
-**Owner:** @test
-**Layer:** implementation
-**Erstellt:** 2026-02-13
-**Aktualisiert:** 2024-01-15
-**Definition of Done:**
-- Test`;
+|**Owner:** @test
+|**Layer:** implementation
+|**Erstellt:** 2026-02-13
+|**Aktualisiert:** 2024-01-15
+|**Definition of Done:**
+|- Test`;
 
       const healed = validator.selfHealTimestampIntegrity(content);
 
@@ -70,12 +72,12 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
       const validator = new DocumentHeaderValidator(clock);
 
       const content = `**Version:** 1.0.0
-**Owner:** @test
-**Layer:** implementation
-**Erstellt:** 2026-02-13
-**Aktualisiert:** 2026-02-15
-**Definition of Done:**
-- Test`;
+|**Owner:** @test
+|**Layer:** implementation
+|**Erstellt:** 2026-02-13
+|**Aktualisiert:** 2026-02-15
+|**Definition of Done:**
+|- Test`;
 
       const healed = validator.selfHealTimestampIntegrity(content);
 
@@ -84,4 +86,3 @@ describe('DocumentHeaderValidator - Timestamp Integrity', () => {
     });
   });
 });
-

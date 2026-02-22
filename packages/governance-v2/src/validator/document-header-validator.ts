@@ -103,20 +103,24 @@ export class DocumentHeaderValidator {
     if (header.createdAt || header.updatedAt) {
       const createdAt = header.createdAt || header.lastUpdated || '';
       const updatedAt = header.updatedAt || header.lastUpdated || '';
-      
+
       if (createdAt && updatedAt) {
+        // Normalize date-only strings (YYYY-MM-DD) to UTC midnight for deterministic comparison
+        const normalizedCreatedAt = this.normalizeDateToUTC(createdAt);
+        const normalizedUpdatedAt = this.normalizeDateToUTC(updatedAt);
+
         // Extract entity identifier from file path or content
         const entity = filePath || 'unknown';
         const sourceLayer = header.layer || 'unknown';
-        
+
         const integrityResult = validateTimestampIntegrity(
-          createdAt, 
-          updatedAt, 
+          normalizedCreatedAt,
+          normalizedUpdatedAt,
           this.clock,
           entity,
           sourceLayer
         );
-        
+
         if (!integrityResult.valid) {
           reasons.push('timestamp_integrity_violation');
           // Log warnings and errors
@@ -136,6 +140,7 @@ export class DocumentHeaderValidator {
 
     return {
       status: 'pass',
+      reasons: [],
     };
   }
 
@@ -182,20 +187,24 @@ export class DocumentHeaderValidator {
     if (header.createdAt || header.updatedAt) {
       const createdAt = header.createdAt || header.lastUpdated || '';
       const updatedAt = header.updatedAt || header.lastUpdated || '';
-      
+
       if (createdAt && updatedAt) {
+        // Normalize date-only strings (YYYY-MM-DD) to UTC midnight for deterministic comparison
+        const normalizedCreatedAt = this.normalizeDateToUTC(createdAt);
+        const normalizedUpdatedAt = this.normalizeDateToUTC(updatedAt);
+
         // Extract entity identifier from content (use first line or hash)
         const entity = content.split('\n')[0]?.substring(0, 50) || 'unknown';
         const sourceLayer = header.layer || 'unknown';
-        
+
         const integrityResult = validateTimestampIntegrity(
-          createdAt, 
-          updatedAt, 
+          normalizedCreatedAt,
+          normalizedUpdatedAt,
           this.clock,
           entity,
           sourceLayer
         );
-        
+
         if (!integrityResult.valid) {
           reasons.push('timestamp_integrity_violation');
           // Log warnings and errors
@@ -215,6 +224,7 @@ export class DocumentHeaderValidator {
 
     return {
       status: 'pass',
+      reasons: [],
     };
   }
 
@@ -290,12 +300,60 @@ export class DocumentHeaderValidator {
   }
 
   /**
+   * Normalizes a date string to UTC midnight ISO-8601 format.
+   * Handles both date-only (YYYY-MM-DD) and full ISO timestamp formats.
+   * Ensures deterministic comparison regardless of local timezone.
+   */
+  private normalizeDateToUTC(dateStr: string): string {
+    // Check if it's already a full ISO timestamp (contains T and time components)
+    if (dateStr.includes('T') && (dateStr.includes('Z') || dateStr.includes('+'))) {
+      return dateStr; // Already a proper ISO timestamp
+    }
+
+    // Check if it's a date-only format (YYYY-MM-DD)
+    const dateOnlyMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnlyMatch) {
+      const [, year, month, day] = dateOnlyMatch;
+      // Return as UTC midnight ISO timestamp
+      return `${year}-${month}-${day}T00:00:00.000Z`;
+    }
+
+    // For other formats, try to parse and convert to UTC
+    const parsed = this.clock.parseISO(dateStr);
+    if (isNaN(parsed.getTime())) {
+      return dateStr; // Invalid date, return as-is for error handling
+    }
+    return parsed.toISOString();
+  }
+
+  /**
+   * Checks if a timestamp is in valid ISO-8601 format.
+   * Enforces strict format validation to prevent ambiguous date parsing.
+   */
+  private isValidISOTimestamp(timestamp: string): boolean {
+    // Strict ISO-8601 regex: YYYY-MM-DDTHH:mm:ss.sssZ or YYYY-MM-DD
+    const isoRegex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/;
+    if (!isoRegex.test(timestamp)) {
+      return false;
+    }
+
+    // Additional validation: must be parseable
+    const parsed = this.clock.parseISO(timestamp);
+    return !isNaN(parsed.getTime());
+  }
+
+  /**
    * Validates timestamp format and checks for future timestamps.
    * Returns validation reason if invalid, null if valid.
    */
   private validateTimestamp(timestamp: string): string | null {
+    // First, enforce strict ISO-8601 format
+    if (!this.isValidISOTimestamp(timestamp)) {
+      return 'invalid_last_updated_format';
+    }
+
     const date = this.clock.parseISO(timestamp);
-    
+
     if (isNaN(date.getTime())) {
       return 'invalid_last_updated_format';
     }
@@ -331,8 +389,8 @@ export class DocumentHeaderValidator {
         return 'invalid_created_at_format';
       }
 
-      const berlinToday = formatBerlinDate(this.clock.now());
-      const reportDate = formatBerlinDate(createdAtDate);
+      const berlinToday = formatBerlinDate(this.clock.now().toISOString(), this.clock);
+      const reportDate = formatBerlinDate(createdAt, this.clock);
 
       if (reportDate !== berlinToday) {
         return 'report_date_mismatch';

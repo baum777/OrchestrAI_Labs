@@ -55,7 +55,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
       const validator = new DocumentHeaderValidator(clock);
 
       const createdAt = clock.now().toISOString();
-      const berlinToday = formatBerlinDate(clock.now());
+      const berlinToday = formatBerlinDate(clock.now().toISOString(), clock);
 
       expect(berlinToday).toBe('19.02.2026');
 

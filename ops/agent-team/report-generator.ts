@@ -60,7 +60,7 @@ export class ReportGenerator {
     const createdAt = now.toISOString();
     
     // Format Berlin date for display
-    const berlinDate = formatBerlinDate(now);
+    const berlinDate = formatBerlinDate(now.toISOString(), this.clock);
     
     // Build header
     const lines: string[] = [];
@@ -148,7 +148,7 @@ export class ReportGenerator {
     // Generate new updatedAt
     const now = this.clock.now();
     const updatedAt = now.toISOString();
-    const berlinDate = formatBerlinDate(now);
+    const berlinDate = formatBerlinDate(now.toISOString(), this.clock);
     
     // Update header
     let updatedContent = existingContent;

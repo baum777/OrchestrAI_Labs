@@ -8,15 +8,17 @@ import { SkillRegistry } from '../src/registry/skill-registry.js';
 import { SkillLoader } from '../src/loader/skill-loader.js';
 import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
 import { WorkstreamValidator } from '@agent-system/governance-v2';
-import type { AgentProfile } from '@shared/types/agent';
+import type { AgentProfile } from '@agent-system/shared';
 import path from 'node:path';
+
+// Resolve skills dir relative to package root (Jest runs from packages/skills)
+const skillsDir = path.join(process.cwd(), 'skills');
 
 describe('SkillExecutor', () => {
   let executor: SkillExecutor;
   let clock: FakeClock;
   let registry: SkillRegistry;
   let loader: SkillLoader;
-  const skillsDir = path.join(process.cwd(), 'packages/skills/skills');
 
   beforeEach(() => {
     clock = new FakeClock();
@@ -127,9 +129,14 @@ describe('SkillExecutor', () => {
 
     const input = {
       workstream: {
-        // Missing required fields
+        // Valid autonomyTier but other fields are invalid
+        autonomyTier: 2,
         owner: '',
         scope: [],
+        structuralModel: '',
+        risks: [],
+        layer: '',
+        definitionOfDone: '',
       },
     };
 

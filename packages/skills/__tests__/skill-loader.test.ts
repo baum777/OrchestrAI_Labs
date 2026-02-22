@@ -7,10 +7,12 @@ import { SkillRegistry } from '../src/registry/skill-registry.js';
 import { SkillLoader } from '../src/loader/skill-loader.js';
 import path from 'node:path';
 
+// Resolve skills dir relative to package root (Jest runs from packages/skills)
+const skillsDir = path.join(process.cwd(), 'skills');
+
 describe('SkillLoader', () => {
   let registry: SkillRegistry;
   let loader: SkillLoader;
-  const skillsDir = path.join(process.cwd(), 'packages/skills/skills');
 
   beforeEach(() => {
     registry = new SkillRegistry({ skillsDir });
