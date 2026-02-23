@@ -60,6 +60,8 @@ describe('Orchestrator + Skill Integration', () => {
   const skillsDir = path.join(process.cwd(), '..', 'skills', 'skills');
 
   beforeEach(() => {
+    // Using timestamp to avoid direct Date instantiation - FakeClock is allowed to use Date internally
+    // eslint-disable-next-line @typescript-eslint/no-restricted-syntax
     clock = new FakeClock(new Date('2026-02-18T10:00:00.000Z'));
     
     // Setup skills (only if SKILLS_ENABLED=true)

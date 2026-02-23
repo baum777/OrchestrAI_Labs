@@ -2,11 +2,20 @@
  * Trace Correlation Middleware Tests
  */
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { TraceCorrelationMiddleware } from '../trace-correlation.middleware';
 import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
 import type { Clock } from '@agent-system/governance-v2/runtime/clock';
 import type { Request, Response } from 'express';
+
+interface TraceContext {
+  traceId: string;
+  requestId: string;
+  startTime: number;
+}
+
+interface RequestWithTrace extends Request {
+  traceContext: TraceContext;
+}
 
 describe('TraceCorrelationMiddleware', () => {
   let middleware: TraceCorrelationMiddleware;
@@ -32,7 +41,7 @@ describe('TraceCorrelationMiddleware', () => {
 
     middleware.use(req, res, next);
 
-    const ctx = (req as any).traceContext;
+    const ctx = (req as unknown as RequestWithTrace).traceContext;
     expect(ctx.traceId).toMatch(/^trace-\d+$/);
     expect(ctx.requestId).toMatch(/^req-/);
     expect(res.setHeader).toHaveBeenCalledWith('X-Trace-ID', expect.any(String));
@@ -56,7 +65,7 @@ describe('TraceCorrelationMiddleware', () => {
 
     middleware.use(req, res, next);
 
-    const ctx = (req as any).traceContext;
+    const ctx = (req as unknown as RequestWithTrace).traceContext;
     expect(ctx.traceId).toBe(incomingTraceId);
     expect(res.setHeader).toHaveBeenCalledWith('X-Trace-ID', incomingTraceId);
   });
@@ -77,7 +86,7 @@ describe('TraceCorrelationMiddleware', () => {
 
     middleware.use(req, res, next);
 
-    const ctx = (req as any).traceContext;
+    const ctx = (req as unknown as RequestWithTrace).traceContext;
     expect(ctx.requestId).toBe(incomingRequestId);
     expect(res.setHeader).toHaveBeenCalledWith('X-Request-ID', incomingRequestId);
   });
@@ -98,7 +107,7 @@ describe('TraceCorrelationMiddleware', () => {
 
     middleware.use(req, res, next);
 
-    const ctx = (req as any).traceContext;
+    const ctx = (req as unknown as RequestWithTrace).traceContext;
     expect(ctx.traceId).not.toBe(invalidTraceId);
     expect(ctx.traceId).toMatch(/^trace-\d+$/);
   });
@@ -118,7 +127,7 @@ describe('TraceCorrelationMiddleware', () => {
 
     middleware.use(req, res, next);
 
-    const ctx = (req as any).traceContext;
+    const ctx = (req as unknown as RequestWithTrace).traceContext;
     expect(ctx.requestId).toContain(ctx.traceId);
   });
 

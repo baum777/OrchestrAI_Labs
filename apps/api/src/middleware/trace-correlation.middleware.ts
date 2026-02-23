@@ -11,6 +11,16 @@ import { Request, Response, NextFunction } from 'express';
 import { SystemClock } from '@agent-system/governance-v2/runtime/clock';
 import type { Clock } from '@agent-system/governance-v2/runtime/clock';
 
+interface TraceContext {
+  traceId: string;
+  requestId: string;
+  startTime: number;
+}
+
+interface RequestWithTrace extends Request {
+  traceContext: TraceContext;
+}
+
 @Injectable()
 export class TraceCorrelationMiddleware implements NestMiddleware {
   private clock: Clock;
@@ -27,7 +37,7 @@ export class TraceCorrelationMiddleware implements NestMiddleware {
     const requestId = this.extractOrGenerateRequestId(req, traceId);
 
     // Set trace context on request for downstream use
-    (req as any).traceContext = {
+    (req as unknown as RequestWithTrace).traceContext = {
       traceId,
       requestId,
       startTime: this.clock.now().getTime(),
@@ -51,7 +61,7 @@ export class TraceCorrelationMiddleware implements NestMiddleware {
 
     // Track response completion for span duration
     res.on('finish', () => {
-      const ctx = (req as any).traceContext;
+      const ctx = (req as unknown as RequestWithTrace).traceContext;
       if (ctx && process.env.TELEMETRY_EXPORT_ENABLED === 'true') {
         console.log(JSON.stringify({
           type: 'trace_end',
