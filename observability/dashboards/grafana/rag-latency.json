@@ -1,0 +1,84 @@
+{
+  "dashboard": {
+    "title": "RAG Performance & Quality",
+    "tags": ["rag", "knowledge", "layer-f"],
+    "timezone": "UTC",
+    "schemaVersion": 36,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Retrieval Latency (p50/p95)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(rag_retrieval_duration_ms_bucket[5m])) by (le))",
+            "legendFormat": "p50"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(rag_retrieval_duration_ms_bucket[5m])) by (le))",
+            "legendFormat": "p95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Retrieval Score Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "sum(rate(rag_retrieval_score_bucket[5m])) by (le)",
+            "legendFormat": "scores"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Citation Presence Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rag_citations_present) / sum(rag_responses_total)",
+            "legendFormat": "citation rate"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Knowledge Source Hits",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(rag_source_hits_total) by (source)",
+            "legendFormat": "{{source}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Tenant Isolation Violations",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(knowledge_tenant_isolation_violations_total)",
+            "legendFormat": "violations"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8}
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "tenant",
+          "type": "query",
+          "query": "label_values(rag_retrieval_duration_ms_bucket, tenant_id)"
+        }
+      ]
+    }
+  }
+}

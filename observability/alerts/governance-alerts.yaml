@@ -1,0 +1,45 @@
+# Governance & Policy Alerts
+
+groups:
+  - name: governance_alerts
+    interval: 30s
+    rules:
+      - alert: PolicyDecisionLatency
+        expr: histogram_quantile(0.95, sum(rate(policy_decision_duration_ms_bucket[5m])) by (le)) > 100
+        for: 2m
+        labels:
+          severity: warning
+          layer: h
+        annotations:
+          summary: "Policy decision latency high"
+          description: "p95 policy decision latency is {{ $value }}ms"
+      
+      - alert: HighDenyRate
+        expr: sum(rate(policy_decisions_total{outcome="deny"}[5m])) / sum(rate(policy_decisions_total[5m])) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          layer: h
+        annotations:
+          summary: "High policy denial rate"
+          description: "Denial rate is {{ $value | humanizePercentage }}"
+      
+      - alert: ReviewQueueBacklog
+        expr: governance_review_queue_depth > 50
+        for: 5m
+        labels:
+          severity: warning
+          layer: h
+        annotations:
+          summary: "Review queue backlog"
+          description: "{{ $value }} reviews pending in queue"
+      
+      - alert: TenantIsolationViolation
+        expr: rate(knowledge_tenant_isolation_violations_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          layer: h
+        annotations:
+          summary: "Tenant isolation violation detected"
+          description: "Cross-tenant data access detected"

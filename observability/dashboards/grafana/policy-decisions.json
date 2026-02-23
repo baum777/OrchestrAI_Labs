@@ -1,0 +1,80 @@
+{
+  "dashboard": {
+    "title": "Policy Decisions & Governance",
+    "tags": ["governance", "policy", "layer-h"],
+    "timezone": "UTC",
+    "schemaVersion": 36,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Policy Decisions by Outcome",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum(policy_decisions_total) by (outcome)",
+            "legendFormat": "{{outcome}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Decision Latency (p95)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(policy_decision_duration_ms_bucket[5m])) by (le))",
+            "legendFormat": "p95"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Escalation Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(policy_escalations_total[5m])",
+            "legendFormat": "escalations/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "Review Queue Depth",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "governance_review_queue_depth",
+            "legendFormat": "pending reviews"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Human-in-the-Loop Interventions",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(human_intervention_requests_total[5m])",
+            "legendFormat": "interventions/sec"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "tenant",
+          "type": "query",
+          "query": "label_values(policy_decisions_total, tenant_id)"
+        }
+      ]
+    }
+  }
+}
