@@ -119,7 +119,6 @@ export class NoOpProviderRouter implements IProviderRouter {
 export class ProviderRouter implements IProviderRouter {
   private config: ProviderRouterConfig;
   private health: Map<string, ProviderHealth> = new Map();
-  private lastHealthCheck: number = 0;
   
   constructor(config: ProviderRouterConfig) {
     const validation = validateProviderConfig(config);
@@ -174,7 +173,7 @@ export class ProviderRouter implements IProviderRouter {
     // Update average latency (exponential moving average)
     const alpha = 0.3;
     current.averageLatencyMs = (alpha * latencyMs) + ((1 - alpha) * current.averageLatencyMs);
-    current.lastCheckedAt = Date.now();
+    current.lastCheckedAt = Date.now(); // Note: Health check uses wall time, not application clock
     
     this.health.set(providerId, current);
   }

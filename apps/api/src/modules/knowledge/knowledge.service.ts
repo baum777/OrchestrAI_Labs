@@ -75,7 +75,8 @@ export class KnowledgeService {
     }
 
     // Sort by timestamp (newest first) and limit
-    results.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+    // Using ISO string comparison as both are ISO-8601 formatted
+    results.sort((a, b) => b.ts.localeCompare(a.ts));
     const limitedResults = results.slice(0, limit);
     const hitCount = results.length;
 
@@ -130,7 +131,7 @@ export class KnowledgeService {
     };
   }
 
-  private async searchDecisions(projectId: string, q: string, limit: number, tenantId?: string): Promise<SearchResult[]> {
+  private async searchDecisions(projectId: string, q: string, limit: number, _tenantId?: string): Promise<SearchResult[]> {
     const searchTerm = `%${q}%`;
     const { rows } = await this.pool.query<{
       id: string;
@@ -206,7 +207,7 @@ export class KnowledgeService {
     });
   }
 
-  private async searchReviews(projectId: string, q: string, limit: number, tenantId?: string): Promise<SearchResult[]> {
+  private async searchReviews(projectId: string, q: string, limit: number, _tenantId?: string): Promise<SearchResult[]> {
     const searchTerm = `%${q}%`;
     const { rows } = await this.pool.query<{
       review_id: string;
@@ -264,7 +265,7 @@ export class KnowledgeService {
     });
   }
 
-  private async searchLogs(projectId: string, q: string, limit: number, tenantId?: string): Promise<SearchResult[]> {
+  private async searchLogs(projectId: string, q: string, limit: number, _tenantId?: string): Promise<SearchResult[]> {
     const searchTerm = `%${q}%`;
     const { rows } = await this.pool.query<{
       id: string;

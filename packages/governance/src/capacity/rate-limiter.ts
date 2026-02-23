@@ -54,7 +54,10 @@ export class RateLimiter {
     this.clock = clock ?? new SystemClock();
     this.loadConfigFromYaml();
     // Cleanup stale buckets every 5 minutes
+    // Note: Using native setInterval for periodic cleanup (not request-scoped)
     this.cleanupInterval = setInterval(() => this.cleanup(), 5 * 60 * 1000);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    void this.cleanupInterval.unref?.();
   }
 
   /**
@@ -101,6 +104,7 @@ export class RateLimiter {
   /**
    * Simple YAML parser for our config format
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parseYaml(content: string): any {
     const result: any = {};
     const lines = content.split('\n');
@@ -108,7 +112,6 @@ export class RateLimiter {
     let currentRole: string | null = null;
     let currentResource: string | null = null;
     let currentSubSection: string | null = null;
-    let depth = 0;
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -128,7 +131,6 @@ export class RateLimiter {
         currentRole = null;
         currentResource = null;
         currentSubSection = null;
-        depth = 0;
         continue;
       }
 
