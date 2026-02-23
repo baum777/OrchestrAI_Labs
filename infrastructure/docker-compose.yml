@@ -22,3 +22,17 @@ services:
     volumes:
       - ./vector/data:/var/lib/postgresql/data
 
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "8889:8889"   # Prometheus exporter
+    volumes:
+      - ./monitoring/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    command: ["--config", "/etc/otel-collector-config.yaml"]
+    environment:
+      - TELEMETRY_EXPORT_ENABLED=true
+    depends_on:
+      - postgres
+

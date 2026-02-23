@@ -40,18 +40,33 @@ jobs:
       - name: Validate Blueprint Structure
         run: pnpm blueprint:check
         env:
-          ENFORCEMENT_STRICT: "0" # Phase 1: warn-only; set to "1" in Phase 2
+          ENFORCEMENT_STRICT: "1" # Phase 80%: strict enforcement on main
         continue-on-error: false
 
       - name: Validate Golden Tasks
         run: pnpm golden-tasks:check
         env:
-          ENFORCEMENT_STRICT: "0" # Phase 1: warn-only; set to "1" in Phase 2
+          ENFORCEMENT_STRICT: "1" # Phase 80%: strict enforcement on main
         continue-on-error: false
 
       - name: Validate PR Governance Schema
         run: pnpm pr:check
         env:
-          ENFORCEMENT_STRICT: "0" # Phase 1: warn-only; set to "1" in Phase 2
+          ENFORCEMENT_STRICT: "1" # Phase 80%: strict enforcement on main
         continue-on-error: false
+
+      - name: Verify No Governance Bypass
+        run: pnpm verify:no-bypass
+        continue-on-error: false
+
+      - name: Check Emergency Bypass Label (if failed)
+        if: failure()
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'emergency-governance-bypass') }}" == "true" ]]; then
+            echo "Emergency bypass label detected. Not failing build."
+            exit 0
+          else
+            echo "No emergency bypass label. Build failed due to governance violations."
+            exit 1
+          fi
 

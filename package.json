@@ -18,7 +18,8 @@
     "lint:clock": "eslint . --ext .ts,.tsx",
     "blueprint:check": "ts-node scripts/validate-blueprint.ts",
     "golden-tasks:check": "ts-node scripts/validate-golden-tasks.ts",
-    "pr:check": "ts-node scripts/validate-pr-template.ts"
+    "pr:check": "ts-node scripts/validate-pr-template.ts",
+    "verify:no-bypass": "ts-node scripts/verify-no-bypass.ts"
   },
   "engines": {
     "node": ">=20"
