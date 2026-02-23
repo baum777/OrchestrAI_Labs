@@ -8,8 +8,8 @@
 
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { SystemClock } from '../runtime/clock';
-import type { Clock } from '../runtime/clock';
+import { SystemClock } from '@agent-system/governance-v2/runtime/clock';
+import type { Clock } from '@agent-system/governance-v2/runtime/clock';
 
 @Injectable()
 export class TraceCorrelationMiddleware implements NestMiddleware {

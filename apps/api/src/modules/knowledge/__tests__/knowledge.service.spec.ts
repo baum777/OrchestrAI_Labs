@@ -7,7 +7,7 @@
 import { Test } from '@nestjs/testing';
 import { KnowledgeService } from '../knowledge.service';
 import { PG_POOL } from '../../db/db.module';
-import { FakeClock } from '../../../../packages/governance-v2/src/runtime/clock';
+import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
 
 const mockPool = {
   query: jest.fn(),

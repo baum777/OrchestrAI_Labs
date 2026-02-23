@@ -6,8 +6,8 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { SystemClock } from '../../../governance-v2/src/runtime/clock';
-import type { Clock } from '../../../governance-v2/src/runtime/clock';
+import { SystemClock } from '../runtime/clock';
+import type { Clock } from '../runtime/clock';
 
 interface ConcurrencySlot {
   executionId: string;

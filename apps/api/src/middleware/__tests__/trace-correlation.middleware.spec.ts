@@ -4,8 +4,8 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { TraceCorrelationMiddleware } from '../trace-correlation.middleware';
-import { FakeClock } from '../../runtime/clock';
-import type { Clock } from '../../runtime/clock';
+import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
+import type { Clock } from '@agent-system/governance-v2/runtime/clock';
 import type { Request, Response } from 'express';
 
 describe('TraceCorrelationMiddleware', () => {

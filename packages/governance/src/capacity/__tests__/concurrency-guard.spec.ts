@@ -3,7 +3,7 @@
  */
 
 import { ConcurrencyGuard } from '../concurrency-guard';
-import { FakeClock } from '../../../governance-v2/src/runtime/clock';
+import { FakeClock } from '../../runtime/clock';
 
 describe('ConcurrencyGuard', () => {
   let guard: ConcurrencyGuard;
