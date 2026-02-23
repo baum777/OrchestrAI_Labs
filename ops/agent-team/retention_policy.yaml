@@ -1,0 +1,88 @@
+version: 1.0.0
+owner: @teamlead_orchestrator
+last_updated: 2026-02-23
+layer: governance
+
+Definition of Done:
+- [ ] retention_policy.yaml is canonical source of retention rules
+- [ ] RetentionOrchestratorJob implements all categories
+- [ ] Audit proof generation (SHA-256) works
+- [ ] Dry-run mode functional
+- [ ] Tests pass
+
+retention_rules:
+  audit_logs:
+    duration: 7y
+    justification: ISO_27001_A.12.4.1
+    action: archive_and_delete
+    archive_location: s3://audit-archive/
+    priority: critical
+
+  action_logs:
+    duration: 7y
+    justification: Governance_traceability
+    action: compress_and_retain
+    priority: critical
+
+  app_logs:
+    duration: 90d
+    justification: Operational_debugging
+    action: delete
+    priority: normal
+
+  knowledge_base:
+    duration: 1y
+    justification: Business_value_decay
+    action: archive_inactive
+    inactive_threshold_days: 90
+    priority: normal
+
+  vector_embeddings:
+    duration: 2y
+    justification: Model_retraining_value
+    action: archive_and_delete
+    priority: normal
+
+  user_sessions:
+    duration: 30d
+    justification: Security_session_management
+    action: delete
+    priority: normal
+
+  prompt_audit:
+    duration: 1y
+    justification: Compliance_review
+    action: compress_and_retain
+    priority: normal
+
+  retention_audit:
+    duration: 10y
+    justification: Compliance_proof
+    action: immutable_storage
+    priority: critical
+    immutable: true
+
+  customer_data_cache:
+    duration: 7d
+    justification: Data_minimization
+    action: delete
+    priority: high
+
+  decision_drafts:
+    duration: 30d
+    justification: Decision_cleanup
+    action: delete
+    priority: normal
+    condition: finalized_at IS NOT NULL
+
+audit_proof:
+  algorithm: SHA-256
+  encoding: hex
+  include_record_count: true
+  include_date_range: true
+  hmac_secret_env: RETENTION_HMAC_SECRET # Optional HMAC for tamper evidence
+
+dry_run:
+  enabled_by_default: false
+  log_output: true
+  max_records_to_preview: 100
