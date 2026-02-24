@@ -5,6 +5,8 @@
  * Ensures deterministic, auditable knowledge usage.
  */
 
+import type { Clock } from '@agent-system/governance-v2/runtime/clock';
+
 /**
  * Citation metadata attached to every retrieved chunk
  */
@@ -189,7 +191,7 @@ export const createDefaultCitation = (
   chunkId: string,
   tenantId: string,
   score: number = 0.5,
-  clock: { now(): Date }
+  clock: Clock
 ): CitationMetadata => ({
   doc_id: docId,
   chunk_id: chunkId,

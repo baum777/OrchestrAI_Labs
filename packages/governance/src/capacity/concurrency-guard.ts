@@ -31,7 +31,7 @@ export class ConcurrencyGuard {
   private waitQueues: Map<string, Array<{
     resolve: (slot: { executionId: string }) => void;
     reject: (error: Error) => void;
-    timeout: ReturnType<typeof setTimeout>;
+    timeout: number;
     requestedAt: number;
   }>> = new Map();
   private clock: Clock;
@@ -85,7 +85,7 @@ export class ConcurrencyGuard {
   private queueForSlot(
     tenantId: string,
     timeoutMs: number,
-    metadata?: { agentId?: string; projectId?: string; userId?: string }
+    _metadata?: { agentId?: string; projectId?: string; userId?: string }
   ): Promise<{ executionId: string } | null> {
     return new Promise((resolve, reject) => {
       const timeout = this.clock.setTimeout(() => {
@@ -226,7 +226,7 @@ export class ConcurrencyGuard {
   /**
    * Estimate config from current state (for internal use)
    */
-  private estimateConfig(tenantId: string): ConcurrencyConfig {
+  private estimateConfig(_tenantId: string): ConcurrencyConfig {
     // Default conservative config
     return {
       maxExecutions: 5,

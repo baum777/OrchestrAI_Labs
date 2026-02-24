@@ -6,6 +6,8 @@
  */
 
 import { RetrievedChunk } from '../retrieval/retrieval-contract';
+import type { Clock } from '@agent-system/governance-v2/runtime/clock';
+import { SystemClock } from '@agent-system/governance-v2/runtime/clock';
 
 /**
  * Reranker interface - implement to provide custom reranking
@@ -69,12 +71,14 @@ export class ScoreThresholdReranker implements Reranker {
   readonly name = 'score_threshold';
   readonly enabled: boolean;
   private minScore: number;
-  
-  constructor(minScore: number = 0.7, enabled: boolean = false) {
+  private clock: Clock;
+
+  constructor(minScore: number = 0.7, enabled: boolean = false, clock?: Clock) {
     this.minScore = minScore;
     this.enabled = enabled;
+    this.clock = clock ?? new SystemClock();
   }
-  
+
   async rerank(_query: string, chunks: RetrievedChunk[]): Promise<RerankResult> {
     if (!this.enabled) {
       return {
@@ -84,13 +88,13 @@ export class ScoreThresholdReranker implements Reranker {
         reranker_name: this.name,
       };
     }
-    
-    const startTime = Date.now();
+
+    const startTime = this.clock.now().getTime();
     const filtered = chunks.filter(c => c.citation.score >= this.minScore);
-    
+
     return {
       chunks: filtered,
-      latency_ms: Date.now() - startTime,
+      latency_ms: this.clock.now().getTime() - startTime,
       reranked: true,
       reranker_name: this.name,
     };

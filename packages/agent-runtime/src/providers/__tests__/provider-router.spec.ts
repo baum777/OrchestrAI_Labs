@@ -12,6 +12,7 @@ import {
 } from '../provider-router';
 import {
   ProviderRouterConfig,
+  ProviderConfig,
   DEFAULT_PROVIDER_ROUTER_CONFIG,
   EXAMPLE_PROVIDER_ROUTER_CONFIG,
 } from '../provider-config.schema';
@@ -30,7 +31,7 @@ describe('ProviderRouter', () => {
     it('should ignore configuration when disabled', () => {
       const router = new NoOpProviderRouter({
         defaultProviderId: 'custom',
-        providers: [{ id: 'custom', name: 'Custom' } as any],
+        providers: [{ id: 'custom', name: 'Custom' } as unknown as ProviderConfig],
       });
       
       // Force disabled
@@ -226,8 +227,8 @@ describe('ProviderRouter', () => {
         ...DEFAULT_PROVIDER_ROUTER_CONFIG,
         enabled: true,
         providers: [
-          { id: 'same-id', name: 'A' } as any,
-          { id: 'same-id', name: 'B' } as any,
+          { id: 'same-id', name: 'A' } as unknown as ProviderConfig,
+          { id: 'same-id', name: 'B' } as unknown as ProviderConfig,
         ],
       };
       

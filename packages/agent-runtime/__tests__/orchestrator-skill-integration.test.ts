@@ -6,6 +6,7 @@
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { Orchestrator } from '../src/orchestrator/orchestrator.js';
+import type { ReviewStore } from '../src/orchestrator/orchestrator.js';
 import { SkillRegistry, SkillLoader, SkillExecutor } from '@agent-system/skills';
 import { WorkstreamValidator } from '@agent-system/governance-v2';
 import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
@@ -75,10 +76,8 @@ describe('Orchestrator + Skill Integration', () => {
 
     const profiles = new MockProfiles();
     const toolRouter = new ToolRouter({});
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const reviewStore = new MockReviewStore() as any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const logger = new MockActionLogger() as any;
+    const reviewStore = new MockReviewStore() as unknown as ReviewStore;
+    const logger = new MockActionLogger() as unknown as { append: (entry: unknown) => Promise<void> };
 
     orchestrator = new Orchestrator(
       profiles,
@@ -136,8 +135,8 @@ describe('Orchestrator + Skill Integration', () => {
     const disabledOrchestrator = new Orchestrator(
       new MockProfiles(),
       new ToolRouter({}),
-      new MockReviewStore() as never,
-      new MockActionLogger() as never,
+      new MockReviewStore() as unknown as ReviewStore,
+      new MockActionLogger() as unknown as { append: (entry: unknown) => Promise<void> },
       undefined,
       clock,
       skillRegistry,

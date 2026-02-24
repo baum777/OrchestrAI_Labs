@@ -42,7 +42,7 @@ interface YamlRateLimitConfig {
 export class RateLimiter {
   private readonly logger = new Logger(RateLimiter.name);
   private buckets: Map<string, TokenBucket> = new Map();
-  private cleanupInterval: NodeJS.Timeout;
+  private cleanupTimeoutId: number;
   private clock: Clock;
 
   // Role-based limits loaded from YAML
@@ -53,11 +53,14 @@ export class RateLimiter {
   constructor(clock?: Clock) {
     this.clock = clock ?? new SystemClock();
     this.loadConfigFromYaml();
-    // Cleanup stale buckets every 5 minutes
-    // Note: Using native setInterval for periodic cleanup (not request-scoped)
-    this.cleanupInterval = setInterval(() => this.cleanup(), 5 * 60 * 1000);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    void this.cleanupInterval.unref?.();
+    // Cleanup stale buckets every 5 minutes via Clock.setTimeout
+    const scheduleCleanup = (): void => {
+      this.cleanupTimeoutId = this.clock.setTimeout(() => {
+        this.cleanup();
+        scheduleCleanup();
+      }, 5 * 60 * 1000);
+    };
+    scheduleCleanup();
   }
 
   /**
@@ -104,9 +107,8 @@ export class RateLimiter {
   /**
    * Simple YAML parser for our config format
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private parseYaml(content: string): any {
-    const result: any = {};
+  private parseYaml(content: string): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
     const lines = content.split('\n');
     let currentSection: string | null = null;
     let currentRole: string | null = null;
@@ -126,7 +128,7 @@ export class RateLimiter {
         if (value?.trim()) {
           result[currentSection] = value.trim().replace(/"/g, '').replace(/'/g, '');
         } else {
-          result[currentSection] = {};
+          result[currentSection] = {} as Record<string, unknown>;
         }
         currentRole = null;
         currentResource = null;
@@ -139,13 +141,13 @@ export class RateLimiter {
         const key = trimmed.replace(':', '').trim();
         if (currentSection === 'roles') {
           currentRole = key;
-          result.roles[currentRole] = {};
+          (result.roles as Record<string, unknown>)[currentRole] = {};
         } else if (currentSection === 'resources') {
           currentResource = key;
-          result.resources[currentResource] = {};
+          (result.resources as Record<string, unknown>)[currentResource] = {};
         } else if (currentSection) {
           currentSubSection = key;
-          result[currentSection][currentSubSection] = {};
+          (result[currentSection] as Record<string, unknown>)[currentSubSection] = {};
         }
         continue;
       }
@@ -156,13 +158,13 @@ export class RateLimiter {
         const k = key.trim();
         const v = value?.trim();
         
-        let target: any = null;
+        let target: Record<string, unknown> | null = null;
         if (currentSection === 'defaults' && currentSubSection) {
-          target = result.defaults[currentSubSection];
+          target = (result.defaults as Record<string, unknown>)?.[currentSubSection] as Record<string, unknown> | undefined ?? null;
         } else if (currentSection === 'roles' && currentRole) {
-          target = result.roles[currentRole];
+          target = (result.roles as Record<string, unknown>)?.[currentRole] as Record<string, unknown> | undefined ?? null;
         } else if (currentSection === 'resources' && currentResource) {
-          target = result.resources[currentResource];
+          target = (result.resources as Record<string, unknown>)?.[currentResource] as Record<string, unknown> | undefined ?? null;
         }
 
         if (target) {
@@ -187,13 +189,13 @@ export class RateLimiter {
         const k = key.trim();
         const v = value?.trim();
         
-        let target: any = null;
+        let target: Record<string, unknown> | null = null;
         if (currentSection === 'defaults' && currentSubSection) {
-          target = result.defaults[currentSubSection];
+          target = (result.defaults as Record<string, unknown>)?.[currentSubSection] as Record<string, unknown> | undefined ?? null;
         } else if (currentSection === 'roles' && currentRole) {
-          target = result.roles[currentRole];
+          target = (result.roles as Record<string, unknown>)?.[currentRole] as Record<string, unknown> | undefined ?? null;
         } else if (currentSection === 'resources' && currentResource) {
-          target = result.resources[currentResource];
+          target = (result.resources as Record<string, unknown>)?.[currentResource] as Record<string, unknown> | undefined ?? null;
         }
 
         if (target && v !== undefined) {
@@ -289,6 +291,6 @@ export class RateLimiter {
   }
 
   onApplicationShutdown(): void {
-    clearInterval(this.cleanupInterval);
+    clearTimeout(this.cleanupTimeoutId);
   }
 }

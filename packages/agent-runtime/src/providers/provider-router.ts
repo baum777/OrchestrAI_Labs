@@ -9,10 +9,11 @@
 import {
   ProviderConfig,
   ProviderRouterConfig,
-  ProviderRoutingPolicy,
   DEFAULT_PROVIDER_ROUTER_CONFIG,
   validateProviderConfig,
 } from './provider-config.schema';
+import type { Clock } from '@agent-system/governance-v2/runtime/clock';
+import { SystemClock } from '@agent-system/governance-v2/runtime/clock';
 
 /**
  * Provider health status
@@ -70,7 +71,7 @@ export class NoOpProviderRouter implements IProviderRouter {
     };
   }
   
-  route(capabilities: string[], _estimatedTokens?: number): RoutingDecision {
+  route(_capabilities: string[], _estimatedTokens?: number): RoutingDecision {
     // Always returns default provider - no routing logic
     return {
       providerId: this.config.defaultProviderId,
@@ -119,14 +120,16 @@ export class NoOpProviderRouter implements IProviderRouter {
 export class ProviderRouter implements IProviderRouter {
   private config: ProviderRouterConfig;
   private health: Map<string, ProviderHealth> = new Map();
-  
-  constructor(config: ProviderRouterConfig) {
+  private readonly clock: Clock;
+
+  constructor(config: ProviderRouterConfig, clock?: Clock) {
     const validation = validateProviderConfig(config);
     if (!validation.valid) {
       throw new Error(`Invalid provider config: ${validation.errors.join(', ')}`);
     }
-    
+
     this.config = config;
+    this.clock = clock ?? new SystemClock();
     this.initializeHealthTracking();
   }
   
@@ -165,15 +168,17 @@ export class ProviderRouter implements IProviderRouter {
       current.healthy = true;
     } else {
       current.consecutiveFailures++;
-      if (current.consecutiveFailures >= this.config.providers.find(p => p.id === providerId)?.circuitBreaker.failureThreshold!) {
+      const provider = this.config.providers.find(p => p.id === providerId);
+      const threshold = provider?.circuitBreaker?.failureThreshold;
+      if (threshold !== undefined && current.consecutiveFailures >= threshold) {
         current.healthy = false;
       }
     }
-    
+
     // Update average latency (exponential moving average)
     const alpha = 0.3;
     current.averageLatencyMs = (alpha * latencyMs) + ((1 - alpha) * current.averageLatencyMs);
-    current.lastCheckedAt = Date.now(); // Note: Health check uses wall time, not application clock
+    current.lastCheckedAt = this.clock.now().getTime();
     
     this.health.set(providerId, current);
   }
@@ -240,25 +245,26 @@ export class ProviderRouter implements IProviderRouter {
     }
     
     switch (strategy) {
-      case 'priority':
+      case 'priority': {
         // Sort by priority (lower = higher)
         const byPriority = [...capable].sort((a, b) => a.priority - b.priority);
         return { provider: byPriority[0], reason: `Highest priority (${byPriority[0].priority})` };
-        
-      case 'cost':
+      }
+      case 'cost': {
         // Sort by input cost
         const byCost = [...capable].sort((a, b) => a.costPer1kInput - b.costPer1kInput);
         return { provider: byCost[0], reason: `Lowest cost ($${byCost[0].costPer1kInput}/1K)` };
-        
-      case 'capability':
+      }
+      case 'capability': {
         // Sort by most capabilities
         const byCapability = [...capable].sort((a, b) => b.capabilities.length - a.capabilities.length);
         return { provider: byCapability[0], reason: `Most capabilities (${byCapability[0].capabilities.length})` };
-        
-      default:
+      }
+      default: {
         // Default to priority
         const defaultSorted = [...capable].sort((a, b) => a.priority - b.priority);
         return { provider: defaultSorted[0], reason: 'Default priority strategy' };
+      }
     }
   }
   

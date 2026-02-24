@@ -10,7 +10,7 @@ describe('ConcurrencyGuard', () => {
   let clock: FakeClock;
 
   beforeEach(() => {
-    clock = new FakeClock(new Date('2026-01-01T00:00:00.000Z'));
+    clock = new FakeClock(Date.UTC(2026, 0, 1, 0, 0, 0));
     guard = new ConcurrencyGuard(clock);
   });
 
@@ -56,7 +56,7 @@ describe('ConcurrencyGuard', () => {
 
     it('should track metadata', async () => {
       const metadata = { agentId: 'agent-1', projectId: 'proj-1', userId: 'user-1' };
-      const slot = await guard.acquireSlot('tenant-1', { maxExecutions: 5, queueTimeoutMs: 0 }, metadata);
+      await guard.acquireSlot('tenant-1', { maxExecutions: 5, queueTimeoutMs: 0 }, metadata);
       
       const state = guard.getState('tenant-1');
       expect(state.activeCount).toBe(1);
@@ -106,7 +106,7 @@ describe('ConcurrencyGuard', () => {
 
   describe('forceCleanup', () => {
     it('should cleanup stale executions', async () => {
-      const slot = await guard.acquireSlot('tenant-1', { maxExecutions: 5, queueTimeoutMs: 0 });
+      await guard.acquireSlot('tenant-1', { maxExecutions: 5, queueTimeoutMs: 0 });
       
       // Advance clock by 1 hour
       clock.advance(60 * 60 * 1000);
