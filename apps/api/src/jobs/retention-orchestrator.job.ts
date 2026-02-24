@@ -46,7 +46,7 @@ export class RetentionOrchestratorJob {
       // Process each category
       results.push(await this.processActionLogs(dryRun, 'cron'));
       results.push(await this.processAppLogs(dryRun, 'cron'));
-      results.push(await this.processUserSessions(dryRun, 'cron'));
+      results.push(await this.processUserSessions(dryRun));
 
       this.logSummary(results, dryRun);
       this.logger.log('Retention orchestrator job completed');
@@ -186,7 +186,7 @@ export class RetentionOrchestratorJob {
   /**
    * Process user sessions
    */
-  private async processUserSessions(dryRun: boolean, _triggeredBy: 'cron' | 'manual' | 'api'): Promise<RetentionResult> {
+  private async processUserSessions(dryRun: boolean): Promise<RetentionResult> {
     // Placeholder for user session cleanup
     return { category: 'user_sessions', recordsIdentified: 0, recordsDeleted: 0, archived: false, dryRun, proofStored: false };
   }
@@ -238,7 +238,7 @@ export class RetentionOrchestratorJob {
     const results: RetentionResult[] = [];
     results.push(await this.processActionLogs(dryRun, 'manual'));
     results.push(await this.processAppLogs(dryRun, 'manual'));
-    results.push(await this.processUserSessions(dryRun, 'manual'));
+    results.push(await this.processUserSessions(dryRun));
 
     return results;
   }

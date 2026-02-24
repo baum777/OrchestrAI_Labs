@@ -7,23 +7,23 @@
 import { Test } from '@nestjs/testing';
 import { KnowledgeService } from '../knowledge.service';
 import { PG_POOL } from '../../db/db.module';
-import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
 
 const mockPool = {
   query: jest.fn(),
 };
 
-const mockLogger = {
+interface MockLogger {
+  append: jest.Mock<Promise<void>, [unknown]>;
+}
+
+const mockLogger: MockLogger = {
   append: jest.fn().mockResolvedValue(undefined),
 };
 
 describe('KnowledgeService', () => {
   let service: KnowledgeService;
-  let clock: FakeClock;
 
   beforeEach(async () => {
-    clock = new FakeClock(new Date('2026-01-01T00:00:00.000Z'));
-    
     const module = await Test.createTestingModule({
       providers: [
         KnowledgeService,
@@ -52,7 +52,7 @@ describe('KnowledgeService', () => {
         'test',
         ['decisions'],
         10,
-        mockLogger as any,
+        mockLogger,
         'agent-1',
         'user-1'
       );
@@ -84,7 +84,7 @@ describe('KnowledgeService', () => {
         'approved',
         ['reviews'],
         10,
-        mockLogger as any,
+        mockLogger,
         'agent-1',
         'user-1'
       );
@@ -110,7 +110,7 @@ describe('KnowledgeService', () => {
         'search',
         ['logs'],
         10,
-        mockLogger as any,
+        mockLogger,
         'agent-1',
         'user-1'
       );
@@ -127,7 +127,7 @@ describe('KnowledgeService', () => {
         'test',
         ['decisions'],
         10,
-        mockLogger as any,
+        mockLogger,
         'agent-1',
         'user-1'
       );
@@ -149,7 +149,7 @@ describe('KnowledgeService', () => {
         'content',
         ['decisions'],
         10,
-        mockLogger as any,
+        mockLogger,
         'agent-1',
         'user-1'
       );
@@ -175,7 +175,7 @@ describe('KnowledgeService', () => {
         'test',
         ['decisions'],
         10,
-        mockLogger as any,
+        mockLogger,
         'agent-1',
         'user-1',
         'client-1',
@@ -196,7 +196,7 @@ describe('KnowledgeService', () => {
         'test',
         ['decisions'],
         10,
-        mockLogger as any,
+        mockLogger,
         'agent-1',
         'user-1'
       );

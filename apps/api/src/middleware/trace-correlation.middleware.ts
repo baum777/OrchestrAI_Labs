@@ -82,11 +82,11 @@ export class TraceCorrelationMiddleware implements NestMiddleware {
     const incomingTraceId = req.headers['x-trace-id'] || req.headers['x-b3-traceid'];
     if (incomingTraceId && typeof incomingTraceId === 'string') {
       // Validate format (alphanumeric and hyphens only, max 64 chars)
-      if (/^[a-zA-Z0-9\-]{8,64}$/.test(incomingTraceId)) {
+      if (/^[a-zA-Z0-9-]{8,64}$/.test(incomingTraceId)) {
         return incomingTraceId;
       }
     }
-    
+
     // Generate deterministic trace ID from clock
     return this.generateTraceId();
   }
@@ -96,11 +96,11 @@ export class TraceCorrelationMiddleware implements NestMiddleware {
     const incomingRequestId = req.headers['x-request-id'];
     if (incomingRequestId && typeof incomingRequestId === 'string') {
       // Validate format
-      if (/^[a-zA-Z0-9\-]{8,64}$/.test(incomingRequestId)) {
+      if (/^[a-zA-Z0-9-]{8,64}$/.test(incomingRequestId)) {
         return incomingRequestId;
       }
     }
-    
+
     // Generate request ID correlated with trace ID
     return `req-${traceId}-${this.clock.now().getTime()}`;
   }

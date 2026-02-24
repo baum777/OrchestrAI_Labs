@@ -4,6 +4,15 @@ import { RateLimiter } from '@packages/governance/capacity/rate-limiter';
 import { TokenCapService } from '@packages/governance/capacity/token-cap.service';
 import { ConcurrencyGuard } from '@packages/governance/capacity/concurrency-guard';
 
+interface ExecutionSlot {
+  executionId: string;
+  acquiredAt: number;
+}
+
+interface RequestWithExecution extends Request {
+  executionSlot: ExecutionSlot;
+}
+
 @Injectable()
 export class CapacityGuard implements NestMiddleware {
   constructor(
@@ -49,7 +58,7 @@ export class CapacityGuard implements NestMiddleware {
     }
 
     // Store execution ID on request for later release
-    (req as any).executionSlot = slot;
+    (req as unknown as RequestWithExecution).executionSlot = slot;
 
     // Estimate tokens from request body
     const bodyText = JSON.stringify(req.body);
