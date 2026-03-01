@@ -47,8 +47,8 @@ export class FakeClock implements Clock {
   private pendingTimeouts: Array<{ id: number; cb: () => void; ms: number }> = [];
   private nextId = 1;
 
-  constructor(initialTime?: Date) {
-    this.currentTime = initialTime ?? new Date();
+  constructor(initialTime?: Date | number) {
+    this.currentTime = initialTime !== undefined ? new Date(initialTime) : new Date();
   }
 
   /**

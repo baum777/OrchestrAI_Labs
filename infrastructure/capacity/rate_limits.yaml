@@ -1,0 +1,120 @@
+# Rate Limits Configuration
+# Canonical source of truth for all rate limiting policies
+
+version: "1.0"
+effective_date: "2026-02-23"
+
+# Global defaults (applied when no tenant-specific override)
+defaults:
+  # Token Bucket settings
+  token_bucket:
+    capacity: 100           # Max burst requests
+    refill_rate_per_minute: 60  # Sustained rate: 1 req/sec
+  
+  # Concurrency limits
+  concurrency:
+    max_executions: 5         # Max concurrent executions per tenant
+    queue_timeout_ms: 30000   # Max wait time for slot
+  
+  # Daily token budget (LLM usage)
+  token_budget:
+    daily_limit: 100000       # 100K tokens per day
+    warning_threshold: 0.8    # Alert at 80%
+    hard_limit: true          # Reject when exceeded
+
+# Role-based overrides (take precedence over defaults)
+roles:
+  premium:
+    token_bucket:
+      capacity: 500
+      refill_rate_per_minute: 300  # 5 req/sec sustained
+    concurrency:
+      max_executions: 25
+      queue_timeout_ms: 60000
+    token_budget:
+      daily_limit: 1000000        # 1M tokens
+      warning_threshold: 0.85
+      hard_limit: true
+  
+  enterprise:
+    token_bucket:
+      capacity: 2000
+      refill_rate_per_minute: 1200  # 20 req/sec sustained
+    concurrency:
+      max_executions: 100
+      queue_timeout_ms: 120000
+    token_budget:
+      daily_limit: 10000000       # 10M tokens
+      warning_threshold: 0.9
+      hard_limit: false           # Soft limit with notification
+  
+  admin:
+    token_bucket:
+      capacity: 10000
+      refill_rate_per_minute: 6000  # 100 req/sec
+    concurrency:
+      max_executions: 250
+      queue_timeout_ms: 60000
+    token_budget:
+      daily_limit: 50000000       # 50M tokens (unlimited for ops)
+      warning_threshold: 0.95
+      hard_limit: false
+
+# Resource-specific overrides (lowest precedence, but useful for special endpoints)
+resources:
+  knowledge_search:
+    # Knowledge search can be expensive - stricter limits
+    default:
+      token_bucket:
+        capacity: 30
+        refill_rate_per_minute: 20
+    premium:
+      token_bucket:
+        capacity: 100
+        refill_rate_per_minute: 60
+  
+  policy_decision:
+    # Policy decisions must be fast - separate limits
+    default:
+      token_bucket:
+        capacity: 300
+        refill_rate_per_minute: 300  # 5/sec - policy must be responsive
+  
+  agent_execution:
+    # Agent execution uses concurrency limits primarily
+    default:
+      concurrency:
+        max_executions: 5
+        queue_timeout_ms: 30000
+    premium:
+      concurrency:
+        max_executions: 25
+        queue_timeout_ms: 60000
+
+# Circuit breaker settings
+circuit_breakers:
+  error_rate_threshold: 0.10      # Open at 10% error rate
+  error_rate_window_ms: 30000     # Measure over 30s
+  half_open_requests: 5           # Test with 5 requests on half-open
+  recovery_time_ms: 30000         # Wait 30s before half-open
+
+# Validation schema (for config validation)
+schema:
+  required_fields:
+    - defaults.token_bucket.capacity
+    - defaults.token_bucket.refill_rate_per_minute
+    - defaults.concurrency.max_executions
+    - defaults.token_budget.daily_limit
+  constraints:
+    token_bucket.capacity:
+      min: 1
+      max: 10000
+    token_bucket.refill_rate_per_minute:
+      min: 1
+      max: 10000
+    concurrency.max_executions:
+      min: 1
+      max: 1000
+    token_budget.daily_limit:
+      min: 1000
+      max: 100000000

@@ -2,6 +2,7 @@
  * Token Bucket Rate Limiter
  *
  * Per-tenant, per-role rate limiting for API requests.
+ * Loads configuration from rate_limits.yaml (single source of truth).
  */
 
 import { Injectable, Optional, Logger } from '@nestjs/common';
@@ -63,6 +64,7 @@ export class RateLimiter {
     const now = this.clock.now().getTime();
 
     let bucket = this.buckets.get(key);
+    const now = this.clock.now().getTime();
     if (!bucket) {
       bucket = {
         tokens: config.burstSize,

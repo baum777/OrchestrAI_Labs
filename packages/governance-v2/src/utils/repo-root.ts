@@ -8,17 +8,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+interface GlobalWithDirname {
+  __dirname?: string;
+}
+
 // Support both ESM (import.meta.url) and CommonJS/Jest environments
 // In Jest/CommonJS, we use process.cwd() as fallback since import.meta is not available
 // Note: This file is primarily used for loading policy files, which works fine with process.cwd()
 // in test environments since tests run from the repo root
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getDirname = (): string => {
   // In Jest/CommonJS, __dirname is available as a global
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).__dirname !== 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (globalThis as any).__dirname;
+  const globalWithDirname = globalThis as unknown as GlobalWithDirname;
+  if (typeof globalWithDirname.__dirname !== 'undefined') {
+    return globalWithDirname.__dirname;
   }
   // Fallback to process.cwd() for ESM environments or when __dirname is not available
   return process.cwd();

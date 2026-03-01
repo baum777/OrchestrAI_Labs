@@ -12,6 +12,7 @@ import { UsersModule } from "./modules/users/users.module";
 import { HealthController } from "./health/health.controller";
 import { AuditLogMiddleware } from "./middleware/audit-log.middleware";
 import { SecurityHeadersMiddleware } from "./middleware/security-headers.middleware";
+import { TraceCorrelationMiddleware } from "./middleware/trace-correlation.middleware";
 import { PostgresActionLogger } from "./runtime/postgres-action-logger";
 import { LogRetentionJob } from "./jobs/log-retention.job";
 
@@ -29,10 +30,15 @@ import { LogRetentionJob } from "./jobs/log-retention.job";
     UsersModule,
   ],
   controllers: [HealthController],
-  providers: [PostgresActionLogger, AuditLogMiddleware, SecurityHeadersMiddleware, LogRetentionJob], // Provide all for DI
+  providers: [PostgresActionLogger, AuditLogMiddleware, SecurityHeadersMiddleware, TraceCorrelationMiddleware, LogRetentionJob], // Provide all for DI
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
+    // Apply trace correlation first (must be outermost for propagation)
+    consumer
+      .apply(TraceCorrelationMiddleware)
+      .forRoutes("*");
+    
     // Apply security headers first (before audit logging)
     consumer
       .apply(SecurityHeadersMiddleware)

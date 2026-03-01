@@ -1,0 +1,45 @@
+# Capacity & Rate Limit Alerts
+
+groups:
+  - name: capacity_alerts
+    interval: 10s
+    rules:
+      - alert: RateLimitThreshold
+        expr: rate(rate_limit_hits_total[1m]) > 0
+        for: 30s
+        labels:
+          severity: warning
+          layer: c
+        annotations:
+          summary: "Rate limit being hit"
+          description: "Tenant {{ $labels.tenant_id }} is hitting rate limits on {{ $labels.resource }}"
+      
+      - alert: TokenBudgetHighUtilization
+        expr: (token_usage_daily / token_budget_daily) > 0.85
+        for: 1m
+        labels:
+          severity: warning
+          layer: c
+        annotations:
+          summary: "Token budget utilization above 85%"
+          description: "Tenant {{ $labels.tenant_id }} at {{ $value | humanizePercentage }} of daily budget"
+      
+      - alert: TokenBudgetExhausted
+        expr: (token_usage_daily / token_budget_daily) >= 1.0
+        for: 1m
+        labels:
+          severity: critical
+          layer: c
+        annotations:
+          summary: "Token budget exhausted"
+          description: "Tenant {{ $labels.tenant_id }} has exceeded daily token budget"
+      
+      - alert: ConcurrencyLimitReached
+        expr: concurrent_executions >= concurrency_limit
+        for: 30s
+        labels:
+          severity: warning
+          layer: c
+        annotations:
+          summary: "Concurrency limit reached"
+          description: "Tenant {{ $labels.tenant_id }} at max concurrent executions"

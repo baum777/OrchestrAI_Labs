@@ -12,8 +12,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
   describe('validateReportFreshness', () => {
     it('should pass when report date matches Berlin today (requiresFreshDate=true)', () => {
       // Simulate: Berlin 19.02.2026 00:30 (UTC 18.02.2026 23:30)
-      // eslint-disable-next-line no-restricted-globals
-      const clock = new FakeClock(new Date('2026-02-18T23:30:00.000Z'));
+      const clock = new FakeClock(Date.UTC(2026, 1, 18, 23, 30, 0));
       const validator = new DocumentHeaderValidator(clock);
 
       const createdAt = clock.now().toISOString();
@@ -24,8 +23,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
 
     it('should fail when report date does not match Berlin today', () => {
       // Simulate: Berlin 19.02.2026 00:30 (UTC 18.02.2026 23:30)
-      // eslint-disable-next-line no-restricted-globals
-      const clock = new FakeClock(new Date('2026-02-18T23:30:00.000Z'));
+      const clock = new FakeClock(Date.UTC(2026, 1, 18, 23, 30, 0));
       const validator = new DocumentHeaderValidator(clock);
 
       // Report created yesterday (Berlin 18.02.2026) - use clock.parseISO for test data
@@ -36,8 +34,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
     });
 
     it('should skip validation when requiresFreshDate=false', () => {
-      // eslint-disable-next-line no-restricted-globals
-      const clock = new FakeClock(new Date('2026-02-18T23:30:00.000Z'));
+      const clock = new FakeClock(Date.UTC(2026, 1, 18, 23, 30, 0));
       const validator = new DocumentHeaderValidator(clock);
 
       const oldDate = clock.parseISO('2026-01-01T00:00:00.000Z').toISOString();
@@ -50,8 +47,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
       // Test Case 1 from requirements
       // UTC: 2026-02-18T23:30:00.000Z
       // Berlin: 19.02.2026 00:30
-      // eslint-disable-next-line no-restricted-globals
-      const clock = new FakeClock(new Date('2026-02-18T23:30:00.000Z'));
+      const clock = new FakeClock(Date.UTC(2026, 1, 18, 23, 30, 0));
       const validator = new DocumentHeaderValidator(clock);
 
       const createdAt = clock.now().toISOString();
@@ -64,10 +60,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
     });
 
     it('should fail for invalid ISO timestamp', () => {
-      // Note: `new Date()` here is intentional - FakeClock constructor requires an initial time.
-      // This is the only acceptable use of `new Date()` in test files (Clock abstraction initialization).
-      // eslint-disable-next-line no-restricted-globals
-      const clock = new FakeClock(new Date());
+      const clock = new FakeClock(Date.UTC(2026, 1, 18, 12, 0, 0));
       const _validator = new DocumentHeaderValidator(clock);
 
       const result = _validator.validateReportFreshness('invalid-date', true);
@@ -78,14 +71,12 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
   describe('Session Time Gap Handling', () => {
     it('should use fresh clock after time gap >= 50 minutes', () => {
       // Simulate: Session start at 18:00
-      // eslint-disable-next-line no-restricted-globals
-      const clock1 = new FakeClock(new Date('2026-02-18T18:00:00.000Z'));
+      const clock1 = new FakeClock(Date.UTC(2026, 1, 18, 18, 0, 0));
 
       const createdAt1 = clock1.now().toISOString();
 
       // Simulate: Pause > 50 minutes, then resume at 19:10
-      // eslint-disable-next-line no-restricted-globals
-      const clock2 = new FakeClock(new Date('2026-02-18T19:10:00.000Z')); // Fresh clock
+      const clock2 = new FakeClock(Date.UTC(2026, 1, 18, 19, 10, 0)); // Fresh clock
 
       // New report should use fresh clock
       const createdAt2 = clock2.now().toISOString();
@@ -106,8 +97,7 @@ describe('DocumentHeaderValidator - Report Freshness', () => {
 
   describe('No Date-Only Slicing', () => {
     it('should ensure createdAt contains full ISO timestamp', () => {
-      // eslint-disable-next-line no-restricted-globals
-      const clock = new FakeClock(new Date('2026-02-18T23:30:00.000Z'));
+      const clock = new FakeClock(Date.UTC(2026, 1, 18, 23, 30, 0));
 
       const createdAt = clock.now().toISOString();
 
