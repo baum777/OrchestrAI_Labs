@@ -192,7 +192,7 @@ export class RetentionOrchestratorJob {
   /**
    * Process user sessions
    */
-  private async processUserSessions(dryRun: boolean): Promise<RetentionResult> {
+  private async processUserSessions(dryRun: boolean, _triggeredBy: 'cron' | 'manual' | 'api'): Promise<RetentionResult> {
     // Placeholder for user session cleanup
     return { category: 'user_sessions', recordsIdentified: 0, recordsDeleted: 0, archived: false, dryRun, proofStored: false };
   }

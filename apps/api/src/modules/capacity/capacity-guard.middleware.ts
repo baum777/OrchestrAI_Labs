@@ -1,17 +1,7 @@
 import { Injectable, NestMiddleware, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { RateLimiter } from '@packages/governance/capacity/rate-limiter';
-import { TokenCapService } from '@packages/governance/capacity/token-cap.service';
-import { ConcurrencyGuard } from '@packages/governance/capacity/concurrency-guard';
-
-interface ExecutionSlot {
-  executionId: string;
-  acquiredAt: number;
-}
-
-interface RequestWithExecution extends Request {
-  executionSlot: ExecutionSlot;
-}
+import { RateLimiter } from '@governance/capacity/rate-limiter';
+import { TokenCapService } from '@governance/capacity/token-cap.service';
 
 @Injectable()
 export class CapacityGuard implements NestMiddleware {

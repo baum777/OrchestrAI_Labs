@@ -1,6 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { PromptSanitizer } from '@packages/governance/policy/prompt-sanitizer';
-import { PromptAuditService } from '@packages/governance/policy/prompt-audit.service';
+import { PromptSanitizer } from '@governance/policy/prompt-sanitizer';
+import { PromptAuditService } from '@governance/policy/prompt-audit.service';
 
 @Injectable()
 export class PromptFirewallGuard implements CanActivate {

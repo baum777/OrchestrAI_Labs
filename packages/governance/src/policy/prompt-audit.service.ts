@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { PG_POOL } from '../../../apps/api/src/db/db.module';
+import { PG_POOL } from '../db/tokens.js';
 import type { Pool } from 'pg';
 import { createHash } from 'crypto';
 

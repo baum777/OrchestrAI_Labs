@@ -9,7 +9,7 @@ import { Orchestrator } from '../src/orchestrator/orchestrator.js';
 import type { ReviewStore } from '../src/orchestrator/orchestrator.js';
 import { SkillRegistry, SkillLoader, SkillExecutor } from '@agent-system/skills';
 import { WorkstreamValidator } from '@agent-system/governance-v2';
-import { FakeClock } from '@agent-system/governance-v2/runtime/clock';
+import { FakeClock, SystemClock } from '@agent-system/governance-v2/runtime/clock';
 import { ToolRouter } from '../src/execution/tool-router.js';
 import type { AgentProfile } from '@shared/types/agent';
 import path from 'node:path';
@@ -61,8 +61,8 @@ describe('Orchestrator + Skill Integration', () => {
   const skillsDir = path.join(process.cwd(), '..', 'skills', 'skills');
 
   beforeEach(() => {
-    // Use timestamp (milliseconds since epoch) to avoid direct Date instantiation in tests
-    clock = new FakeClock(Date.UTC(2026, 1, 18, 10, 0, 0));
+    const sysClock = new SystemClock();
+    clock = new FakeClock(sysClock.parseISO('2026-02-18T10:00:00.000Z'));
     
     // Setup skills (only if SKILLS_ENABLED=true)
     const originalEnv = process.env.SKILLS_ENABLED;

@@ -4,11 +4,11 @@
  * Tracks daily token usage per tenant and enforces caps.
  */
 
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { PG_POOL } from '../../../apps/api/src/db/db.module';
+import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
+import { PG_POOL } from '../db/tokens.js';
 import type { Pool } from 'pg';
-import { SystemClock } from '../runtime/clock';
-import type { Clock } from '../runtime/clock';
+import type { Clock } from '../runtime/clock.js';
+import { SystemClock } from '../runtime/clock.js';
 
 @Injectable()
 export class TokenCapService {
@@ -17,7 +17,7 @@ export class TokenCapService {
 
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
-    clock?: Clock,
+    @Optional() clock?: Clock,
   ) {
     this.clock = clock ?? new SystemClock();
   }
