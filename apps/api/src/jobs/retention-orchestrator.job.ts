@@ -11,6 +11,8 @@ import { PG_POOL } from '../db/db.module';
 import type { Pool } from 'pg';
 import { RetentionPolicyService } from '../modules/retention/retention-policy.service';
 import { AuditProofService } from '../modules/retention/audit-proof.service';
+import { SystemClock } from '@agent-system/governance-v2/runtime/clock';
+import type { Clock } from '@agent-system/governance-v2/runtime/clock';
 
 interface RetentionResult {
   category: string;
@@ -24,12 +26,16 @@ interface RetentionResult {
 @Injectable()
 export class RetentionOrchestratorJob {
   private readonly logger = new Logger(RetentionOrchestratorJob.name);
+  private readonly clock: Clock;
 
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
     private readonly policyService: RetentionPolicyService,
     private readonly auditProofService: AuditProofService,
-  ) {}
+    clock?: Clock,
+  ) {
+    this.clock = clock ?? new SystemClock();
+  }
 
   /**
    * Enforce all retention policies.
@@ -46,7 +52,7 @@ export class RetentionOrchestratorJob {
       // Process each category
       results.push(await this.processActionLogs(dryRun, 'cron'));
       results.push(await this.processAppLogs(dryRun, 'cron'));
-      results.push(await this.processUserSessions(dryRun, 'cron'));
+      results.push(await this.processUserSessions(dryRun));
 
       this.logSummary(results, dryRun);
       this.logger.log('Retention orchestrator job completed');
@@ -71,7 +77,7 @@ export class RetentionOrchestratorJob {
     }
 
     const retentionDays = this.policyService.parseDuration(rule.duration);
-    const cutoff = new Date();
+    const cutoff = this.clock.now();
     cutoff.setDate(cutoff.getDate() - retentionDays);
 
     // Identify records
@@ -89,7 +95,7 @@ export class RetentionOrchestratorJob {
     }
 
     // Generate audit proof before deletion
-    const dateRangeStart = new Date(cutoff);
+    const dateRangeStart = this.clock.parseISO(cutoff.toISOString());
     dateRangeStart.setFullYear(dateRangeStart.getFullYear() - 1); // Approximate
 
     const proof = this.auditProofService.generateProof({
@@ -135,7 +141,7 @@ export class RetentionOrchestratorJob {
     }
 
     const retentionDays = this.policyService.parseDuration(rule.duration);
-    const cutoff = new Date();
+    const cutoff = this.clock.now();
     cutoff.setDate(cutoff.getDate() - retentionDays);
 
     // Identify non-audit logs
@@ -158,7 +164,7 @@ export class RetentionOrchestratorJob {
       category,
       recordIds,
       dateRangeStart: cutoff,
-      dateRangeEnd: new Date(),
+      dateRangeEnd: this.clock.now(),
       policyVersion: this.policyService.loadPolicy().version,
       dryRun,
     });
@@ -186,7 +192,7 @@ export class RetentionOrchestratorJob {
   /**
    * Process user sessions
    */
-  private async processUserSessions(dryRun: boolean, triggeredBy: 'cron' | 'manual' | 'api'): Promise<RetentionResult> {
+  private async processUserSessions(dryRun: boolean): Promise<RetentionResult> {
     // Placeholder for user session cleanup
     return { category: 'user_sessions', recordsIdentified: 0, recordsDeleted: 0, archived: false, dryRun, proofStored: false };
   }
@@ -209,8 +215,8 @@ export class RetentionOrchestratorJob {
         category,
         proof.batchChecksum,
         proof.recordCount,
-        new Date(),
-        new Date(),
+        this.clock.now(),
+        this.clock.now(),
         triggeredBy,
         dryRun,
         proof.verificationHash,
@@ -238,7 +244,7 @@ export class RetentionOrchestratorJob {
     const results: RetentionResult[] = [];
     results.push(await this.processActionLogs(dryRun, 'manual'));
     results.push(await this.processAppLogs(dryRun, 'manual'));
-    results.push(await this.processUserSessions(dryRun, 'manual'));
+    results.push(await this.processUserSessions(dryRun));
 
     return results;
   }

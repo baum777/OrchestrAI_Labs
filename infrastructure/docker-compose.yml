@@ -10,6 +10,14 @@ services:
       - "5432:5432"
     volumes:
       - ./db/data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 16G
+        reservations:
+          cpus: '2.0'
+          memory: 8G
 
   vector-db:
     image: supabase/postgres:15.4
@@ -21,6 +29,14 @@ services:
       - "5433:5432"
     volumes:
       - ./vector/data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 8G
+        reservations:
+          cpus: '1.0'
+          memory: 4G
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
@@ -33,6 +49,14 @@ services:
     command: ["--config", "/etc/otel-collector-config.yaml"]
     environment:
       - TELEMETRY_EXPORT_ENABLED=true
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
     depends_on:
       - postgres
 

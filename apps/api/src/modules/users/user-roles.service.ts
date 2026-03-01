@@ -162,7 +162,7 @@ export class UserRolesService implements PermissionResolver {
     grantedBy: string
   ): Promise<UserRoleRecord> {
     const now = this.clock.now().toISOString();
-    const id = `role_${userId}_${role}_${Date.now()}`;
+    const id = `role_${userId}_${role}_${this.clock.now().getTime()}`;
     
     // Revoke existing role if active
     await this.pool.query(
@@ -219,7 +219,7 @@ export class UserRolesService implements PermissionResolver {
     grantedBy: string
   ): Promise<UserPermissionRecord> {
     const now = this.clock.now().toISOString();
-    const id = `perm_${userId}_${permission}_${Date.now()}`;
+    const id = `perm_${userId}_${permission}_${this.clock.now().getTime()}`;
     
     // Revoke existing permission if active
     await this.pool.query(

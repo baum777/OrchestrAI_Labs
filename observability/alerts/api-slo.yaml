@@ -1,0 +1,36 @@
+# API SLO Alert Rules
+# Prometheus AlertManager compatible
+
+groups:
+  - name: api_slo_alerts
+    interval: 30s
+    rules:
+      - alert: APIHighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket[5m])) by (le)) > 500
+        for: 2m
+        labels:
+          severity: warning
+          layer: b
+        annotations:
+          summary: "API p95 latency exceeds 500ms"
+          description: "p95 latency is {{ $value }}ms for the last 5 minutes"
+      
+      - alert: APIErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.01
+        for: 1m
+        labels:
+          severity: critical
+          layer: b
+        annotations:
+          summary: "API error rate exceeds 1%"
+          description: "Error rate is {{ $value | humanizePercentage }}"
+      
+      - alert: APIAvailability
+        expr: (sum(rate(http_requests_total{status=~"2..|3.."}[5m])) / sum(rate(http_requests_total[5m]))) < 0.995
+        for: 2m
+        labels:
+          severity: critical
+          layer: b
+        annotations:
+          summary: "API availability below 99.5%"
+          description: "Current availability: {{ $value | humanizePercentage }}"
