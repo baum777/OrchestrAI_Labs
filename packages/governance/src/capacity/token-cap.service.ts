@@ -4,23 +4,29 @@
  * Tracks daily token usage per tenant and enforces caps.
  */
 
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
 import { PG_POOL } from '../../../apps/api/src/db/db.module';
 import type { Pool } from 'pg';
+import type { Clock } from '../runtime/clock.js';
+import { SystemClock } from '../runtime/clock.js';
 
 @Injectable()
 export class TokenCapService {
   private readonly logger = new Logger(TokenCapService.name);
+  private readonly clock: Clock;
 
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
-  ) {}
+    @Optional() clock?: Clock,
+  ) {
+    this.clock = clock ?? new SystemClock();
+  }
 
   /**
    * Check if tenant has remaining token budget
    */
   async checkBudget(tenantId: string, requestedTokens: number): Promise<{ allowed: boolean; remaining: number }> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.clock.now().toISOString().split('T')[0];
 
     // Get or create usage record
     const result = await this.pool.query(
@@ -31,7 +37,7 @@ export class TokenCapService {
       [tenantId, today, tenantId]
     );
 
-    const { tokens_used, tokens_remaining } = result.rows[0];
+    const { tokens_remaining } = result.rows[0];
 
     if (tokens_remaining < requestedTokens) {
       // Log violation
@@ -52,7 +58,7 @@ export class TokenCapService {
    * Consume tokens from budget
    */
   async consumeTokens(tenantId: string, tokens: number): Promise<void> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.clock.now().toISOString().split('T')[0];
 
     await this.pool.query(
       `UPDATE token_usage_daily
@@ -76,7 +82,7 @@ export class TokenCapService {
    * Get current usage stats
    */
   async getUsageStats(tenantId: string): Promise<{ used: number; remaining: number; total: number } | null> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.clock.now().toISOString().split('T')[0];
 
     const result = await this.pool.query(
       `SELECT u.tokens_used, u.tokens_remaining, q.daily_tokens as total

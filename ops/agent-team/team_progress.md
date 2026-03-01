@@ -3,7 +3,7 @@
 **Version:** 1.0.0  
 **Owner:** @implementer_codex  
 **Layer:** implementation  
-**Last Updated:** 2026-02-21T10:19:12Z  
+**Last Updated:** 2026-03-01T12:00:00Z  
 **Definition of Done:**
 - [ ] Alle Einträge haben Timestamp, Owner, Action, Result, Links/Refs, Next
 - [ ] Format ist konsistent (ISO Timestamp)
@@ -17,6 +17,8 @@
 ---
 
 ## Entries
+
+- 2026-03-01T12:00:00Z — [@implementer_codex] CI Timestamp Integrity green — lint:clock Fehler behoben: retention-orchestrator (_triggeredBy), apply-e2e-schema (Pool unused entfernt), orchestrator-skill-integration (SystemClock.parseISO für FakeClock), rate-limiter (Clock injiziert, setInterval durch lazy cleanup ersetzt), token-cap (Clock injiziert), apps/api eslint argsIgnorePattern ergänzt — `apps/api/**`, `packages/governance/src/capacity/**`, `packages/agent-runtime/__tests__/**` — timestamp-integrity CI vollständig grün
 
 - 2026-02-22T14:00:00Z — [@implementer_codex] G1 Repo Health Recovery Phase 2 (SPEC 1.3) abgeschlossen — DocumentHeaderValidator Timestamp-Fixes: normalizeDateToUTC() fuer YYYY-MM-DD zu UTC-Mitternacht Konversion (deterministisch), isValidISOTimestamp() fuer strikte ISO-8601 Validierung, reasons: [] immer definieren (nicht undefined bei pass), validateTimestamp() verschärft, Zeitstempelintegritäts-Tests mit Last Updated Feldern korrigiert, skill-executor Schema entspannt (Validierung in execute), Zukunfts-Toleranz bei Datum-Only-Strings korrigiert — `packages/governance-v2/src/validator/document-header-validator.ts`, `packages/skills/src/executor/skill-executor.ts`, `packages/governance-v2/__tests__/document-header-validator-timestamp-integrity.test.ts`, `packages/governance-v2/__tests__/document-header-validator-timestamp.test.ts`, `packages/skills/__tests__/skill-executor.test.ts` — lint/typecheck gruen; test: governance-v2 51/51 Tests, skills 28/28 Tests, agent-runtime 3/3 Tests; apps/api hat vorbestehende Probleme (logs.module fehlt, tsconfig rootDir Konflikt)
 
