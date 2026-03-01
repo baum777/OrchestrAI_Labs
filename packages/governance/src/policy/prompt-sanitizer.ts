@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { FORBIDDEN_PATTERNS, HIGH_RISK_THRESHOLD, ForbiddenPattern } from './forbidden-patterns';
+import { FORBIDDEN_PATTERNS, HIGH_RISK_THRESHOLD, ForbiddenPattern } from './forbidden-patterns.js';
 
 export interface SanitizationResult {
   original: string;

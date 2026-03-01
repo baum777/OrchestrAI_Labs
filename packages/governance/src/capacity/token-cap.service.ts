@@ -5,7 +5,7 @@
  */
 
 import { Injectable, Inject, Optional, Logger } from '@nestjs/common';
-import { PG_POOL } from '../../../apps/api/src/db/db.module';
+import { PG_POOL } from '../db/tokens.js';
 import type { Pool } from 'pg';
 import type { Clock } from '../runtime/clock.js';
 import { SystemClock } from '../runtime/clock.js';

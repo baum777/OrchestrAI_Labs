@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@agent-system/shared": "workspace:*",
-    "@agent-system/governance": "workspace:*"
+    "@agent-system/governance": "workspace:*",
+    "@agent-system/customer-data": "workspace:*"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
