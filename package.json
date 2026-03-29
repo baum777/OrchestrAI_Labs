@@ -19,7 +19,8 @@
     "blueprint:check": "tsx scripts/validate-blueprint.ts",
     "golden-tasks:check": "tsx scripts/validate-golden-tasks.ts",
     "pr:check": "tsx scripts/validate-pr-template.ts",
-    "verify:no-bypass": "tsx scripts/verify-no-bypass.ts"
+    "verify:no-bypass": "tsx scripts/verify-no-bypass.ts",
+    "codex:validate": "node scripts/tools/validate-shared-core-consumer.mjs"
   },
   "engines": {
     "node": ">=20"

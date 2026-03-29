@@ -1,0 +1,48 @@
+{
+  "consumerRepo": "OrchestrAI_Labs",
+  "sharedCoreSource": "C:/workspace/main_projects/codex-workflow-core",
+  "sharedCoreMode": "standalone-local-repo",
+  "sharedCoreVersion": "0.1.4",
+  "packageFingerprint": "8f93e32a633d9601f609beca48cb8df913e476fef495789c9aee8a4e0f41ed42",
+  "adoptedSkills": [
+    "repo-intake-sot-mapper",
+    "runtime-policy-auditor",
+    "planning-slice-builder",
+    "implementation-contract-extractor",
+    "test-matrix-builder",
+    "post-implementation-review-writer",
+    "patch-strategy-designer",
+    "failure-mode-enumerator",
+    "release-narrative-builder"
+  ],
+  "deferredSkills": [
+    "paper-to-live-readiness-reviewer",
+    "journal-to-learning-extractor"
+  ],
+  "localOverlayFiles": [
+    ".codex/repo-intake-inputs.json",
+    "docs/codex-workflow-consumer.md",
+    "docs/repo-specific-canonical-sources.md",
+    "AGENTS.md",
+    ".codex/runtime-policy-inputs.json"
+  ],
+  "localOnlyOverrides": [
+    "ops/agent-team/*",
+    "policy_approval_rules.yaml",
+    "golden_tasks.yaml",
+    "scorecard_definition.md",
+    "trace_schema.json"
+  ],
+  "validationExpectations": [
+    "shared-core path exists",
+    "shared-core version matches package.json",
+    "shared-core fingerprint matches package fingerprint",
+    "shared-core validator passes",
+    "adopted skills exist in the shared core",
+    "consumer overlay docs exist",
+    "repo-specific canonical sources are explicit",
+    "repo-intake local input contract validates",
+    "runtime-policy local input contract validates"
+  ],
+  "notes": "Consumer linked to standalone shared-core repository."
+}

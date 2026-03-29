@@ -1,0 +1,37 @@
+{
+  "skill": "repo-intake-sot-mapper",
+  "repoRoot": ".",
+  "canonicalSourceFiles": [
+    "README.md",
+    "AGENTS.md",
+    "package.json",
+    "docs/codex-workflow-consumer.md",
+    "docs/repo-specific-canonical-sources.md",
+    ".codex/shared-core-consumer.json"
+  ],
+  "primaryDocs": [
+    "README.md",
+    "docs/"
+  ],
+  "governanceFiles": [
+    "AGENTS.md"
+  ],
+  "likelyEntrypoints": [
+    "apps/",
+    "packages/",
+    "scripts/",
+    "ops/"
+  ],
+  "testCommands": [
+    "pnpm run codex:validate",
+    "pnpm test",
+    "pnpm lint"
+  ],
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "coverage",
+    ".git"
+  ],
+  "notes": "Consumer-local inputs for repo-intake-sot-mapper in OrchestrAI_Labs."
+}

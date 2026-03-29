@@ -1,0 +1,58 @@
+{
+  "skill": "runtime-policy-auditor",
+  "repoRoot": ".",
+  "runtimePolicyDocs": [
+    "AGENTS.md",
+    "docs/codex-workflow-consumer.md",
+    "docs/repo-specific-canonical-sources.md",
+    "docs/governance.md",
+    "docs/provider-resilience.md",
+    "docs/governance-clock-hardening.md",
+    "ops/agent-team/README.md",
+    "ops/agent-team/autonomy_policy.md"
+  ],
+  "runtimeConfigFiles": [
+    "package.json",
+    "pnpm-workspace.yaml",
+    ".env.example",
+    "ops/agent-team/runtime_state.json"
+  ],
+  "controlSurfaceFiles": [
+    "ops/agent-team/policy_approval_rules.yaml",
+    "ops/agent-team/scorecard_definition.md",
+    "ops/agent-team/agent_team_spec.v1.yaml",
+    "ops/agent-team/retention_policy.yaml"
+  ],
+  "killSwitchFiles": [
+    "ops/agent-team/autonomy_policy.md",
+    "ops/agent-team/runtime_state.json"
+  ],
+  "approvalBoundaryFiles": [
+    "AGENTS.md",
+    "ops/agent-team/policy_approval_rules.yaml",
+    "ops/agent-team/README.md",
+    "docs/governance.md"
+  ],
+  "postureOrModeDefinitions": [
+    "ops/agent-team/autonomy_policy.md",
+    "ops/agent-team/agent_team_spec.v1.yaml",
+    "ops/agent-team/runtime_state.json"
+  ],
+  "healthOrStatusSurfaceFiles": [
+    "ops/agent-team/runtime_state.json",
+    "docs/provider-resilience.md",
+    "docs/governance-clock-hardening.md"
+  ],
+  "optionalEnvReferenceFiles": [
+    ".env.example",
+    "package.json",
+    "pnpm-workspace.yaml"
+  ],
+  "ignorePaths": [
+    ".git",
+    "node_modules",
+    "dist",
+    "coverage"
+  ],
+  "notes": "Consumer-local runtime policy inputs for governance and runtime controls. This contract does not decide live-readiness or capital deployment."
+}
