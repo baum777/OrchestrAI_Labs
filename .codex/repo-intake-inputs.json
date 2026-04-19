@@ -5,7 +5,7 @@
     "README.md",
     "AGENTS.md",
     "package.json",
-    "docs/codex-workflow-consumer.md",
+    "docs/model-agnostic-workflow-system-consumer.md",
     "docs/repo-specific-canonical-sources.md",
     ".codex/shared-core-consumer.json"
   ],

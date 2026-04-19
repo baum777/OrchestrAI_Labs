@@ -39,6 +39,12 @@ This file records the local sources of truth for `agent-system`.
 - `docs/provider-resilience.md`
 - `docs/governance-clock-hardening.md`
 
+## Shared-Core Boundary
+
+Shared-core assets are consumed only through `.codex/shared-core-consumer.json`.
+The current consumer overlay is `docs/model-agnostic-workflow-system-consumer.md`.
+The standalone `model-agnostic-workflow-system` repository is a workflow dependency, not agent-system runtime authority.
+
 ## Rule
 
 If a shared-core document conflicts with these local sources, the local source wins for this repository.

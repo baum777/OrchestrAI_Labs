@@ -2,8 +2,8 @@
   "consumerRepo": "OrchestrAI_Labs",
   "sharedCoreSource": "C:/workspace/main_projects/codex-workflow-core",
   "sharedCoreMode": "standalone-local-repo",
-  "sharedCoreVersion": "0.1.4",
-  "packageFingerprint": "8f93e32a633d9601f609beca48cb8df913e476fef495789c9aee8a4e0f41ed42",
+  "sharedCoreVersion": "0.2.1",
+  "packageFingerprint": "42c40e701633cce0606efce1a7057c4831fe095a66676906bfa8270049d97c96",
   "adoptedSkills": [
     "repo-intake-sot-mapper",
     "runtime-policy-auditor",
@@ -21,7 +21,7 @@
   ],
   "localOverlayFiles": [
     ".codex/repo-intake-inputs.json",
-    "docs/codex-workflow-consumer.md",
+    "docs/model-agnostic-workflow-system-consumer.md",
     "docs/repo-specific-canonical-sources.md",
     "AGENTS.md",
     ".codex/runtime-policy-inputs.json"

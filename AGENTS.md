@@ -28,11 +28,11 @@ All work must keep these files current:
 4) Run Golden Tasks relevant to your change
 5) Request review + scorecard gate when applicable
 
-## Codex Shared-Core Consumer
-- If `.codex/shared-core-consumer.json` exists, read `docs/codex-workflow-consumer.md` and `docs/repo-specific-canonical-sources.md` first.
+## Model-Agnostic Workflow System Shared-Core Consumer
+- If `.codex/shared-core-consumer.json` exists, read `docs/model-agnostic-workflow-system-consumer.md` and `docs/repo-specific-canonical-sources.md` first.
 - If `.codex/repo-intake-inputs.json` exists, keep it aligned with the repo-intake skill before mapping the repo.
 - If `.codex/runtime-policy-inputs.json` exists, keep it aligned with `runtime-policy-auditor` before auditing runtime policy.
   - Use shared-core assets only through the local consumer overlay.
   - The authoritative shared-core source is `C:/workspace/main_projects/codex-workflow-core/`.
-  - Do not edit the standalone shared-core source from this repository.
+  - Do not edit the standalone `model-agnostic-workflow-system` repository from this repository.
   - Keep repo-specific governance in `ops/agent-team/` and the local canonical docs.
