@@ -57,9 +57,9 @@ describe('ProviderRouter', () => {
       expect(router.getConfig().enabled).toBe(false);
     });
 
-    it('should create ProviderRouter when env var set', () => {
+    it('should create ProviderRouter when env var set and config allows it', () => {
       process.env.PROVIDER_ROUTER_ENABLED = 'true';
-      const router = createProviderRouter(EXAMPLE_PROVIDER_ROUTER_CONFIG);
+      const router = createProviderRouter({ ...EXAMPLE_PROVIDER_ROUTER_CONFIG, enabled: true });
       expect(router.getConfig().enabled).toBe(true);
       delete process.env.PROVIDER_ROUTER_ENABLED;
     });
@@ -198,6 +198,146 @@ describe('ProviderRouter', () => {
     });
   });
 
+  describe('model-agnostic routing', () => {
+    const modelAgnosticConfig: ProviderRouterConfig = {
+      enabled: true,
+      defaultProviderId: 'fast-generalist',
+      providers: [
+        {
+          id: 'fast-generalist',
+          name: 'Fast Generalist',
+          type: 'custom',
+          kind: 'gateway',
+          baseUrl: 'https://gateway.fast.example/v1',
+          priority: 1,
+          costPer1kInput: 0.01,
+          costPer1kOutput: 0.02,
+          capabilities: ['chat', 'json-output'],
+          modelProfile: {
+            id: 'generalist.fast',
+            capabilities: ['chat', 'json-output'],
+            inputModalities: ['text'],
+            outputModalities: ['text'],
+            maxContextTokens: 32000,
+            supportsJsonMode: true,
+            supportsToolCalling: false,
+            supportsStreaming: true,
+            dataResidency: ['EU'],
+          },
+          timeoutMs: 30000,
+          retry: { maxAttempts: 3, backoffMs: 1000 },
+          circuitBreaker: { failureThreshold: 3, recoveryTimeMs: 60000 },
+          rateLimit: { requestsPerSecond: 20, tokensPerMinute: 100000 },
+        },
+        {
+          id: 'tool-capable-generalist',
+          name: 'Tool-Capable Generalist',
+          type: 'custom',
+          kind: 'gateway',
+          baseUrl: 'https://gateway.tools.example/v1',
+          priority: 2,
+          costPer1kInput: 0.03,
+          costPer1kOutput: 0.06,
+          capabilities: ['chat', 'json-output', 'tool-use', 'reasoning'],
+          modelProfile: {
+            id: 'generalist.tool_capable',
+            capabilities: ['chat', 'json-output', 'tool-use', 'reasoning'],
+            inputModalities: ['text'],
+            outputModalities: ['text'],
+            maxContextTokens: 128000,
+            supportsJsonMode: true,
+            supportsToolCalling: true,
+            supportsStreaming: true,
+            supportsDeterministicReplay: true,
+            dataResidency: ['EU', 'US'],
+          },
+          timeoutMs: 30000,
+          retry: { maxAttempts: 3, backoffMs: 1000 },
+          circuitBreaker: { failureThreshold: 3, recoveryTimeMs: 60000 },
+          rateLimit: { requestsPerSecond: 10, tokensPerMinute: 200000 },
+        },
+      ],
+      policy: {
+        name: 'model-agnostic-test',
+        strategy: 'model-agnostic',
+        fallback: {
+          enabled: true,
+          maxAttempts: 2,
+          cascadeOrder: ['fast-generalist', 'tool-capable-generalist'],
+        },
+        healthCheck: {
+          intervalMs: 30000,
+          timeoutMs: 5000,
+          unhealthyThreshold: 3,
+        },
+      },
+      costGuard: {
+        enabled: false,
+        alertThreshold: 0.8,
+        hardStopThreshold: 1.0,
+        budgetResetHours: 24,
+      },
+    };
+
+    it('should prefer the narrowest capable model profile for simple requests', () => {
+      const router = new ProviderRouter(modelAgnosticConfig);
+      const decision = router.route({
+        capabilities: ['chat', 'json-output'],
+        inputModalities: ['text'],
+        outputModalities: ['text'],
+        requiresJsonMode: true,
+      });
+
+      expect(decision.providerId).toBe('fast-generalist');
+      expect(decision.strategy).toBe('model-agnostic');
+    });
+
+    it('should route to a tool-capable profile when tool use is required', () => {
+      const router = new ProviderRouter(modelAgnosticConfig);
+      const decision = router.route({
+        capabilities: ['chat', 'tool-use'],
+        requiresToolCalling: true,
+        minContextTokens: 64000,
+      });
+
+      expect(decision.providerId).toBe('tool-capable-generalist');
+      expect(decision.reason).toContain('Model-agnostic fit score');
+    });
+
+    it('should reject requests that exceed available model context', () => {
+      const router = new ProviderRouter(modelAgnosticConfig);
+
+      expect(() => router.route({
+        capabilities: ['chat'],
+        minContextTokens: 256000,
+      })).toThrow('No provider supports required model contract');
+    });
+
+    it('should enforce data residency through the model profile', () => {
+      const router = new ProviderRouter(modelAgnosticConfig);
+
+      expect(() => router.route({
+        capabilities: ['chat'],
+        dataResidency: 'APAC',
+      })).toThrow('No provider supports required model contract');
+    });
+
+    it('should validate fallback providers exist', () => {
+      const invalidConfig: ProviderRouterConfig = {
+        ...modelAgnosticConfig,
+        policy: {
+          ...modelAgnosticConfig.policy,
+          fallback: {
+            ...modelAgnosticConfig.policy.fallback,
+            cascadeOrder: ['fast-generalist', 'missing-provider'],
+          },
+        },
+      };
+
+      expect(() => new ProviderRouter(invalidConfig)).toThrow('Fallback provider missing-provider not found');
+    });
+  });
+
   describe('StubCostGuard', () => {
     it('should always allow when disabled', () => {
       const guard = new StubCostGuard();
@@ -226,9 +366,36 @@ describe('ProviderRouter', () => {
       const duplicateConfig: ProviderRouterConfig = {
         ...DEFAULT_PROVIDER_ROUTER_CONFIG,
         enabled: true,
+        defaultProviderId: 'same-id',
         providers: [
-          { id: 'same-id', name: 'A' } as unknown as ProviderConfig,
-          { id: 'same-id', name: 'B' } as unknown as ProviderConfig,
+          {
+            id: 'same-id',
+            name: 'A',
+            type: 'custom',
+            baseUrl: 'https://a.example/v1',
+            priority: 1,
+            costPer1kInput: 0,
+            costPer1kOutput: 0,
+            capabilities: ['chat'],
+            timeoutMs: 30000,
+            retry: { maxAttempts: 1, backoffMs: 1000 },
+            circuitBreaker: { failureThreshold: 3, recoveryTimeMs: 60000 },
+            rateLimit: { requestsPerSecond: 1, tokensPerMinute: 1000 },
+          },
+          {
+            id: 'same-id',
+            name: 'B',
+            type: 'custom',
+            baseUrl: 'https://b.example/v1',
+            priority: 2,
+            costPer1kInput: 0,
+            costPer1kOutput: 0,
+            capabilities: ['chat'],
+            timeoutMs: 30000,
+            retry: { maxAttempts: 1, backoffMs: 1000 },
+            circuitBreaker: { failureThreshold: 3, recoveryTimeMs: 60000 },
+            rateLimit: { requestsPerSecond: 1, tokensPerMinute: 1000 },
+          },
         ],
       };
       
