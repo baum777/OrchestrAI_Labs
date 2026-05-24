@@ -11,9 +11,43 @@ import {
   ProviderRouterConfig,
   DEFAULT_PROVIDER_ROUTER_CONFIG,
   validateProviderConfig,
+  ModelCapability,
+  ModelModality,
 } from './provider-config.schema';
 import type { Clock } from '@agent-system/governance-v2/runtime/clock';
 import { SystemClock } from '@agent-system/governance-v2/runtime/clock';
+
+/**
+ * Provider-neutral request contract for model-agnostic routing.
+ */
+export interface ProviderRouteRequest {
+  /** Required logical capabilities, for example "chat", "tool-use", "json-output" */
+  capabilities: ModelCapability[];
+
+  /** Estimated total tokens for cost and context-window checks */
+  estimatedTokens?: number;
+
+  /** Minimum context window required by the caller */
+  minContextTokens?: number;
+
+  /** Required input modalities */
+  inputModalities?: ModelModality[];
+
+  /** Required output modalities */
+  outputModalities?: ModelModality[];
+
+  /** Require explicit structured JSON output support */
+  requiresJsonMode?: boolean;
+
+  /** Require explicit tool/function-calling support */
+  requiresToolCalling?: boolean;
+
+  /** Require deterministic replay eligibility */
+  requiresDeterministicReplay?: boolean;
+
+  /** Required data-residency region, when governed */
+  dataResidency?: string;
+}
 
 /**
  * Provider health status
@@ -38,12 +72,18 @@ export interface RoutingDecision {
   estimatedCost: number;
 }
 
+interface ProviderMatch {
+  provider: ProviderConfig;
+  score: number;
+  reason: string;
+}
+
 /**
  * Provider Router Interface
  */
 export interface IProviderRouter {
   /** Get routing decision for request */
-  route(capabilities: string[], estimatedTokens?: number): RoutingDecision;
+  route(capabilities: string[] | ProviderRouteRequest, estimatedTokens?: number): RoutingDecision;
   
   /** Report provider health */
   reportHealth(providerId: string, success: boolean, latencyMs: number): void;
@@ -71,7 +111,9 @@ export class NoOpProviderRouter implements IProviderRouter {
     };
   }
   
-  route(_capabilities: string[], _estimatedTokens?: number): RoutingDecision {
+  route(capabilitiesOrRequest: string[] | ProviderRouteRequest, estimatedTokens?: number): RoutingDecision {
+    const request = this.normalizeRequest(capabilitiesOrRequest, estimatedTokens);
+
     // Always returns default provider - no routing logic
     return {
       providerId: this.config.defaultProviderId,
@@ -79,7 +121,7 @@ export class NoOpProviderRouter implements IProviderRouter {
       strategy: 'noop',
       reason: 'Router disabled - using default provider',
       fallbackAttempt: 0,
-      estimatedCost: 0,
+      estimatedCost: request.estimatedTokens ? 0 : 0,
     };
   }
   
@@ -100,16 +142,34 @@ export class NoOpProviderRouter implements IProviderRouter {
       id: this.config.defaultProviderId,
       name: 'Default Provider',
       type: 'custom',
+      kind: 'custom',
       baseUrl: '',
       priority: 1,
       costPer1kInput: 0,
       costPer1kOutput: 0,
       capabilities: ['chat'],
+      modelProfile: {
+        id: 'default.disabled',
+        capabilities: ['chat'],
+        inputModalities: ['text'],
+        outputModalities: ['text'],
+      },
       timeoutMs: 30000,
       retry: { maxAttempts: 3, backoffMs: 1000 },
       circuitBreaker: { failureThreshold: 5, recoveryTimeMs: 60000 },
       rateLimit: { requestsPerSecond: 10, tokensPerMinute: 100000 },
     };
+  }
+
+  private normalizeRequest(
+    capabilitiesOrRequest: string[] | ProviderRouteRequest,
+    estimatedTokens?: number
+  ): ProviderRouteRequest {
+    if (Array.isArray(capabilitiesOrRequest)) {
+      return { capabilities: capabilitiesOrRequest, estimatedTokens };
+    }
+
+    return capabilitiesOrRequest;
   }
 }
 
@@ -133,10 +193,12 @@ export class ProviderRouter implements IProviderRouter {
     this.initializeHealthTracking();
   }
   
-  route(capabilities: string[], estimatedTokens?: number): RoutingDecision {
+  route(capabilitiesOrRequest: string[] | ProviderRouteRequest, estimatedTokens?: number): RoutingDecision {
+    const request = this.normalizeRequest(capabilitiesOrRequest, estimatedTokens);
+
     if (!this.config.enabled) {
       // Delegate to no-op behavior
-      return new NoOpProviderRouter(this.config).route(capabilities, estimatedTokens);
+      return new NoOpProviderRouter(this.config).route(request);
     }
     
     // Filter healthy providers
@@ -147,7 +209,7 @@ export class ProviderRouter implements IProviderRouter {
     }
     
     // Apply routing strategy
-    const selected = this.selectProvider(healthyProviders, capabilities, estimatedTokens);
+    const selected = this.selectProvider(healthyProviders, request);
     
     return {
       providerId: selected.provider.id,
@@ -155,7 +217,7 @@ export class ProviderRouter implements IProviderRouter {
       strategy: this.config.policy.strategy,
       reason: selected.reason,
       fallbackAttempt: 0,
-      estimatedCost: this.estimateCost(selected.provider, estimatedTokens),
+      estimatedCost: this.estimateCost(selected.provider, request.estimatedTokens),
     };
   }
   
@@ -227,45 +289,179 @@ export class ProviderRouter implements IProviderRouter {
     const health = this.health.get(providerId);
     return health?.healthy ?? false;
   }
+
+  private normalizeRequest(
+    capabilitiesOrRequest: string[] | ProviderRouteRequest,
+    estimatedTokens?: number
+  ): ProviderRouteRequest {
+    if (Array.isArray(capabilitiesOrRequest)) {
+      return { capabilities: capabilitiesOrRequest, estimatedTokens };
+    }
+
+    return capabilitiesOrRequest;
+  }
   
   private selectProvider(
     providers: ProviderConfig[],
-    capabilities: string[],
-    _estimatedTokens?: number
+    request: ProviderRouteRequest
   ): { provider: ProviderConfig; reason: string } {
-    const strategy = this.config.policy.strategy;
+    const matches = this.findModelAgnosticMatches(providers, request);
     
-    // Filter by capabilities
-    const capable = providers.filter(p => 
-      capabilities.every(c => p.capabilities.includes(c))
-    );
-    
-    if (capable.length === 0) {
-      throw new Error(`No provider supports required capabilities: ${capabilities.join(', ')}`);
+    if (matches.length === 0) {
+      throw new Error(`No provider supports required model contract: ${this.describeRequest(request)}`);
     }
     
-    switch (strategy) {
+    switch (this.config.policy.strategy) {
+      case 'model-agnostic': {
+        const byScore = this.sortByModelAgnosticFit(matches);
+        return {
+          provider: byScore[0].provider,
+          reason: byScore[0].reason,
+        };
+      }
       case 'priority': {
-        // Sort by priority (lower = higher)
-        const byPriority = [...capable].sort((a, b) => a.priority - b.priority);
-        return { provider: byPriority[0], reason: `Highest priority (${byPriority[0].priority})` };
+        const byPriority = [...matches].sort((a, b) => a.provider.priority - b.provider.priority);
+        return { provider: byPriority[0].provider, reason: `Highest priority (${byPriority[0].provider.priority})` };
       }
       case 'cost': {
-        // Sort by input cost
-        const byCost = [...capable].sort((a, b) => a.costPer1kInput - b.costPer1kInput);
-        return { provider: byCost[0], reason: `Lowest cost ($${byCost[0].costPer1kInput}/1K)` };
+        const byCost = [...matches].sort((a, b) => a.provider.costPer1kInput - b.provider.costPer1kInput);
+        return { provider: byCost[0].provider, reason: `Lowest cost ($${byCost[0].provider.costPer1kInput}/1K)` };
       }
       case 'capability': {
-        // Sort by most capabilities
-        const byCapability = [...capable].sort((a, b) => b.capabilities.length - a.capabilities.length);
-        return { provider: byCapability[0], reason: `Most capabilities (${byCapability[0].capabilities.length})` };
+        const byCapability = [...matches].sort(
+          (a, b) => this.getCapabilities(b.provider).length - this.getCapabilities(a.provider).length
+        );
+        return {
+          provider: byCapability[0].provider,
+          reason: `Most capabilities (${this.getCapabilities(byCapability[0].provider).length})`,
+        };
       }
+      case 'random':
       default: {
-        // Default to priority
-        const defaultSorted = [...capable].sort((a, b) => a.priority - b.priority);
-        return { provider: defaultSorted[0], reason: 'Default priority strategy' };
+        // Keep deterministic behavior; random selection is intentionally not used.
+        const defaultSorted = this.sortByModelAgnosticFit(matches);
+        return { provider: defaultSorted[0].provider, reason: 'Deterministic model-agnostic fallback strategy' };
       }
     }
+  }
+
+  private findModelAgnosticMatches(
+    providers: ProviderConfig[],
+    request: ProviderRouteRequest
+  ): ProviderMatch[] {
+    return providers
+      .map(provider => this.matchProvider(provider, request))
+      .filter((match): match is ProviderMatch => match !== null);
+  }
+
+  private matchProvider(provider: ProviderConfig, request: ProviderRouteRequest): ProviderMatch | null {
+    const capabilities = this.getCapabilities(provider);
+    const missingCapabilities = request.capabilities.filter(capability => !capabilities.includes(capability));
+    if (missingCapabilities.length > 0) {
+      return null;
+    }
+
+    const profile = provider.modelProfile;
+    if (request.inputModalities?.length) {
+      if (!profile || !request.inputModalities.every(modality => profile.inputModalities.includes(modality))) {
+        return null;
+      }
+    }
+
+    if (request.outputModalities?.length) {
+      if (!profile || !request.outputModalities.every(modality => profile.outputModalities.includes(modality))) {
+        return null;
+      }
+    }
+
+    if (request.minContextTokens !== undefined) {
+      if (!profile?.maxContextTokens || profile.maxContextTokens < request.minContextTokens) {
+        return null;
+      }
+    }
+
+    if (request.requiresJsonMode && !this.supportsJsonMode(provider)) {
+      return null;
+    }
+
+    if (request.requiresToolCalling && !this.supportsToolCalling(provider)) {
+      return null;
+    }
+
+    if (request.requiresDeterministicReplay && profile?.supportsDeterministicReplay !== true) {
+      return null;
+    }
+
+    if (request.dataResidency) {
+      if (!profile?.dataResidency?.includes(request.dataResidency)) {
+        return null;
+      }
+    }
+
+    const score = this.scoreProvider(provider, request);
+    return {
+      provider,
+      score,
+      reason: `Model-agnostic fit score ${score} for capabilities: ${request.capabilities.join(', ') || 'none'}`,
+    };
+  }
+
+  private sortByModelAgnosticFit(matches: ProviderMatch[]): ProviderMatch[] {
+    return [...matches].sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (a.provider.priority !== b.provider.priority) return a.provider.priority - b.provider.priority;
+      return a.provider.id.localeCompare(b.provider.id);
+    });
+  }
+
+  private scoreProvider(provider: ProviderConfig, request: ProviderRouteRequest): number {
+    const profile = provider.modelProfile;
+    const capabilities = this.getCapabilities(provider);
+    let score = request.capabilities.length * 10;
+
+    if (profile) score += 5;
+    if (request.requiresJsonMode && this.supportsJsonMode(provider)) score += 3;
+    if (request.requiresToolCalling && this.supportsToolCalling(provider)) score += 3;
+    if (request.requiresDeterministicReplay && profile?.supportsDeterministicReplay) score += 3;
+    if (request.minContextTokens !== undefined && profile?.maxContextTokens) {
+      score += Math.min(Math.floor(profile.maxContextTokens / request.minContextTokens), 10);
+    }
+
+    // Prefer narrower contracts after requirements are satisfied to avoid routing
+    // simple requests to unnecessarily specialized/high-cost models.
+    score -= Math.max(capabilities.length - request.capabilities.length, 0);
+    score -= provider.priority - 1;
+
+    return score;
+  }
+
+  private getCapabilities(provider: ProviderConfig): string[] {
+    return Array.from(new Set([
+      ...provider.capabilities,
+      ...(provider.modelProfile?.capabilities ?? []),
+    ]));
+  }
+
+  private supportsJsonMode(provider: ProviderConfig): boolean {
+    return provider.modelProfile?.supportsJsonMode === true ||
+      this.getCapabilities(provider).some(capability => capability === 'json-output' || capability === 'json-mode');
+  }
+
+  private supportsToolCalling(provider: ProviderConfig): boolean {
+    return provider.modelProfile?.supportsToolCalling === true ||
+      this.getCapabilities(provider).some(capability => capability === 'tool-use' || capability === 'function-calling');
+  }
+
+  private describeRequest(request: ProviderRouteRequest): string {
+    const parts = [`capabilities=${request.capabilities.join(',') || 'none'}`];
+    if (request.minContextTokens !== undefined) parts.push(`minContextTokens=${request.minContextTokens}`);
+    if (request.inputModalities?.length) parts.push(`inputModalities=${request.inputModalities.join(',')}`);
+    if (request.outputModalities?.length) parts.push(`outputModalities=${request.outputModalities.join(',')}`);
+    if (request.requiresJsonMode) parts.push('requiresJsonMode=true');
+    if (request.requiresToolCalling) parts.push('requiresToolCalling=true');
+    if (request.requiresDeterministicReplay) parts.push('requiresDeterministicReplay=true');
+    if (request.dataResidency) parts.push(`dataResidency=${request.dataResidency}`);
+    return parts.join('; ');
   }
   
   private estimateCost(provider: ProviderConfig, tokens?: number): number {
