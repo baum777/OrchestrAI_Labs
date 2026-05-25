@@ -3,7 +3,7 @@
 **Purpose:** Verbindliche Struktur und Regeln fuer Dokumentation, Agent-Handling und Change-Evidence im Repo.  
 **Scope:** Root-Dokumente, `docs/**`, `ops/agent-team/**`, PR-Ausgabeformat.  
 **Owner:** @teamlead_orchestrator  
-**Last Updated:** 2026-02-21T10:09:38Z  
+**Last Updated:** 2026-05-24T22:30:00Z  
 **Layer:** strategy
 
 ---
@@ -21,9 +21,10 @@
 
 1. `AGENTS.md` und `ops/agent-team/policy_approval_rules.yaml` (Guardrails + Approval Gates)
 2. `ops/agent-team/autonomy_policy.md` (Autonomy Ladder)
-3. `docs/DOCS_BLUEPRINT_SPEC.md` (dieses Dokument; Doku-Topologie + Process-Logik)
-4. `README.md` (Repo-Architektur und Terminologie: Apps/Packages/Infrastructure/Ops)
-5. Domain-Dokumente in `docs/**` (z. B. Governance, Decisions, Drift, Golden Tasks)
+3. `docs/repo-specific-canonical-sources.md` (repo-lokale SoT-Liste + Konfliktregel)
+4. `docs/DOCS_BLUEPRINT_SPEC.md` (dieses Dokument; Doku-Topologie + Process-Logik)
+5. `README.md` (Repo-Architektur und Terminologie: Apps/Packages/Infrastructure/Ops)
+6. Domain-Dokumente in `docs/**` (z. B. Governance, Decisions, Drift, Provider Resilience, Golden Tasks)
 
 Wenn zwei Dokumente derselben Ebene widersprechen, MUSS ein Decision Record in
 `ops/agent-team/team_decisions.md` angelegt werden.
@@ -68,24 +69,39 @@ Der Layer Map MUSS eindeutig sein (genau eine Canonical-Datei pro Layer).
 - `PR_DESCRIPTION.md` (canonical: PR-Body-Template)
 
 ### 4.2 Docs
+- `docs/repo-specific-canonical-sources.md` (canonical SoT inventory and conflict rule)
 - `docs/ist-zustand-agent-system.md` (canonical architecture baseline)
 - `docs/produktlogik-spezifikation.md` (canonical strategy/logic summary)
 - `docs/governance.md` (canonical governance overview)
 - `docs/decisions.md` (canonical decision lifecycle contract)
 - `docs/drift_playbook.md` (canonical monitoring operations)
+- `docs/provider-resilience.md` (canonical provider routing and model-agnostic runtime contract)
 - `docs/golden-tasks/README.md` + `docs/golden-tasks/tasks/*.md` (canonical scenario specs)
 
 Alle anderen Dokus SOLLEN als **derived** oder **evidence** gekennzeichnet werden.
 
 ---
 
-## 5) Trigger -> Pflicht-Doku/Evidence Mapping
+## 5) Model-Agnostic First Rule
+
+Runtime- und Agent-Docs MUESSEN Rollen, Provider und Routing primaer ueber Faehigkeiten/Profile beschreiben, nicht ueber konkrete Vendor-/Modellnamen.
+
+- **MUSS:** Capability-/Profile-Begriffe verwenden, z. B. `reasoning.lead`, `implementation.code`, `review.validation`, `qa.e2e`, `generalist.tool_capable`.
+- **DARF:** konkrete Modell-/Vendor-Namen als Beispiel, Adapter-Metadaten oder historisches Evidence-Detail nennen.
+- **DARF NICHT:** konkrete Modell-/Vendor-Namen als alleinige Source of Truth fuer Routing, Role Assignment oder Governance Gates verwenden.
+- **MUSS:** `docs/provider-resilience.md` aktualisieren, wenn Provider-Routing, Model-Profile oder Runtime-Provider-Policies geaendert werden.
+- **SOLL:** `docs/repo-specific-canonical-sources.md` aktualisieren, wenn sich SoT-Hierarchie oder Konfliktregeln aendern.
+
+---
+
+## 6) Trigger -> Pflicht-Doku/Evidence Mapping
 
 | Trigger | MUSS | SOLL | DARF NICHT | KANN |
 |---|---|---|---|---|
 | Code-Aenderung (Produktivcode) | `team_progress.md` Eintrag | `team_findings.md` bei technischen Learnings | Aenderung ohne Evidence-Log | betroffene Domain-Doku ergaenzen |
 | Policy-/Regel-Aenderung | `team_progress.md` + `team_decisions.md` | `team_findings.md` mit Risikoeinschaetzung | Regelsemantik ohne Decision Record aendern | `docs/governance.md` updaten |
 | Architektur-/Schnittstellenaenderung | Canonical Architektur-Doku aktualisieren (`docs/ist-zustand-agent-system.md` oder Domain-canonical) | Mapping in `team_findings.md` dokumentieren | Mehrere neue SoT-Dateien fuer dieselbe Aussage erzeugen | Architekturdiagramm als Appendix |
+| Provider-/Model-Routing-Aenderung | `docs/provider-resilience.md` + `team_progress.md` | `docs/repo-specific-canonical-sources.md` pruefen | Vendor-/Modellname als alleinige Routing-Policy setzen | Adapter-Metadaten als Appendix dokumentieren |
 | CI/Governance Gate Aenderung | `team_progress.md` + `team_findings.md` + Approval Trigger pruefen | `docs/governance.md` referenzieren | Merge-Empfehlung ohne notwendige Approvals | Evidence in separatem Ops-Report |
 | Doku-Refactor ohne Code | `team_progress.md` | `team_findings.md` (Konflikte/Gaps) | stille Moves/Renames | deprecate-notice mit Canonical-Verweis |
 | Golden-Task-relevante Aenderung | Verifikationsteil MUSS relevante Golden Tasks nennen | Ausfuehrung je Autonomy Tier planen | Golden-Task-Relevanz weglassen | Task-Ausfuehrung + Evidence anhangen |
@@ -96,7 +112,7 @@ Zusatzregel:
 
 ---
 
-## 6) Einheitliche PR-Ausgabe (verpflichtend)
+## 7) Einheitliche PR-Ausgabe (verpflichtend)
 
 Jede PR-Beschreibung MUSS diese Sections enthalten:
 
@@ -109,7 +125,7 @@ Jede PR-Beschreibung MUSS diese Sections enthalten:
 
 ---
 
-## 7) Regeln fuer Konsolidierung ohne Scope-Creep
+## 8) Regeln fuer Konsolidierung ohne Scope-Creep
 
 - Neue SoT-Duplikate DARF es NICHT geben.
 - Semantische Umdeutung DARF NICHT ohne Decision Record passieren.
@@ -119,7 +135,7 @@ Jede PR-Beschreibung MUSS diese Sections enthalten:
 
 ---
 
-## 8) Definition of Done fuer Doku-Changes
+## 9) Definition of Done fuer Doku-Changes
 
 Ein Doku-Change ist nur fertig, wenn:
 
@@ -130,4 +146,4 @@ Ein Doku-Change ist nur fertig, wenn:
   - `ops/agent-team/team_decisions.md`
 - Canonical Quelle klar benannt ist.
 - Verification-Plan mit Golden-Task-Relevanz vorhanden ist.
-- PR-Ausgabeformat aus Abschnitt 6 vollstaendig befuellt werden kann.
+- PR-Ausgabeformat aus Abschnitt 7 vollstaendig befuellt werden kann.

@@ -2,6 +2,17 @@
 
 This file records the local sources of truth for `agent-system`.
 
+## Source-of-Truth Rule
+
+Local repo policy wins over shared-core guidance when the two conflict. If two local canonical sources conflict, create or update a decision record in `ops/agent-team/team_decisions.md` before changing behavior.
+
+## Model-Agnostic First Rule
+
+Provider and agent behavior must be described by capability/profile contracts first. Concrete vendor or model names may appear as adapter metadata, examples, or historical evidence, but they are not canonical for runtime routing, role assignment, or governance.
+
+Canonical file for provider/model routing: `docs/provider-resilience.md`.
+Canonical runtime contracts: `packages/agent-runtime/src/providers/provider-config.schema.ts` and `packages/agent-runtime/src/providers/provider-router.ts`.
+
 ## Governance and Workflow
 
 - `AGENTS.md`
@@ -27,6 +38,7 @@ This file records the local sources of truth for `agent-system`.
 - `docs/decisions.md`
 - `docs/project-phases.md`
 - `docs/drift_playbook.md`
+- `docs/provider-resilience.md`
 
 ## Runtime Policy Inputs
 
@@ -39,6 +51,10 @@ This file records the local sources of truth for `agent-system`.
 - `docs/provider-resilience.md`
 - `docs/governance-clock-hardening.md`
 
-## Rule
+## Derived / Evidence Docs
 
-If a shared-core document conflicts with these local sources, the local source wins for this repository.
+Derived docs may summarize canonical sources, but they must link back to the canonical file instead of redefining the same rule. Evidence docs may quote concrete models/providers only as observed runtime evidence, not as normative routing policy.
+
+## Conflict Handling
+
+If a shared-core document conflicts with these local sources, the local source wins for this repository. If a docs-only change alters SoT hierarchy, the PR must include the affected canonical files and the verification plan.
